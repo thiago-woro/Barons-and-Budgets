@@ -29,8 +29,8 @@
         </div>
         
 
-        <div id="tools" class="col">
-            <div id="toolTabs" class="row">
+        <div id="tools">
+            <div id="toolTabs" class="row" style="display: flex;   z-index: 0; background-color: rgba(0, 0, 0, 0); margin-bottom: -10;"> 
                 <span id="minimizeTabButton" class="tabSelector" onclick="hideTabs()">
                     <i style="height: 20px; width: 20px;" class="fas fa-angle-double-up"></i> hide</span>
                 <span id="gameTabButton" class="tabSelector active" onclick="toggleTab('gameTab')">Game</span>
@@ -39,14 +39,13 @@
                 <span id="chartTabButton" class="tabSelector" onclick="toggleTab('chartTab')">Chart</span>
 
             </div>
-		<div id="gameTab" style="display: none;" class="card">
+		<div id="gameTab" style="display: none; margin-top: -24px; z-index: 2001 ;" class="card">
             <div class="col" >
 			<div class="row">
-				<button id="startGeneratingMap">Generate map</button>
-				<button id="gen2">Gen 2</button>
+				<button id="gen2">Generate Map</button>
 				<button id="startColony" class="blueButton">Start colony</button>
             </div>
-                <div class="row" style="margin-top: 10px;">
+                <div id="secondRowButtons" class="row footprint" style="margin-top: 10px;">
 				<button class="secondaryBtn" id="clearGround">Remove Land</button>
 				<button class="secondaryBtn" id="removeWater">Remove Water</button>
 				<button class="secondaryBtn" onclick="clearNPC()" id="clearNPCS">Remove NPCS</button>
@@ -55,14 +54,7 @@
             </div>         
         </div>
 
-
-
-			
-			
-
-			<fieldset style="margin-bottom: 5px;">
-				<legend>Debugger:</legend>
-
+            <div class="col">
 				<div>
 					<input
 						type="checkbox"
@@ -79,15 +71,14 @@
 						name="Water" checked />
 					<label for="Water">Water</label>
 				</div>
-			</fieldset>
-           
+            </div>      
             <div class="row">
             <button disabled id="startButton">Start Simulation</button>
                 <button class="curto" id="playButton">Play ⏯</button>
                 <button class="curto blueButton" id="pauseButton">Pause ⏸</button>
                 <img id="playStatusImg" style="width: 50px; display: none;" src="https://cdn.pixabay.com/animation/2022/07/31/05/09/05-09-47-978_512.gif">
             </div>
-<div id="slidersGP" class="col" style="max-width: 350px; background-color: inherit; padding: 15px;">
+<div id="slidersGP" class="col footprint" style=" margin-top: 10px; padding: 15px;">
             <p id="gameSpeedValue" style="margin: 3px;">Game Speed: 60</p>
             <input  type="range" id="gameSpeedSlider" min="1" max="100" value="10">
 
@@ -111,7 +102,7 @@
 
             </div>
 
-			<canvas id="minimap"></canvas>
+			<canvas style="visibility: collapse;" id="minimap"></canvas>
 
 		</div>
 

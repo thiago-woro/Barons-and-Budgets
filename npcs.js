@@ -1,5 +1,5 @@
 let year = 0;
-const startingPopulation = 5;
+const startingPopulation = 50;
 const populationIncreaseSpeed = 0.15;
 let isPaused = false;
 var deathRate = 0.001;
@@ -159,8 +159,6 @@ class NPC {
   
   ageAndDie() {
     this.age++; // Increment the age by 1 year
-    console.log(`${this.name} aged to ${this.age}`);
-
     if (this.age >= 96 || (this.age > 80 && Math.random() < deathRate)) {
       this.die();
       deathsThisLoop++; // Increment deaths count
@@ -491,15 +489,31 @@ function coupleMaker(npcs) {
       //`${npc.name} has ${availableSpouses.length} available spouses.`
       ();
 
-    if (availableSpouses.length > 0) {
-      const randomSpouse =
-        availableSpouses[Math.floor(Math.random() * availableSpouses.length)];
-      npc.spouse = randomSpouse.name;
-      randomSpouse.spouse = npc.name;
-      console.log(`${npc.name} married ${randomSpouse.name} 👰🤵👰🤵👰🤵👰🤵`);
-    }
-  });
-}
+      if (availableSpouses.length > 0) {
+        const randomSpouse =
+          availableSpouses[Math.floor(Math.random() * availableSpouses.length)];
+        npc.spouse = randomSpouse.name;
+        randomSpouse.spouse = npc.name;
+      
+        // Add the NPCs (couple) to a new house
+        const randomIndex = Math.floor(Math.random() * groundCells.length);
+        const selectedCell = groundCells.splice(randomIndex, 1)[0]; // Select and remove a ground cell
+      
+        const newHouseX = selectedCell.x;
+        const newHouseY = selectedCell.y;
+      
+        const newHouse = new House(newHouseX, newHouseY, cellSize);
+        newHouse.addInhabitant(npc); // Add the first NPC to the house
+        newHouse.addInhabitant(randomSpouse); // Add the second NPC to the house
+      
+        houses.push(newHouse);
+        newHouse.draw(npcCtx, cellSize);
+        console.log(`${npc.name} married ${randomSpouse.name} 👰🤵👰🤵👰🤵👰🤵`);
+        console.log(`🏠🏠🏠🏠🏠🏠🏠🏠 at ${newHouseX}, ${newHouseY}`);
+      }
+      
+    });
+  }
 
 function babyMaker(npcs) {
   npcs.forEach((parentNPC) => {

@@ -1,18 +1,25 @@
+@font-face {
+    font-family: 'Press Start 2P';
+    src: url('./assets/fonts/PressStart2P-Regular.ttf') format('truetype');
+  }
+
 body {
-    display: flex;
-    flex-direction: column;
     background-color: rgb(0, 0, 0);
     gap: 10px;
     color: white;
-    font: 1rem "Fira Sans", sans-serif;
-    padding: 50px;
     border: 0px solid coral;
     margin: 0px;
     min-width: 100vw;
-    min-height: 100;
-    cursor: url(skyrim.cur), auto;
+    min-height: 100vh;
+    cursor: url(./assets/cursor/skyrim.cur), auto;
+    font-family: 'Press Start 2P';font-size: 1rem;
+
 }
 
+.canvas-moved {
+    transform: translate(0, 0); /* Initial position */
+  }
+  
 
 .canvas-container {
     position: absolute;
@@ -20,10 +27,8 @@ body {
     left: 0;
     width: 100vw;  /* 100% of viewport width */
     height: 100vh; /* 100% of viewport height */
-    overflow: hidden; /* Hide overflow */
 }
 
-/* Position canvas elements on top of each other */
 .canvas-container canvas {
     position: absolute;
     top: 0;
@@ -31,18 +36,16 @@ body {
     width: 100%;
     height: 100%;
     margin: 0;
-    /* Add any other necessary styles for the canvas elements here */
+    image-rendering: pixelated;
 }
 
 /* Specific z-index for each canvas layer */
 #groundCanvas {
     z-index: 20;
-
 }
 
 #waterCanvas {
     z-index: 10;
-
 }
 
 #npcCanvas {
@@ -59,11 +62,10 @@ body {
 }
 
 #minimap{
-    visibility: visible;
+    visibility: hidden;
     background-color: rgb(58, 11, 53);
-    max-height: 100vh;
-    max-width: 100vw;
     scale: 0.8;
+    height: 0px;
 }
 
   #tools {
@@ -79,7 +81,6 @@ body {
     margin-bottom: -15px;
     margin-left: 20px;
     justify-content: end;
-
   }
   
 
@@ -87,11 +88,18 @@ body {
     display: flex;
     flex-direction: row;
     gap: 20px;
+    background-color: #454a3f;
+    padding: 10px;
+    border-radius: 10px;
 }
 
-.card {
-    background-color: rgb(41, 41, 41);
-
+.col {
+    display: flex;
+    flex-direction: column;
+    background-color: #454a3f;
+    margin: 10px;
+    padding: 10px;
+    border-radius: 10px;
 }
 
 
@@ -101,31 +109,28 @@ body {
 
 
 
-.col {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 15px;
-}
 
 .card {
     display: flex;
     flex-direction: column;
-    background-color: rgb(41, 41, 41);
-    padding: 20px;
+    padding: 7px;
     border-radius: 10px;
     gap: 20px;
     z-index: 99;
     box-shadow: 2px 3px 50px 3px rgba(4, 0, 255, 0.176);
     border: 2px solid rgba(41, 178, 105, 0.13);
+    border: 11px solid rgb(82, 82, 82);
+    margin: 5px;
+    background-color: #595e4e;
+
 }
 
 .secondaryBtn {
     background-color: grey;
     font-size: 14px;
     width: fit-content;
+    font-size: 10px;
 }
-
-
 
 
 
@@ -138,14 +143,19 @@ range {
     max-width: 100px;
 }
 
+#gameTab {
+    height: fit-content;
+}
+
 
 .tabSelector {
 background-color: rgb(35, 45, 56);
 border-radius: 15px 15px 0px 0px;
+border-radius: 10px;
 padding: 20px;
 height: 20px;
 max-height: 30px;
-cursor: url(glove1.cur), auto;
+cursor: url(./assets/cursor/glove1.cur), auto;
 user-select: none;
 
 }
@@ -160,20 +170,23 @@ user-select: none;
     }
 
 button {
-    background-color: rgb(40, 180, 40);
-    border-radius: 15px;
+    background-color: rgb(28, 116, 28);
+    border-radius: 8px;
     height: 50px;
     width: 200px;
     color: white;
     font-size: 20px;
     cursor: pointer;
-    font: 1rem "Fira Sans", sans-serif;
-    border: solid 0px green;
+    font-family: 'Press Start 2P';
+    font-size: 1rem;
+    border: solid 3px rgb(165, 128, 26);
     transition: background-color 0.3s ease;
-    cursor: url(glove1.cur), auto;
-
+cursor: url(./assets/cursor/glove1.cur), auto;
 
 }
+
+
+       /* ui background color for behind buttons    ---->  #454a3f */ 
 
 button:hover {
     background-color: rgb(70, 40, 180);
@@ -191,7 +204,8 @@ button:hover {
 
 p,
 label {
-    font: 1rem "Fira Sans", sans-serif;
+    font-family: 'Press Start 2P';
+    font-size: 1rem;
 }
 
 input {
@@ -250,7 +264,7 @@ tbody tr:hover {
 }
 
 .curto {
-    max-width: 120px;
+    width: fit-content;
 }
 
 button:disabled {   
@@ -260,31 +274,6 @@ button:disabled {
 }
 
 
-.resizable-col {
-    min-width: 500px;
-    width: calc(100% - 10px); /* Account for the width of the resize handle */
-    overflow: hidden; /* Hide overflowing content when resizing */
-}
-
-#resize-handle {
-    width: 6px;
-    cursor: ew-resize; /* Set the cursor style to indicate resize */
-    background-color: #3cd6890b;
-    height: 100%;
-    min-width: 1px;
-    min-height: 100vh;
-    border-radius: 10px;
-}
-
-#resize-handle:hover {
-    width: 2px;
-    cursor: ew-resize; /* Set the cursor style to indicate resize */
-    background-color: #3cd689c6;
-    height: 100%;
-    min-width: 4px;
-    min-height: 100vh;
-    border-radius: 10px;
-}
 
 #npcTab {
     /* Allow the table to have a vertical scrollbar when it exceeds the parent's height */

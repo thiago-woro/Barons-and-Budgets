@@ -1,46 +1,61 @@
 class House {
-    constructor(x, y, cellSize) {
-      this.x = x * cellSize;
-      this.y = y * cellSize;
-      this.inhabitants = []; // Array to store NPCs living in this house
-    }
-  
-    // Method to add an NPC to this house
-    addInhabitant(npc) {
-      this.inhabitants.push(npc);
-    }
-  
-    // Method to draw the house on the ground canvas
-    draw(ctx, cellSize) {
-      ctx.fillStyle = "#A0522D"; // Brown for the house
-      ctx.fillRect(this.x, this.y, cellSize, cellSize);
-  
-      console.log(
-        `✅ House placed on map!\n\n  X: ${this.x}, Y: ${this.y}`,
-        "font-weight: bold; color: green;"
-      );
-    }
+  constructor(x, y, cellSize) {
+    this.x = x * cellSize;
+    this.y = y * cellSize;
+    this.inhabitants = []; // Array to store NPCs living in this house
+    this.upgrades = []; // Array to store home upgrades
+    this.economicStatus = "Average"; // Economic status of the house
+    this.homeValue = Math.floor(Math.random() * 100000) + 50000; // Random home value
   }
-  
-  // Global array to store houses
-  let houses = [];
-  
-  function startHouses(ctx, cellSize) {
-    const houseCount = 10; // Replace with the desired number of houses
-  
-    for (let i = 0; i < houseCount && groundCells.length > 0; i++) {
-      const randomIndex = Math.floor(Math.random() * groundCells.length);
-      const selectedCell = groundCells.splice(randomIndex, 1)[0]; // Select and remove a ground cell
-  
-      const house = new House(selectedCell.x, selectedCell.y, cellSize);
-      houses.push(house);
-      house.draw(ctx, cellSize);
-    }
+
+  // Method to add an NPC to this house
+  addInhabitant(npc) {
+    this.inhabitants.push(npc);
   }
+
+  // Method to draw the house on the ground canvas
+  draw(npcCtx, cellSize) {
+    // Choose emoji character based on economic status and upgrades
+    let emoji = "🏠"; // Default emoji for average house
+
+    if (this.economicStatus === "Wealthy") {
+      emoji = "🏡"; // Emoji for wealthy house
+    } else if (this.economicStatus === "Poor") {
+      emoji = "🏚"; // Emoji for poor house
+    } else if (this.upgrades.length > 0) {
+      emoji = "🏢"; // Emoji for house with upgrades
+    }
+
+    // Draw the emoji on the canvas
+    npcCtx.font = "bold 20px Arial";
+    npcCtx.fillText(emoji, this.x, this.y );
+
+    console.log(
+      `✅ House placed on map!\n\n  X: ${this.x}, Y: ${this.y}`
+    );
+  }
+}
+
+// Global array to store houses
+let houses = [];
+
+function startHouses(ctx, cellSize) {
+  const houseCount = 0; // Replace with the desired number of houses
+
+  for (let i = 0; i < houseCount && groundCells.length > 0; i++) {
+    const randomIndex = Math.floor(Math.random() * groundCells.length);
+    const selectedCell = groundCells.splice(randomIndex, 1)[0]; // Select and remove a ground cell
+
+    const house = new House(selectedCell.x, selectedCell.y, cellSize);
+    houses.push(house);
+    house.draw(ctx, cellSize);
+  }
+}
+
   
   // Initialize
   
-  //startHouses(groundCtx, cellSize);
+  startHouses(groundCtx, cellSize);
 
   
   

@@ -1,14 +1,17 @@
+let cellSize = 9
+var gridSize = 90;
+
 function setupCanvas(canvasId, width, height) {
   const canvas = document.getElementById(canvasId);
   const ctx = canvas.getContext("2d");
-  canvas.width = width;
-  canvas.height = height;
+  canvas.width = gridSize * cellSize;
+  canvas.height =  gridSize * cellSize;
   return [canvas, ctx];
 }
 
 const container = document.getElementById("canvas-content");
-const containerWidth = container.offsetWidth;
-const containerHeight = container.offsetHeight;
+const containerWidth = container;
+const containerHeight = container;
 
 const [waterCanvas, waterCtx] = setupCanvas("waterCanvas", containerWidth, containerHeight);
 const [groundCanvas, groundCtx] = setupCanvas("groundCanvas", containerWidth, containerHeight);
@@ -19,12 +22,12 @@ const [npcCanvas, npcCtx] = setupCanvas("npcCanvas", containerWidth, containerHe
 const [boatCanvas, boatCtx] = setupCanvas("boatCanvas", containerWidth, containerHeight);
 
 
+
 let terrainGrid;
 
 
 let trees = [];
 
-var gridSize = 90;
 let perlinNoiseScale = 0.03; //original number is 0.025
 
 let offset = 0.65;   //og is 0.35
@@ -34,8 +37,6 @@ let validCells =[]
 let groundCells = [];
 let waterCells = [];
 
-  // Calculate cell size based on container dimensions
-let cellSize = 9
 
 var SAND = "#b0ad58";
 
@@ -358,7 +359,7 @@ function clearNPC() {
 
   
 function startTrees(ctx, cellSize) {
-  const treeEmojis = ['🌳', '🌲', '🌴', '🏠'];
+  const treeEmojis = ['🌳', '🌲', '🌴','🌳', '🌵'];
 
   const treeCount = groundCells.length * 0.010;
   console.log('will draw ' + treeCount.toFixed(0) + " trees");
@@ -421,3 +422,44 @@ npcCanvas.addEventListener('mousemove', function(event) {
     infoPanel.style.display = 'none';
   }
 });
+
+
+
+
+
+let keys = {};
+let canvasX = 0;
+let canvasY = 0;
+const canvasSpeed = 30;
+
+
+
+// Function to handle key down events
+function handleKeyDown(event) {
+  keys[event.key] = true;
+
+  // Move canvas based on pressed keys
+  if (keys["ArrowLeft"] || keys["a"]) {
+    canvasX -= canvasSpeed;
+  }
+  if (keys["ArrowRight"] || keys["d"]) {
+    canvasX += canvasSpeed;
+  }
+  if (keys["ArrowUp"] || keys["w"]) {
+    canvasY -= canvasSpeed;
+  }
+  if (keys["ArrowDown"] || keys["s"]) {
+    canvasY += canvasSpeed;
+  }
+
+  // Apply CSS transform to move the canvas container
+  container.classList.add("canvas-moved");
+  container.style.transform = `translate(${-canvasX}px, ${-canvasY}px)`;
+}
+
+function handleKeyUp(event) {
+  keys[event.key] = false;
+}
+
+document.addEventListener("keydown", handleKeyDown);
+      document.addEventListener("keyup", handleKeyUp);
