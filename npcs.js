@@ -1,19 +1,13 @@
-// ⭐⭐⭐⭐ Code related to players and NPCs ⭐⭐⭐⭐
-
 let year = 0;
 const startingPopulation = 5;
 const populationIncreaseSpeed = 0.15;
 let isPaused = false;
-var deathRate = 0.001; // Set your desired death rate
-let babies = [];
-
-
-
-let npcs = [];
+var deathRate = 0.001;
 let npcSize = cellSize;
+let babies = [];
+let npcs = [];
 
 //game loop speed control
-
 const gameSpeedSlider = document.getElementById("gameSpeedSlider");
 const gameSpeedValue = document.getElementById("gameSpeedValue");
 let gameLoopInterval = null;
@@ -24,10 +18,6 @@ gameSpeedSlider.addEventListener("input", function () {
   gameLoopSpeed = 10000 / newGameSpeed;
   gameSpeedValue.textContent = `Game Speed: ${newGameSpeed}`;
 });
-
-
-
-
 
 
 startButton.addEventListener("click", function () {
@@ -80,14 +70,18 @@ function gameLoop() {
   );
 
   coupleMaker(npcs);
-
   babyMaker(npcs);
-
   console.log("Total: " + babies.length + " born");
 
-  const economicGDP = npcs.length * 10;
-
   sortNPCTable()
+
+  npcCtx.clearRect(0, 0, npcCanvas.width, npcCanvas.height); // Clear the canvas
+
+    // This will move and redraw each NPC, including new babies
+    npcs.forEach(npc => {
+      npc.move();
+      drawNPC(npc, npcCtx);
+    });
 
   document.getElementById("currentPopulation").textContent = npcs.length;
   document.getElementById("growthRate").textContent = populationIncreaseSpeed;
@@ -123,7 +117,6 @@ class NPC {
     this.y = y * cellSize;
     this.age = 0;
     this.salary = Math.floor(Math.random() * 9800);
-    this.movement = { dx: 1, dy: 1 }; // Example movement pattern
     this.sex = Math.random() < 0.5 ? "male" : "female";
     this.color = Math.random() < 0.5 ? "#ba8247" : "#a382ab";
     this.isClickable = true; // Can be toggled on or off
@@ -132,19 +125,16 @@ class NPC {
     this.name = this.generateName(); // Generate a name for the NPC
     this.spouse;
     this.profession = this.generateProfession(); // Generate a profession for the NPC
-    this.movementSpeed = 0.000001;
+    this.movementSpeed = 1;
     this.children = []; // Array to store children
     this.emoji = this.generateRandomEmoji();
     this.myNumber = myNumber; // Sequential number for creation order
   }
 
   move() {
-    
-    
     // Find the current cell coordinates of the NPC
     const currentX = Math.floor(this.x / cellSize);
     const currentY = Math.floor(this.y / cellSize);
-  
     // Generate the coordinates for adjacent cells
     const adjacentCells = [
       { x: currentX - 1, y: currentY },
@@ -152,23 +142,19 @@ class NPC {
       { x: currentX, y: currentY - 1 },
       { x: currentX, y: currentY + 1 },
     ];
-  
     // Filter out cells that are not ground cells
     const validAdjacentCells = adjacentCells.filter(cell =>
       groundCells.some(groundCell => groundCell.x === cell.x && groundCell.y === cell.y)
     );
-  
     // If there are valid adjacent ground cells to move to
     if (validAdjacentCells.length > 0) {
       // Pick a random valid adjacent cell
       const randomIndex = Math.floor(Math.random() * validAdjacentCells.length);
       const selectedCell = validAdjacentCells[randomIndex];
-  
       // Update the NPC's position to the new cell
       this.x = selectedCell.x * cellSize;
       this.y = selectedCell.y * cellSize;
     }
-    
   }
   
   ageAndDie() {
@@ -178,7 +164,14 @@ class NPC {
     if (this.age >= 96 || (this.age > 80 && Math.random() < deathRate)) {
       this.die();
       deathsThisLoop++; // Increment deaths count
+      return
     }
+
+     // Update age in the table
+  const ageCell = document.querySelector(`#npcRow-${this.myNumber} td:nth-child(2)`);
+  if (ageCell) {
+    ageCell.textContent = this.age;
+  }
   }
 
   die() {
@@ -312,10 +305,7 @@ class NPC {
       "Pedro",
       "Mateo",
       "Sebastian",
-      "Elena",
       "Manuel",
-      "Gabriela",
-      "Camila",
       "Francisco",
       "Ricardo",
       "Andrés",
@@ -408,7 +398,6 @@ class NPC {
 
 // Function to add NPC information to the table
 function addNPCToTable(npc) {
-  //console.log('adding npc to table: ' + npc.name)
   const tableBody = document.querySelector("#npcTable tbody");
   const newRow = tableBody.insertRow();
   // Assign a unique ID to the row
@@ -514,7 +503,7 @@ function coupleMaker(npcs) {
 
 function babyMaker(npcs) {
   npcs.forEach((parentNPC) => {
-    if (parentNPC.spouse && parentNPC.isAlive) {
+    if (parentNPC.spouse) {
       const spouse = npcs.find((npc) => npc.name === parentNPC.spouse);
 
       if (spouse && spouse.isAlive) {
@@ -523,7 +512,7 @@ function babyMaker(npcs) {
           parentNPC.children.length + spouse.children.length;
 
         // Decrease the chance to 0 if they have 2 or more children
-        const chanceOfChild = numberOfChildren < 2 ? 0.1 : 0;
+        const chanceOfChild = numberOfChildren < 3 ? 0.1 : 0;
 
         if (Math.random() < chanceOfChild) {
           console.log(
@@ -536,12 +525,17 @@ function babyMaker(npcs) {
             cellSize,
             npcs.length + 1
           );
+
+          const randomIndex = Math.floor(Math.random() * groundCells.length);
+          const selectedCell = groundCells[randomIndex];
+          newChild.x = selectedCell.x * cellSize;
+          newChild.y = selectedCell.y * cellSize;
+          
           parentNPC.addChild(newChild); // Add child to parent's children array
           spouse.addChild(newChild); // Add child to spouse's children array
           npcs.push(newChild); // Add the new child NPC to the main NPCs array
           babies.push(newChild);
 
-          drawNPC(newChild, ctx, cellSize);
           addNPCToTable(newChild);
 
           console.log(
@@ -622,7 +616,6 @@ function startNPCs(ctx, cellSize) {
 
     const npc = new NPC(selectedCell.x, selectedCell.y, cellSize, i + 1);
     npcs.push(npc);
-    drawNPC(npc, ctx, cellSize);
   }
 
   npcs.forEach((npc) => {
@@ -638,42 +631,35 @@ function startNPCs(ctx, cellSize) {
     npc.x = selectedCell.x * cellSize;
     npc.y = selectedCell.y * cellSize;
     drawNPC(npc, ctx, cellSize);
-  addNPCToTable(npc);
-
+    addNPCToTable(npc);
   });
 
 
   npcTableHeader.textContent = `Total Population ${npcs.length}`;
 
-// Move and redraw NPCs every second
-setInterval(() => {
-  // Clear the NPC canvas first
-  npcCtx.clearRect(0, 0, npcCanvas.width, npcCanvas.height);
 
-  // Move and redraw each NPC
-  npcs.forEach(npc => {
-    npc.move();
-    drawNPC(npc, npcCtx, cellSize);
-  });
 
- // console.log(`💡 Moved ${npcs.length} NPCs`);
-}, 300);
+
 }
 
 
-
-function drawNPC(npc, ctx, cellSize) {
- 
-  // Set text alignment to center
+function drawNPC(npc, ctx) {
   ctx.textAlign = "center";
-  // Draw NPC as a male or female emoji
-  const emoji = npc.sex === "male" ? "👨" : "👩";
+  let emoji;
+  if (npc.age < 10) {
+    emoji = "👶";
+  } else if (npc.age > 70) {
+    emoji = npc.sex === "male" ? "👴" : "👵";
+  } else {
+    emoji = npc.sex === "male" ? "👨" : "👩";
+  }
   ctx.font = "bold 20px Arial"; // Increase font size for the emoji
   ctx.fillText(emoji, npc.x, npc.y);
-  // Draw NPC's name and age
   const text = `${npc.name}, ${npc.age}`;
   ctx.fillStyle = 'black';
   ctx.font = "900 15px Arial"; // Use a bolder font weight
   ctx.fillText(text, npc.x, npc.y + 25); // Adjust Y-coordinate for the text
-  //console.log(`✅ NPC ${npc.name} placed on map!\n\n  X: ${npc.x}, Y: ${npc.y}`);
 }
+
+
+

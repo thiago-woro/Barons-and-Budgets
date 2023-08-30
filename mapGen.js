@@ -391,3 +391,33 @@ function startTrees(ctx, cellSize) {
 }
 
   
+const infoPanel = document.getElementById("infoPanel");
+
+function showNPCInfo(npc) {
+  infoPanel.style.left = `${npc.x}px`;
+  infoPanel.style.top = `${npc.y}px`;
+  infoPanel.style.display = "block";
+  infoPanel.innerHTML = `
+    <strong>Name:</strong> ${npc.name}<br/>
+    <strong>Age:</strong> ${npc.age}<br/>
+    <strong>Sex:</strong> ${npc.sex}<br/>
+  `;
+}
+
+npcCanvas.addEventListener('mousemove', function(event) {
+  const rect = npcCanvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  let foundNPC = false;
+  for(const npc of npcs) {
+    const distance = Math.sqrt((x - npc.x)**2 + (y - npc.y)**2);
+    if(distance < 10) { // Adjust the value based on your needs
+      showNPCInfo(npc);
+      foundNPC = true;
+      break;
+    }
+  }
+  if (!foundNPC) {
+    infoPanel.style.display = 'none';
+  }
+});
