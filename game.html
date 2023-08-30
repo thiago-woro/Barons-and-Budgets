@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0" />
+		<title>Economy Simulator</title>
+	
+        <link rel="stylesheet" href="style.css">
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+</head>
+
+	<body>
+        <div class="canvas-container" id="canvas-content">
+            <canvas id="groundCanvas"  style="z-index: 20;"></canvas>
+            <canvas id="waterCanvas"  style="z-index: 10;"></canvas>
+            <canvas id="npcCanvas"  style="z-index: 99;"></canvas>
+            <canvas id="validCells"  style="z-index: 30;"></canvas>
+            <canvas id="treeCanvas"  style="z-index: 40;"></canvas>
+            <canvas id="boatCanvas"  style="z-index: 50;"></canvas>
+
+
+
+        </div>
+        
+
+        <div id="tools" class="col">
+            <div id="toolTabs" class="row">
+                <span id="minimizeTabButton" class="tabSelector" onclick="hideTabs()">
+                    <i style="height: 20px; width: 20px;" class="fas fa-angle-double-up"></i> hide</span>
+                <span id="gameTabButton" class="tabSelector active" onclick="toggleTab('gameTab')">Game</span>
+                <span id="statsTabButton" class="tabSelector" onclick="toggleTab('statsTab')">Stats</span>
+                <span id="npcTabButton" class="tabSelector" onclick="toggleTab('npcTab')">NPCs</span>
+                <span id="chartTabButton" class="tabSelector" onclick="toggleTab('chartTab')">Chart</span>
+
+            </div>
+		<div id="gameTab" style="display: none;" class="card">
+            <div class="col" >
+			<div class="row">
+				<button id="startGeneratingMap">Generate map</button>
+				<button id="gen2">Gen 2</button>
+				<button id="startColony" class="blueButton">Start colony</button>
+            </div>
+                <div class="row" style="margin-top: 10px;">
+				<button class="secondaryBtn" id="clearGround">Remove Land</button>
+				<button class="secondaryBtn" id="removeWater">Remove Water</button>
+				<button class="secondaryBtn" onclick="clearNPC()" id="clearNPCS">Remove NPCS</button>
+
+				<button class="secondaryBtn" id="placeHomes">Place homes</button>
+            </div>         
+        </div>
+
+
+
+			
+			
+
+			<fieldset style="margin-bottom: 5px;">
+				<legend>Debugger:</legend>
+
+				<div>
+					<input
+						type="checkbox"
+						id="ground"
+						name="Ground"
+						checked />
+					<label for="ground">Ground</label>
+				</div>
+
+				<div>
+					<input
+						type="checkbox"
+						id="Water"
+						name="Water" checked />
+					<label for="Water">Water</label>
+				</div>
+			</fieldset>
+           
+            <div class="row">
+            <button disabled id="startButton">Start Simulation</button>
+                <button class="curto" id="playButton">Play ⏯</button>
+                <button class="curto blueButton" id="pauseButton">Pause ⏸</button>
+                <img id="playStatusImg" style="width: 50px; display: none;" src="https://cdn.pixabay.com/animation/2022/07/31/05/09/05-09-47-978_512.gif">
+            </div>
+<div id="slidersGP" class="col" style="max-width: 350px; background-color: inherit; padding: 15px;">
+            <p id="gameSpeedValue" style="margin: 3px;">Game Speed: 60</p>
+            <input  type="range" id="gameSpeedSlider" min="1" max="100" value="10">
+
+            <label for="gridSizeSlider">Grid Size:</label>
+
+            <input type="range" id="gridSizeSlider" min="5" max="200" step="5" value="100">
+            <span id="gridSizeDisplay">100</span>
+
+
+            <br>
+            <label for="perlinNoiseScaleSlider">Scale:</label>
+
+            <input type="range" id="perlinNoiseScaleSlider" min="0.001" max="0.1" step="0.001" value="0.025">
+            <span id="perlinDisplay">0.025</span>
+
+            <br>
+            <label for="transformSlider">Zoom</label>
+            <input type="range" id="transformSlider" min="0.1" max="4" step="0.1" value="3">
+            
+            <button id="drawValidCellsButton">Draw valid cells</button>
+
+            </div>
+
+			<canvas id="minimap"></canvas>
+
+		</div>
+
+       
+        <div class="card" id="statsTab" style="display: none;">
+            <h3>Economic Simulation Statistics</h3>
+			<h1 id="currentYear">Year: </h1>
+
+            <div>Current Population 🏙️ <span id="currentPopulation"></span></div>
+            <div>Land available 🌍 <span id="landAvailable"></span></div>
+            <div>Growth Rate 📈 <span id="growthRate"></span></div>
+            <div>Game Speed ⏩ <span id="gameSpeed"></span></div>
+            <div>Economic Activity 💰 <span id="economicGDP"></span></div>
+        </div>
+
+            <div id="chartTab" class="card" style="display: none;">
+			<canvas id="populationChart"></canvas>
+
+            </div>
+
+
+<div style="display: none;" id="npcTab" class="card">
+    <h1 id="npcTableHeader" >NPC Information</h1>
+    <table id="npcTable">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Age</th>
+                <th>Salary</th>
+                <th>Profession</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Table rows will be added dynamically through JavaScript -->
+        </tbody>
+    </table></div>
+		
+
+</div>
+
+		
+        <!--  <script src="./camera.js"></script>   -->
+  <!--     <script src="./simulation.js"></script> -->
+
+
+		<script src="perlin.js"></script>
+     <script src="./mapGen.js"></script>
+     <script src="./uitools.js"></script>
+     <script src="./arrays.js"></script>
+     <script src="./npcs.js"></script>
+     <script src="./homes.js"></script>
+
+
+
+    </div>
+
+
+
+	 <script>
+
+
+
+
+const transformSlider = document.getElementById('transformSlider');
+        const canvasContainer = document.getElementById('canvas-content');
+
+        transformSlider.addEventListener('input', () => {
+            const scaleValue = transformSlider.value;
+            const translateYValue = 50; // Adjust this value as needed
+
+            // Update the transform property for the canvas container
+            canvasContainer.style.transform = `scale(${scaleValue}) translateY(${translateYValue}%)`;
+
+         
+        });
+
+
+
+// Function to toggle the visibility of a tab and show the most recent clicked tab
+function toggleTab(tabId) {
+    const tab = document.getElementById(tabId);
+    const tabWindows = document.querySelectorAll(".card");
+    const tabButtons = document.querySelectorAll(".tabSelector");
+    
+    // Hide all tab windows
+    tabWindows.forEach(tabWindow => {
+        tabWindow.style.display = "none";
+    });
+    
+    // Remove "active" class from all tab buttons
+    tabButtons.forEach(tabButton => {
+        tabButton.classList.remove("active");
+    });
+    
+    // Show the clicked tab window
+    tab.style.display = "block";
+    
+    // Add "active" class to the clicked tab button
+    const tabButton = document.getElementById(`${tabId}Button`);
+    tabButton.classList.add("active");
+}
+
+/////////////////////////////hide menu 
+
+let hideMenu = true;
+
+// Function to toggle the visibility of a tab and show the most recent clicked tab
+function hideTabs() {
+
+  if (hideMenu === true) {
+    gameTab.style.display = "block";
+    statsTab.style.display = "block";
+    chartTab.style.display = "block";
+    npcTab.style.display = "block";
+    minimizeTabButton.textContent = "Hide";
+    hideMenu = false;
+  } else {
+    hideMenu = true;
+    gameTab.style.display = "none";
+    statsTab.style.display = "none";
+    chartTab.style.display = "none";
+    npcTab.style.display = "none";
+    minimizeTabButton.textContent = "Show";
+  }
+
+  // Store hideMenu value in localStorage
+  localStorage.setItem('hideMenu', JSON.stringify(hideMenu));
+}
+
+// On page load, retrieve hideMenu value from localStorage
+window.addEventListener('load', function () {
+    
+  const storedHideMenu = localStorage.getItem('hideMenu');
+  if (storedHideMenu !== null) {
+     console.log("config:  " + storedHideMenu);
+
+    hideMenu = JSON.parse(storedHideMenu);
+    if (hideMenu === false) {
+        gameTab.style.display = "block";
+      statsTab.style.display = "block";
+      chartTab.style.display = "block";
+      npcTab.style.display = "block";
+      minimizeTabButton.textContent = "Hide";
+    }
+  }
+});
+
+
+
+
+
+
+
+
+function updateVariables() {
+	gridSize = parseFloat(document.getElementById('gridSizeSlider').value);
+	perlinNoiseScale = parseFloat(document.getElementById('perlinNoiseScaleSlider').value);
+	document.getElementById('gridSizeDisplay').textContent = gridSize;
+	document.getElementById('perlinDisplay').textContent = perlinNoiseScale;
+   console.log(`Updated variables - Grid Size: ${gridSize}, Perlin Noise Scale: ${perlinNoiseScale}`);
+}
+   
+
+        // Log the initial values
+        console.log(
+            `Initial variables - Grid Size: ${gridSize}, Perlin Noise Scale: ${perlinNoiseScale}`
+        );
+
+        // Attach input event listeners to the sliders
+        document.getElementById('gridSizeSlider').addEventListener('input', function () {
+            gridSize = parseFloat(this.value);
+            thiago = parseFloat(this.value);
+            updateVariables();
+        });
+
+        document.getElementById('perlinNoiseScaleSlider').addEventListener('input', function () {
+            perlinNoiseScale = parseFloat(this.value);
+            updateVariables();
+        });
+
+
+    </script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
+
+	</body>
+</html>

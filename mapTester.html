@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Perlin Sandbox v2</title>
+		<style>
+			/* Add your CSS styles here */
+
+			body {
+				margin: 0;
+				color: white;
+				background-color: rgb(0, 0, 0);
+				display: flex;
+				flex-direction: row;
+				font-family: Verdana, sans-serif;
+			}
+			#land {
+				border: 3px dashed rgb(42, 179, 122);
+				background-color: rgb(13, 45, 17);
+				image-rendering: pixelated;
+			}
+
+			#menu {
+				background-color: rgb(21, 32, 47);
+				padding: 20px;
+				display: flex;
+				flex-direction: column;
+				position: fixed; /* Set the position to fixed */
+				top: 20px; /* Adjust the top position as needed */
+				right: 20px; /* Set the right position */
+				z-index: 100; /* Adjust the z-index as needed */
+			}
+
+			button {
+				max-width: 200px;
+				height: 30px;
+				background-color: rgb(24, 65, 24);
+				color: white;
+			}
+			input {
+				max-width: 200px;
+			}
+
+			#progressBar {
+				margin-top: 50px;
+				width: 100%;
+				height: 20px;
+				min-height: 20px;
+				background-color: rgb(150, 164, 191);
+				border-radius: 30px;
+			}
+			#progressBarFill {
+				height: 20px;
+				background-color: rgb(31, 152, 81);
+				width: 0;
+				border-radius: 30px;
+			}
+
+			#landCanvas {
+				background-color: green;
+				width: 50px;
+				height: 50px;
+				margin: 50px;
+			}
+
+			#waterCanvas {
+				background-color: rgb(27, 136, 179);
+				width: 50px;
+				height: 50px;
+				margin: 50px;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="menu">
+			<button id="generateButton">Generate Map</button>
+			<br />
+			<label for="widthSlider">Screen Width:</label>
+			<input
+				type="range"
+				id="widthSlider"
+				min="100"
+				max="1000"
+				step="50"
+				value="250" />
+			<br />
+			<label for="heightSlider">Screen Height:</label>
+			<input
+				type="range"
+				id="altura"
+				min="100"
+				max="800"
+				step="50"
+				value="150" />
+			<br />
+			<label for="noiseScaleSlider">Noise Scale:</label>
+			<input
+				type="range"
+				id="noiseScaleSlider"
+				min="0.01"
+				max="1"
+				step="0.01"
+				value="0.1" />
+			<br />
+			<label for="noiseLevelSlider">Noise Level:</label>
+			<input
+				type="range"
+				id="noiseLevelSlider"
+				min="0.01"
+				max="2"
+				step="0.01"
+				value="1" />
+
+			<div
+				style="display: none"
+				id="progressBar">
+				<div id="progressBarFill"></div>
+			</div>
+			<div
+				id="loadingBox"
+				style="text-align: center; height: 100px">
+				<img
+					id="loading"
+					src="https://media3.giphy.com/media/3o7bu3XilJ5BOiSGic/200w.webp?cid=ecf05e472ot88ygfsct8i4bna1gdpotolcx0dgug882p9np8&ep=v1_gifs_search&rid=200w.webp&ct=g"
+					style="height: 60px; display: none" />
+			</div>
+		</div>
+
+		<canvas id="land"></canvas>
+
+		<!-- Canvas for land cells -->
+		<canvas
+			id="landCanvas"
+			width="250"
+			height="250"></canvas>
+
+		<!-- Canvas for water cells -->
+		<canvas id="waterCanvas"></canvas>
+
+		<script src="perlin.js"></script>
+		<script>
+			let screenWidth;
+			let screenHeight;
+			const waterCanvas = document.getElementById("waterCanvas");
+			const waterCtx = waterCanvas.getContext("2d");
+			const landCanvas = document.getElementById("landCanvas");
+			const landCtx = landCanvas.getContext("2d");
+			let canvas, ctx;
+			let perlinSeed = Math.random();
+			const waterColor = "blue";
+			const landColor = "green";
+			let noiseScale = 0.01;
+			let noiseLevel = 3;
+			let landCells = [];
+			let waterCells = [];
+			canvas = document.getElementById("land");
+			ctx = canvas.getContext("2d");
+			var WATER_SHADES = [
+	"#b9e0fa",
+	"#9ecbf3",
+	"#7ab3e9",
+	"#5c91d1",
+	"#4b7cb8",
+	"#4173b0",
+	"#3d76b",
+	"#84a1c8",
+	"#6b9bbf",
+	"#5690b7",
+];
+var LAND_SHADES = [
+	"#acd976",
+	"#9ac558",
+	"#88b14b",
+	"#759e42",
+	"#648a3b",
+	"#547637",
+	"#7fbf6e",
+	"#6bb556",
+	"#5aa748",
+];
+
+
+			function initializeCellsArray() {
+				landCells = Array(screenWidth)
+					.fill()
+					.map(() => Array(screenHeight).fill(false));
+				waterCells = Array(screenWidth)
+					.fill()
+					.map(() => Array(screenHeight).fill(false));
+			}
+
+			function updateAndDrawCells() {
+  for (let x = 0; x < screenWidth; x++) {
+    for (let y = 0; y < screenHeight; y++) {
+      let perlinValue = perlin.get(x * noiseScale, y * noiseScale) * noiseLevel;
+      let shadeIndex = Math.abs(Math.floor(perlinValue / 0.3)); // Adjust this value to change shade selection
+
+      if (perlinValue < 0) {
+        let waterShade = WATER_SHADES[shadeIndex % WATER_SHADES.length];
+        waterCells[x][y] = true;
+        waterCtx.fillStyle = waterShade;
+        waterCtx.fillRect(x, y, 1, 1);
+        landCtx.fillStyle = waterShade;
+        landCtx.fillText("~", x, y);
+      } else {
+        let landShade = LAND_SHADES[shadeIndex % LAND_SHADES.length];
+        landCells[x][y] = true;
+        ctx.fillStyle = landShade;
+        ctx.fillRect(x, y, 1, 1);
+        landCtx.fillStyle = landShade;
+        landCtx.fillText("x", x, y);
+      }
+    }
+  }
+  console.log(`Array Length: ${screenWidth * screenHeight}`);
+}
+			function drawPerlinMap() {
+				setTimeout(() => {
+					initializeCellsArray();
+					updateAndDrawCells();
+				}, 10);
+			}
+
+			function generateMap() {
+				waterCanvas.width = canvas.width;
+				waterCanvas.height = canvas.height;
+				landCanvas.width = screenWidth;
+				landCanvas.height = screenHeight;
+				perlin.seed(perlinSeed);
+				console.log("generation done...");
+				drawPerlinMap();
+			}
+
+			console.log(`Started drawing!`);
+			console.log(`Array Width: ${screenWidth}`);
+			console.log(`Array Height: ${screenHeight}`);
+
+			// UI STUFF ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+			// Function to calculate and store screen width and height
+			function calculateScreenSize() {
+				screenWidth = window.innerWidth;
+				screenHeight = window.innerHeight;
+				updateCanvasSize(); // Call the function to update canvas size
+			}
+
+			function updateCanvasSize() {
+				const menuWidth = document.getElementById("menu").offsetWidth; // Get the menu div width
+				canvas.width = screenWidth;
+				canvas.height = screenHeight; // Use the height slider value
+
+				console.log(
+					`Width: ${screenWidth}, Height: ${screenHeight}, Canvas h: ${canvas.height} , Canvas w: ${canvas.width}`
+				);
+			}
+
+			// Function to handle width slider change
+			function handleWidthChange() {
+				screenWidth = parseInt(document.getElementById("widthSlider").value);
+				updateCanvasSize();
+			}
+
+			// Function to handle height slider change
+			function handleHeightChange() {
+				screenHeight = parseInt(altura.value);
+				console.log(
+					`larrgura: ${screenWidth}, Altura: ${screenHeight}, Canvas h: ${canvas.height} , Canvas w: ${canvas.width}`
+				);
+				updateCanvasSize();
+			}
+			// Event listener for width slider change
+			const widthSlider = document.getElementById("widthSlider");
+			widthSlider.addEventListener("input", handleWidthChange);
+
+			// Event listener for height slider change
+			//const heightSlider = document.getElementById("heightSlider");
+			altura.addEventListener("input", handleHeightChange);
+
+			// Event listener for when the window is resized
+			window.addEventListener("resize", calculateScreenSize);
+
+			// Event listener for button click
+			const generateButton = document.getElementById("generateButton");
+			generateButton.addEventListener("click", generateMap);
+
+			// Function to handle noise scale slider change
+			function handleNoiseScaleChange() {
+				noiseScale = parseFloat(
+					document.getElementById("noiseScaleSlider").value
+				);
+				updateCanvasSize();
+			}
+
+			// Function to handle noise level slider change
+			function handleNoiseLevelChange() {
+				noiseLevel = parseFloat(
+					document.getElementById("noiseLevelSlider").value
+				);
+				updateCanvasSize();
+			}
+
+			// Event listener for noise scale slider change
+			const noiseScaleSlider = document.getElementById("noiseScaleSlider");
+			noiseScaleSlider.addEventListener("input", handleNoiseScaleChange);
+
+			// Event listener for noise level slider change
+			const noiseLevelSlider = document.getElementById("noiseLevelSlider");
+			noiseLevelSlider.addEventListener("input", handleNoiseLevelChange);
+
+			// Initialization
+		
+			calculateScreenSize();
+
+			// Function to update the progress bar
+			function updateProgressBar(progress) {
+				const progressBarFill = document.getElementById("progressBarFill");
+				progressBarFill.style.width = progress + "%";
+			}
+
+			console.log("hello");
+		</script>
+	</body>
+</html>

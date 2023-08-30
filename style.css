@@ -1,0 +1,300 @@
+body {
+    display: flex;
+    flex-direction: column;
+    background-color: rgb(0, 0, 0);
+    gap: 10px;
+    color: white;
+    font: 1rem "Fira Sans", sans-serif;
+    padding: 50px;
+    border: 0px solid coral;
+    margin: 0px;
+    min-width: 100vw;
+    min-height: 100;
+    cursor: url(skyrim.cur), auto;
+}
+
+
+.canvas-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;  /* 100% of viewport width */
+    height: 100vh; /* 100% of viewport height */
+    overflow: hidden; /* Hide overflow */
+}
+
+/* Position canvas elements on top of each other */
+.canvas-container canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    /* Add any other necessary styles for the canvas elements here */
+}
+
+/* Specific z-index for each canvas layer */
+#groundCanvas {
+    z-index: 20;
+
+}
+
+#waterCanvas {
+    z-index: 10;
+
+}
+
+#npcCanvas {
+    z-index: 30;
+}
+
+#treeCanvas {
+    z-index: 3000;
+}
+
+#validCells {
+    margin: 0px;
+    margin-top: 0px;
+}
+
+#minimap{
+    visibility: visible;
+    background-color: rgb(58, 11, 53);
+    max-height: 100vh;
+    max-width: 100vw;
+    scale: 0.8;
+}
+
+  #tools {
+    position: fixed; /* Fixed position */
+    top: 10px;       /* Distance from the top */
+    right: 10px;     /* Distance from the right */
+    z-index: 1000;   /* Layering order (higher means closer to the viewer) */
+  }
+
+  #toolTabs {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: -15px;
+    margin-left: 20px;
+    justify-content: end;
+
+  }
+  
+
+.row {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+}
+
+.card {
+    background-color: rgb(41, 41, 41);
+
+}
+
+
+#generateButton {
+    margin: 10px;
+}
+
+
+
+.col {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    background-color: rgb(41, 41, 41);
+    padding: 20px;
+    border-radius: 10px;
+    gap: 20px;
+    z-index: 99;
+    box-shadow: 2px 3px 50px 3px rgba(4, 0, 255, 0.176);
+    border: 2px solid rgba(41, 178, 105, 0.13);
+}
+
+.secondaryBtn {
+    background-color: grey;
+    font-size: 14px;
+    width: fit-content;
+}
+
+
+
+
+
+#tools {
+    min-width: 200px;
+    max-width: 900px;
+}
+
+range {
+    max-width: 100px;
+}
+
+
+.tabSelector {
+background-color: rgb(35, 45, 56);
+border-radius: 15px 15px 0px 0px;
+padding: 20px;
+height: 20px;
+max-height: 30px;
+cursor: url(glove1.cur), auto;
+user-select: none;
+
+}
+
+.tabSelector:hover {
+    background-color: rgb(25, 151, 86);
+    transition: background-color 0.3s ease;
+    }
+
+    .active {
+    background-color: rgb(40, 87, 138);
+    }
+
+button {
+    background-color: rgb(40, 180, 40);
+    border-radius: 15px;
+    height: 50px;
+    width: 200px;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    font: 1rem "Fira Sans", sans-serif;
+    border: solid 0px green;
+    transition: background-color 0.3s ease;
+    cursor: url(glove1.cur), auto;
+
+
+}
+
+button:hover {
+    background-color: rgb(70, 40, 180);
+    box-shadow: 3px 8px 40px rgba(70, 19, 164, 0.803);
+    scale: 1.01;
+}
+
+#water {
+    background-color: rgb(69, 141, 236);
+}
+
+#gridSizeSlider {
+    width: 300px;
+}
+
+p,
+label {
+    font: 1rem "Fira Sans", sans-serif;
+}
+
+input {
+    margin: 0.4rem;
+}
+
+
+  .blueButton{
+    background-color: rgb(18, 81, 130);
+  }
+
+
+  /* Style the table */
+table {
+    border-collapse: collapse;
+    border: 1px solid #cccccc4e;
+    background-color: rgba(46, 131, 60, 0.414);
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    width: 80%;
+    max-width: 800px;
+}
+
+/* Style table headers */
+thead th {
+    background-color: rgba(54, 130, 224, 0.414);
+
+    text-align: left;
+    padding: 10px;
+    font-weight: bold;
+}
+
+/* Style table rows */
+tbody td {
+    border-top: 1px solid #cccccc3a;
+    padding: 10px;
+}
+
+
+/* Add hover effect on rows */
+tbody tr:hover {
+    background-color: #1f41a93e;
+
+}
+
+
+.male {
+    background-color: rgb(25, 64, 136);
+    color: #89c3fd;
+    font-weight: 900;
+}
+
+.female {
+    background-color: rgba(147, 27, 111, 0.749);
+    color: #fff
+}
+
+.curto {
+    max-width: 120px;
+}
+
+button:disabled {   
+    background-color: #d3d3d3; /* Light gray */
+    color: #a0a0a0;
+    cursor: not-allowed;
+}
+
+
+.resizable-col {
+    min-width: 500px;
+    width: calc(100% - 10px); /* Account for the width of the resize handle */
+    overflow: hidden; /* Hide overflowing content when resizing */
+}
+
+#resize-handle {
+    width: 6px;
+    cursor: ew-resize; /* Set the cursor style to indicate resize */
+    background-color: #3cd6890b;
+    height: 100%;
+    min-width: 1px;
+    min-height: 100vh;
+    border-radius: 10px;
+}
+
+#resize-handle:hover {
+    width: 2px;
+    cursor: ew-resize; /* Set the cursor style to indicate resize */
+    background-color: #3cd689c6;
+    height: 100%;
+    min-width: 4px;
+    min-height: 100vh;
+    border-radius: 10px;
+}
+
+#npcTab {
+    /* Allow the table to have a vertical scrollbar when it exceeds the parent's height */
+    max-height: calc(100% - 90px); /* Adjust the value considering the header's height */
+    overflow-y: auto;
+}
+
+#npcTable {
+    /* Add a bit of padding to the right to account for the scrollbar's width */
+    padding-right: 15px;
+    width: 100%;
+    border-collapse: collapse;
+}
