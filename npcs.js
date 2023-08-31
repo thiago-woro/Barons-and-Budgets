@@ -1,5 +1,5 @@
 let year = 0;
-const startingPopulation = 20;
+const startingPopulation = 200;
 const populationIncreaseSpeed = 0.15;
 let isPaused = false;
 var deathRate = 0.001;
