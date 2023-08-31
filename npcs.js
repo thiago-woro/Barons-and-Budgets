@@ -229,47 +229,44 @@ class NPC {
       "Electrician",
       "Mechanic",
       "Lawyer",
+      "Alchemist",
+      "Enchanter",
+      "Mage",
+      "Bard",
+      "Blacksmith",
+      "Herbalist",
+      "Hunter",
+      "Thief",
+      "Minstrel",
+      "Farmer",
+      "Priest",
+      "Wizard",
+      "Sorcerer",
+      "Healer",
+      "Librarian",
+      "Scholar",
+      "Apothecary",
+      "Astrologer",
+      "Jester",
+      "Innkeeper",
+      "Tailor",
+      "Knight",
+      "Archer",
+      "Ranger",
+      "Tinkerer",
+      "Scribe",
+      "Falconer",
+      "Shipwright",
+      "Cartographer",
+      "Monk",
     ];
+    
     const randomProfession =
       professions[Math.floor(Math.random() * professions.length)];
     return randomProfession;
   }
 
-  // Method to calculate male color based on age
-  getMaleColor() {
-    const maxAge = this.deathAge;
-    let brightness = 0;
-
-    if (this.age <= 10) {
-      brightness = Math.floor((this.age / 10) * 128); // Lighter shade
-    } else if (this.age <= 20) {
-      brightness = Math.floor(128 + ((this.age - 10) / 10) * 127); // Brighter shade
-    } else if (this.age <= 60) {
-      brightness = 255; // Bright solid color
-    } else {
-      brightness = Math.floor(255 - ((this.age - 60) / (maxAge - 60)) * 128); // Darker shade
-    }
-
-    return `rgb(255, ${brightness}, ${brightness})`; // Always red tones
-  }
-
-  // Method to calculate female color based on age
-  getFemaleColor() {
-    const maxAge = this.deathAge;
-    let brightness = 0;
-
-    if (this.age <= 10) {
-      brightness = Math.floor((this.age / 10) * 128); // Lighter shade
-    } else if (this.age <= 20) {
-      brightness = Math.floor(128 + ((this.age - 10) / 10) * 127); // Brighter shade
-    } else if (this.age <= 60) {
-      brightness = 255; // Bright solid color
-    } else {
-      brightness = Math.floor(255 - ((this.age - 60) / (maxAge - 60)) * 128); // Darker shade
-    }
-
-    return `rgb(${brightness}, 0, ${brightness})`; // Always pink tones
-  }
+ 
 
   // Method to generate a random name based on gender
   generateName() {
@@ -617,11 +614,13 @@ function updatePopulationChart(year, population, medianAge) {
 
 function startNPCs(ctx, cellSize) {
 
-  // Calculate the upper bound for the random index
-  const upperBound = Math.min(30, groundCells.length);
+  // Calculate the maximum index based on the size of the groundCells array.
+  const maxIndex = Math.min(30, groundCells.length);
 
-  for (let i = 0; i < startingPopulation && groundCells.length > 0; i++) {
-    const randomIndex = Math.floor(Math.random() * upperBound);
+  for (let i = 0; i < startingPopulation && maxIndex > 0; i++) {
+    // Only select from the first 'maxIndex' cells.
+    const randomIndex = Math.floor(Math.random() * maxIndex);
+
     const selectedCell = groundCells.splice(randomIndex, 1)[0];
     const npc = new NPC(selectedCell.x, selectedCell.y, cellSize, i + 1);
     npcs.push(npc);
@@ -643,12 +642,7 @@ function startNPCs(ctx, cellSize) {
     addNPCToTable(npc);
   });
 
-
   npcTableHeader.textContent = `Total Population ${npcs.length}`;
-
-
-
-
 }
 
 
