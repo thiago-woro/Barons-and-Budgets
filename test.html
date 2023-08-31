@@ -37,7 +37,12 @@
 
 
     </style>
+
+<div class="canvas-container" id="canvas-content">
   <canvas id="gameCanvas" width="1000" height="500"></canvas>
+
+</div>
+
 
   <script>
     const canvas = document.getElementById("gameCanvas");
@@ -96,10 +101,16 @@
 
 
 
+ 
     let keys = {};
+let isDragging = false; // Flag to track mouse dragging
+let dragStartX = 0;
+let dragStartY = 0;
 let canvasX = 0;
 let canvasY = 0;
-const canvasSpeed = 20;
+const canvasSpeed = 5; // Adjust this value as needed
+
+const container = document.getElementById("canvas-content");
 
 function handleKeyDown(event) {
   keys[event.key] = true;
@@ -107,6 +118,29 @@ function handleKeyDown(event) {
 
 function handleKeyUp(event) {
   keys[event.key] = false;
+}
+
+function handleMouseDown(event) {
+  isDragging = true;
+  dragStartX = event.clientX;
+  dragStartY = event.clientY;
+}
+
+function handleMouseMove(event) {
+  if (isDragging) {
+    const deltaX = event.clientX - dragStartX;
+    const deltaY = event.clientY - dragStartY;
+    canvasX -= deltaX;
+    canvasY -= deltaY;
+    dragStartX = event.clientX;
+    dragStartY = event.clientY;
+
+    updateCanvasPosition();
+  }
+}
+
+function handleMouseUp() {
+  isDragging = false;
 }
 
 function updateCanvasPosition() {
@@ -124,8 +158,17 @@ function updateCanvasPosition() {
   }
 
   // Apply CSS transform to move the canvas
-  canvas.style.transform = `translate(${-canvasX}px, ${-canvasY}px)`;
+  container.style.transform = `translate(${-canvasX}px, ${-canvasY}px)`;
 }
+
+// Add event listeners for key down and key up events
+document.addEventListener("keydown", handleKeyDown);
+document.addEventListener("keyup", handleKeyUp);
+
+// Add event listeners for mouse events
+container.addEventListener("mousedown", handleMouseDown);
+container.addEventListener("mousemove", handleMouseMove);
+container.addEventListener("mouseup", handleMouseUp);
 
 // Update canvas position continuously
 function updateLoop() {
@@ -133,12 +176,17 @@ function updateLoop() {
   requestAnimationFrame(updateLoop);
 }
 
-// Add event listeners for key down and key up events
-document.addEventListener("keydown", handleKeyDown);
-document.addEventListener("keyup", handleKeyUp);
-
 // Start the update loop
 updateLoop();
+
+
+
+
+
+
+
+
+
 
   </script>
 </body>
