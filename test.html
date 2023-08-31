@@ -1,193 +1,193 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <style>
-    canvas {
-      border: 1px solid black;
-    }
-  </style>
-</head>
-<body>
-
+  <head> </head>
+  <body>
     <style>
-        body {
-            background-color: black;
-            margin: 0;
-        }
+      body {
+        background-color: black;
+        margin: 0;
+      }
 
-        canvas {
-      border: 1px solid rgb(203, 109, 27);
-    }
+      canvas {
+        border: 1px solid rgb(203, 109, 27);
+      }
 
-    #gameContainer {
-      width: 1000px;
-      height: 500px;
-    }
+      #gameContainer {
+        width: 1000px;
+        height: 500px;
+      }
 
-    h2 {
+      h2 {
         color: rgb(104, 163, 70);
         color: rgb(54, 110, 163);
-    }
+      }
 
-    #gameCanvas {
-      width: 3000px; /* Double the canvas width to accommodate potential translation */
-      height: 2000px; /* Double the canvas height to accommodate potential translation */
-      transform-origin: top left; /* Set the origin of transformations */
-    }
+      #gameCanvas {
+        width: 3000px; /* Double the canvas width to accommodate potential translation */
+        height: 2000px; /* Double the canvas height to accommodate potential translation */
+        transform-origin: top left; /* Set the origin of transformations */
+      }
 
-
+      .canvas-container canvas {
+        image-rendering: pixelated;
+      }
     </style>
 
-<div class="canvas-container" id="canvas-content">
-  <canvas id="gameCanvas" width="1000" height="500"></canvas>
+    <div class="canvas-container" id="canvas-content">
+      <canvas id="gameCanvas" width="1000" height="500"></canvas>
+    </div>
 
-</div>
+    <script>
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
 
+      // Generate a terrain map
+      const terrainMap = generateTerrainMap();
 
-  <script>
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
-
-    // Generate a terrain map
-    const terrainMap = generateTerrainMap();
-
-    function drawSquare(x, y, size, color) {
-      ctx.fillStyle = color;
-      ctx.fillRect(x, y, size, size);
-    }
-
-    function getRandomColor() {
-      return Math.random() < 0.5 ? "rgb(54, 110, 163)" : "rgb(104, 163, 70)";
-    }
-
-    // Function to generate a terrain map
-    function generateTerrainMap() {
-      const map = [];
-      const gridSize = 20;
-      const rows = canvas.height / gridSize;
-      const cols = canvas.width / gridSize;
-
-      for (let row = 0; row < rows; row++) {
-        const rowArray = [];
-        for (let col = 0; col < cols; col++) {
-          rowArray.push(getRandomColor());
-        }
-        map.push(rowArray);
+      function drawSquare(x, y, size, color) {
+        ctx.fillStyle = color;
+        ctx.fillRect(x, y, size, size);
       }
 
-      return map;
-    }
+      function getRandomColor() {
+        return Math.random() < 0.5 ? "rgb(54, 110, 163)" : "rgb(104, 163, 70)";
+      }
 
-    // Function to draw the terrain map
-    function drawTerrain() {
-      const gridSize = 20;
-      for (let row = 0; row < terrainMap.length; row++) {
-        for (let col = 0; col < terrainMap[row].length; col++) {
-          const x = col * gridSize;
-          const y = row * gridSize;
-          drawSquare(x, y, gridSize, terrainMap[row][col]);
+      // Function to generate a terrain map
+      function generateTerrainMap() {
+        const map = [];
+        const gridSize = 20;
+        const rows = canvas.height / gridSize;
+        const cols = canvas.width / gridSize;
+
+        for (let row = 0; row < rows; row++) {
+          const rowArray = [];
+          for (let col = 0; col < cols; col++) {
+            rowArray.push(getRandomColor());
+          }
+          map.push(rowArray);
+        }
+
+        return map;
+      }
+
+      // Function to draw the terrain map
+      function drawTerrain() {
+        const gridSize = 20;
+        for (let row = 0; row < terrainMap.length; row++) {
+          for (let col = 0; col < terrainMap[row].length; col++) {
+            const x = col * gridSize;
+            const y = row * gridSize;
+            drawSquare(x, y, gridSize, terrainMap[row][col]);
+          }
         }
       }
-    }
 
+      window.onload = function () {
+        drawTerrain();
+      };
 
+      let keys = {};
+      let isDragging = false;
+      let dragStartX = 0;
+      let dragStartY = 0;
+      let canvasX = 0;
+      let canvasY = 0;
+      let zoomLevel = 1; // Initial zoom level
+      const zoomSpeed = 0.1; // Adjust this for zoom speed
+      const minZoom = 0.5; // Minimum zoom level
+      const maxZoom = 3; // Maximum zoom level
+      const canvasSpeed = 5;
 
-    window.onload = function () {
-      drawTerrain();
+      const container = document.getElementById("canvas-content");
+
+      function handleKeyDown(event) {
+        keys[event.key] = true;
+      }
+
+      function handleKeyUp(event) {
+        keys[event.key] = false;
+      }
+
+      function handleMouseDown(event) {
+        isDragging = true;
+        dragStartX = event.clientX;
+        dragStartY = event.clientY;
+      }
+
+      function handleMouseMove(event) {
+        if (isDragging) {
+          const deltaX = event.clientX - dragStartX;
+          const deltaY = event.clientY - dragStartY;
+          canvasX -= deltaX;
+          canvasY -= deltaY;
+          dragStartX = event.clientX;
+          dragStartY = event.clientY;
+
+          updateCanvasPosition();
+        }
+      }
+
+      function handleMouseUp() {
+        isDragging = false;
+      }
+
+      const zoomStep = 0.1; // Adjust this value for finer-grained zooming
+
+      function handleMouseWheel(event) {
+        event.preventDefault(); // Prevent default page scrolling behavior
+
+        // Calculate the zoom change based on the zoom step
+        const zoomChange = event.deltaY > 0 ? -zoomStep : zoomStep;
+
+        // Adjust zoom level based on the calculated zoom change
+        zoomLevel += zoomChange;
+        // Limit zoom to specified bounds
+        zoomLevel = Math.max(minZoom, Math.min(zoomLevel, maxZoom));
+
+        // Apply CSS transform to zoom the canvas container
+        container.style.transform = `translate(${-canvasX}px, ${-canvasY}px) scale(${zoomLevel})`;
+        console.log(`zoom ${zoomLevel}`);
+      }
+
+      function updateCanvasPosition() {
+        if (keys["ArrowLeft"] || keys["a"]) {
+          canvasX -= canvasSpeed;
+        }
+        if (keys["ArrowRight"] || keys["d"]) {
+          canvasX += canvasSpeed;
+        }
+        if (keys["ArrowUp"] || keys["w"]) {
+          canvasY -= canvasSpeed;
+        }
+        if (keys["ArrowDown"] || keys["s"]) {
+          canvasY += canvasSpeed;
+        }
+
+        // Apply CSS transform to move and zoom the canvas container
+        container.style.transform = `translate(${-canvasX}px, ${-canvasY}px) scale(${zoomLevel})`;
+      }
+
+      // Add event listeners for key down and key up events
       document.addEventListener("keydown", handleKeyDown);
       document.addEventListener("keyup", handleKeyUp);
-    };
 
+      // Add event listeners for mouse events
+      container.addEventListener("mousedown", handleMouseDown);
+      container.addEventListener("mousemove", handleMouseMove);
+      container.addEventListener("mouseup", handleMouseUp);
 
+      // Add event listener for mouse wheel (scroll) events
+      container.addEventListener("wheel", handleMouseWheel);
 
+      // Update canvas position continuously
+      function updateLoop() {
+        updateCanvasPosition();
+        requestAnimationFrame(updateLoop);
+      }
 
- 
-    let keys = {};
-let isDragging = false; // Flag to track mouse dragging
-let dragStartX = 0;
-let dragStartY = 0;
-let canvasX = 0;
-let canvasY = 0;
-const canvasSpeed = 5; // Adjust this value as needed
-
-const container = document.getElementById("canvas-content");
-
-function handleKeyDown(event) {
-  keys[event.key] = true;
-}
-
-function handleKeyUp(event) {
-  keys[event.key] = false;
-}
-
-function handleMouseDown(event) {
-  isDragging = true;
-  dragStartX = event.clientX;
-  dragStartY = event.clientY;
-}
-
-function handleMouseMove(event) {
-  if (isDragging) {
-    const deltaX = event.clientX - dragStartX;
-    const deltaY = event.clientY - dragStartY;
-    canvasX -= deltaX;
-    canvasY -= deltaY;
-    dragStartX = event.clientX;
-    dragStartY = event.clientY;
-
-    updateCanvasPosition();
-  }
-}
-
-function handleMouseUp() {
-  isDragging = false;
-}
-
-function updateCanvasPosition() {
-  if (keys["ArrowLeft"] || keys["a"]) {
-    canvasX -= canvasSpeed;
-  }
-  if (keys["ArrowRight"] || keys["d"]) {
-    canvasX += canvasSpeed;
-  }
-  if (keys["ArrowUp"] || keys["w"]) {
-    canvasY -= canvasSpeed;
-  }
-  if (keys["ArrowDown"] || keys["s"]) {
-    canvasY += canvasSpeed;
-  }
-
-  // Apply CSS transform to move the canvas
-  container.style.transform = `translate(${-canvasX}px, ${-canvasY}px)`;
-}
-
-// Add event listeners for key down and key up events
-document.addEventListener("keydown", handleKeyDown);
-document.addEventListener("keyup", handleKeyUp);
-
-// Add event listeners for mouse events
-container.addEventListener("mousedown", handleMouseDown);
-container.addEventListener("mousemove", handleMouseMove);
-container.addEventListener("mouseup", handleMouseUp);
-
-// Update canvas position continuously
-function updateLoop() {
-  updateCanvasPosition();
-  requestAnimationFrame(updateLoop);
-}
-
-// Start the update loop
-updateLoop();
-
-
-
-
-
-
-
-
-
-
-  </script>
-</body>
+      // Start the update loop
+      updateLoop();
+    </script>
+  </body>
 </html>
