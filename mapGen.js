@@ -1,11 +1,11 @@
-let cellSize = 9
-var gridSize = 90;
+let cellSize = 20
+var gridSize = 50;
 
 function setupCanvas(canvasId, width, height) {
   const canvas = document.getElementById(canvasId);
   const ctx = canvas.getContext("2d");
-  canvas.width = gridSize * cellSize;
-  canvas.height =  gridSize * cellSize;
+  canvas.width = window.innerWidth;
+  canvas.height =  window.innerHeight;
   return [canvas, ctx];
 }
 
@@ -16,7 +16,6 @@ const containerHeight = container;
 const [waterCanvas, waterCtx] = setupCanvas("waterCanvas", containerWidth, containerHeight);
 const [groundCanvas, groundCtx] = setupCanvas("groundCanvas", containerWidth, containerHeight);
 const [minimapCanvas, minimapCtx] = setupCanvas("minimap", containerWidth, containerHeight);
-const [validCellsCanvas, validCellsCtx] = setupCanvas("validCells", containerWidth, containerHeight);
 const [treeCanvas, treeCtx] = setupCanvas("treeCanvas", containerWidth, containerHeight);
 const [npcCanvas, npcCtx] = setupCanvas("npcCanvas", containerWidth, containerHeight);
 const [boatCanvas, boatCtx] = setupCanvas("boatCanvas", containerWidth, containerHeight);
@@ -30,10 +29,9 @@ let trees = [];
 
 let perlinNoiseScale = 0.03; //original number is 0.025
 
-let offset = 0.65;   //og is 0.35
+let offset = 0.55;   //og is 0.35
 let noiseValues = [];
 let terrainMap = [];
-let validCells =[]
 let groundCells = [];
 let waterCells = [];
 
@@ -147,18 +145,6 @@ function animateWater() {
 setInterval(animateWater, 3000);  // Call animateWater() every 1000 milliseconds (1 second)
 
 
-function findValidCells(noiseValues) {
-  console.log('Calculating valide cells  ... 🔍🔍')
-  for (let y = 0; y < noiseValues.length; y++) {
-    for (let x = 0; x < noiseValues[y].length; x++) {
-      const noiseValue = noiseValues[y][x];
-      if (noiseValue > 0.11 ) {
-        validCells.push({ x, y });
-      }
-    }
-  }
-  return validCells;
-}
 
 
 console.log('Starting to generate noise map');
@@ -259,7 +245,7 @@ function drawRoundedRect(ctx, x, y, width, height, borderRadius, color) {
 
 
 
-
+/* 
 function drawValidCells(ctx, validCells) {
   // Loop through the array of valid cells and draw each one
   validCells.forEach((cell) => {
@@ -282,6 +268,7 @@ drawValidCellsButton.addEventListener("click", function () {
   console.log(validCells, cellSize, cellSize);
   drawValidCells(validCellsCtx, validCells);
 });
+ */
 
 
 
@@ -292,49 +279,33 @@ drawValidCellsButton.addEventListener("click", function () {
 
 
 
+/// FOR DEBUGGING ONLY - DO NOT DELETE
+function debugTerrain(ctx, gridSize, cellSize) {
+  ctx.fillStyle = "black";
+  ctx.textAlign = "center";
+  ctx.font = "12px Arial";
 
-/* /// FOR DEBUGGING ONLY - DO NOT DELETE
-function debugTerrain(ctx, terrainMap, cellSizeWidth, cellSizeHeight) {
-  console.log("[2] Draw terrain ");
+  for (let row = 0; row < gridSize; row++) {
+    for (let col = 0; col < gridSize; col++) {
+      const cellIndex = row * gridSize + col;
+      const x = col * cellSize + cellSize / 2;
+      const y = row * cellSize + cellSize / 2;
 
-  let delay = 0;
+      // Draw a low-opacity red rectangle behind the number
+      ctx.fillStyle = "rgba(255, 0, 0, 0.0)";
+      ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
 
-  for (var y = 0; y < gridSize; y++) {
-    for (var x = 0; x < gridSize; x++) {
-      (function (x, y) {
-        setTimeout(function () {
-          const color = terrainMap[y][x];
-          drawRoundedRect(
-            ctx,
-            x * cellSizeWidth,
-            y * cellSizeHeight,
-            cellSizeWidth,
-            cellSizeHeight,
-            5,
-            color
-          );
 
-          // Add grid number
-          const gridNumber = y * gridSize + x;
-          ctx.fillStyle = "black"; // Set the text color
-          ctx.textAlign = "center"; // Center-align the text
-          ctx.font = "12px Arial"; // Set the font size and family
-          ctx.fillText(
-            gridNumber,
-            x * cellSizeWidth + cellSizeWidth / 2,
-            y * cellSizeHeight + cellSizeHeight / 2
-          );
-        }, delay);
-      })(x, y);
+      // Draw the number on top of the rectangle
+      ctx.fillStyle = "black";
 
-      delay += 0; // 0.5 second delay
+      ctx.fillText(cellIndex, x, y);
     }
   }
+  
+  console.log("Finished drawing terrain with indices");
+}
 
-  setTimeout(function () {
-    console.log("drawTerrainLayer  🌳 🌳  - Finished drawing 100%");
-  }, delay);
-} */
 
 
 
@@ -389,6 +360,9 @@ function startTrees(ctx, cellSize) {
     ctx.font = "bold 20px Arial";
     ctx.fillText(selectedEmoji, x, y);
   }
+
+  //debugger to show cell index
+  //debugTerrain(npcCtx, gridSize, cellSize)
 }
 
   
@@ -432,8 +406,6 @@ let canvasX = 0;
 let canvasY = 0;
 const canvasSpeed = 30;
 
-
-
 // Function to handle key down events
 function handleKeyDown(event) {
   keys[event.key] = true;
@@ -463,3 +435,27 @@ function handleKeyUp(event) {
 
 document.addEventListener("keydown", handleKeyDown);
       document.addEventListener("keyup", handleKeyUp);
+
+
+      function showCellnumber(ctx, gridSize, cellSize) {
+        ctx.font = "12px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        
+        for (let row = 0; row < gridSize / cellSize; row++) {
+          for (let col = 0; col < gridSize / cellSize; col++) {
+            const cellIndex = row * (gridSize / cellSize) + col;
+            const x = col * cellSize + cellSize / 2;
+            const y = row * cellSize + cellSize / 2;
+      
+            // Draw a low-opacity red rectangle behind the number
+            ctx.fillStyle = "rgba(255, 0, 0, 0.3)";
+            ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+      
+            // Draw the number on top of the rectangle
+            ctx.fillStyle = "black";
+            ctx.fillText(cellIndex, x, y);
+          }
+        }
+      }
+      

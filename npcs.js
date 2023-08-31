@@ -1,5 +1,5 @@
 let year = 0;
-const startingPopulation = 50;
+const startingPopulation = 20;
 const populationIncreaseSpeed = 0.15;
 let isPaused = false;
 var deathRate = 0.001;
@@ -524,8 +524,10 @@ function babyMaker(npcs) {
         // Check the number of children the couple has
         const numberOfChildren =
           parentNPC.children.length + spouse.children.length;
+          //TODO 🈵🈵🈵🈵🈵🈵
 
-        // Decrease the chance to 0 if they have 2 or more children
+
+        // Decrease the chance to 0 if they have 3 or more children
         const chanceOfChild = numberOfChildren < 3 ? 0.1 : 0;
 
         if (Math.random() < chanceOfChild) {
@@ -660,7 +662,7 @@ function startNPCs(ctx, cellSize) {
 function drawNPC(npc, ctx) {
   ctx.textAlign = "center";
   let emoji;
-  if (npc.age < 10) {
+  if (npc.age < 11) {
     emoji = "👶";
   } else if (npc.age > 70) {
     emoji = npc.sex === "male" ? "👴" : "👵";

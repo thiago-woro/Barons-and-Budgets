@@ -43,11 +43,6 @@
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
 
-    let keys = {};
-    let canvasX = 0;
-    let canvasY = 0;
-    const canvasSpeed = 30;
-
     // Generate a terrain map
     const terrainMap = generateTerrainMap();
 
@@ -90,36 +85,61 @@
       }
     }
 
-function handleKeyDown(event) {
-      keys[event.key] = true;
 
-      // Move canvas based on pressed keys
-      if (keys["ArrowLeft"] || keys["a"]) {
-        canvasX -= canvasSpeed;
-      }
-      if (keys["ArrowRight"] || keys["d"]) {
-        canvasX += canvasSpeed;
-      }
-      if (keys["ArrowUp"] || keys["w"]) {
-        canvasY -= canvasSpeed;
-      }
-      if (keys["ArrowDown"] || keys["s"]) {
-        canvasY += canvasSpeed;
-      }
-
-      // Apply CSS transform to move the canvas
-      canvas.style.transform = `translate(${-canvasX}px, ${-canvasY}px)`;
-    }
-
-    function handleKeyUp(event) {
-      keys[event.key] = false;
-    }
 
     window.onload = function () {
       drawTerrain();
       document.addEventListener("keydown", handleKeyDown);
       document.addEventListener("keyup", handleKeyUp);
     };
+
+
+
+
+    let keys = {};
+let canvasX = 0;
+let canvasY = 0;
+const canvasSpeed = 20;
+
+function handleKeyDown(event) {
+  keys[event.key] = true;
+}
+
+function handleKeyUp(event) {
+  keys[event.key] = false;
+}
+
+function updateCanvasPosition() {
+  if (keys["ArrowLeft"] || keys["a"]) {
+    canvasX -= canvasSpeed;
+  }
+  if (keys["ArrowRight"] || keys["d"]) {
+    canvasX += canvasSpeed;
+  }
+  if (keys["ArrowUp"] || keys["w"]) {
+    canvasY -= canvasSpeed;
+  }
+  if (keys["ArrowDown"] || keys["s"]) {
+    canvasY += canvasSpeed;
+  }
+
+  // Apply CSS transform to move the canvas
+  canvas.style.transform = `translate(${-canvasX}px, ${-canvasY}px)`;
+}
+
+// Update canvas position continuously
+function updateLoop() {
+  updateCanvasPosition();
+  requestAnimationFrame(updateLoop);
+}
+
+// Add event listeners for key down and key up events
+document.addEventListener("keydown", handleKeyDown);
+document.addEventListener("keyup", handleKeyUp);
+
+// Start the update loop
+updateLoop();
+
   </script>
 </body>
 </html>
