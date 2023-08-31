@@ -95,10 +95,7 @@
             <span id="perlinDisplay">0.025</span>
 
             <br>
-            <label for="transformSlider">Zoom</label>
-            <input type="range" id="transformSlider" min="0.1" max="4" step="0.1" value="3">
-            
-
+        
             </div>
 
 			<canvas style="visibility: collapse;" id="minimap"></canvas>
@@ -143,40 +140,16 @@
 </div>
 
 		
-        <!--  <script src="./camera.js"></script>   -->
   <!--     <script src="./simulation.js"></script> -->
-
-
 		<script src="perlin.js"></script>
      <script src="./mapGen.js"></script>
      <script src="./uitools.js"></script>
      <script src="./arrays.js"></script>
      <script src="./npcs.js"></script>
      <script src="./homes.js"></script>
-
-
-
+  <script src="./camera.js"></script> 
     </div>
-
-
-
 	 <script>
-
-
-
-
-const transformSlider = document.getElementById('transformSlider');
-        const canvasContainer = document.getElementById('canvas-content');
-
-        transformSlider.addEventListener('input', () => {
-            const scaleValue = transformSlider.value;
-            const translateYValue = 50; // Adjust this value as needed
-
-            // Update the transform property for the canvas container
-            canvasContainer.style.transform = `scale(${scaleValue}) translateY(${translateYValue}%)`;
-
-         
-        });
 
 
 
@@ -236,7 +209,6 @@ window.addEventListener('load', function () {
     
   const storedHideMenu = localStorage.getItem('hideMenu');
   if (storedHideMenu !== null) {
-     console.log("config:  " + storedHideMenu);
 
     hideMenu = JSON.parse(storedHideMenu);
     if (hideMenu === false) {

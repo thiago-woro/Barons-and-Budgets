@@ -5,7 +5,6 @@ let isPaused = false;
 var deathRate = 0.001;
 let npcSize = cellSize;
 let babies = [];
-let npcs = [];
 
 //game loop speed control
 const gameSpeedSlider = document.getElementById("gameSpeedSlider");
@@ -617,19 +616,13 @@ function updatePopulationChart(year, population, medianAge) {
 
 
 function startNPCs(ctx, cellSize) {
-  //findValidCells(noiseValues);
-  npcTableHeader.textContent = `Total Population ${npcs.length}`;
-  console.log("fn startNPCs 👫");
+
+  // Calculate the upper bound for the random index
+  const upperBound = Math.min(30, groundCells.length);
 
   for (let i = 0; i < startingPopulation && groundCells.length > 0; i++) {
-
-    const randomIndex = Math.floor(Math.random() * groundCells.length);
+    const randomIndex = Math.floor(Math.random() * upperBound);
     const selectedCell = groundCells.splice(randomIndex, 1)[0];
-
-    console.log(
-      `Selected cell coordinates: x = ${selectedCell.x}, y = ${selectedCell.y}`
-    );
-
     const npc = new NPC(selectedCell.x, selectedCell.y, cellSize, i + 1);
     npcs.push(npc);
   }
