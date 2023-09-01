@@ -1,5 +1,3 @@
-
-
 ////////////////////CAMERA FUNCTIONS
 let keys = {};
 let isDragging = false;
@@ -141,3 +139,37 @@ document.addEventListener("DOMContentLoaded", () => {
   setInitialCanvasPosition();  // Set the initial position
   updateLoop();  // Start the update loop
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+//reset camera controls - DO NOT DELETE
+function resetCanvasPosition() {
+    zoomLevel = 1; // Reset to initial zoom level
+    canvasX = 0;  // Reset X translation
+    canvasY = 0;  // Reset Y translation
+    updateCanvasPosition();  // Update the canvas position
+  }
+  // Listen for 'Esc' key
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      resetCanvasPosition();
+    }
+  });
+  
+  // Listen for click on the 'recenterCanvas' icon
+  document.getElementById("recenterCanvas").addEventListener("click", () => {
+    resetCanvasPosition();
+  });
+  
+
+  //git add . && git commit -m "Added feature: Esc key to reset camera Scale and Translate" && git push origin main

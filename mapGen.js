@@ -8,14 +8,14 @@ function setupCanvas(canvasId, width, height) {
   //canvas.width = window.innerWidth;
   //canvas.width = cellSize * gridSize;
   //canvas.height =  cellSize * gridSize;
-  canvas.width = 5000;
-  canvas.height = 5000;
+  canvas.width = 3000;
+  canvas.height = 3000;
   return [canvas, ctx];
 }
 
 const container = document.getElementById("canvas-content");
-const containerWidth = container;
-const containerHeight = container;
+const containerWidth = 3000;
+const containerHeight = 3000;
 
 const [waterCanvas, waterCtx] = setupCanvas(
   "waterCanvas",
