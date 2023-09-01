@@ -1,16 +1,17 @@
 let year = 0;
-const startingPopulation = 20;
+const startingPopulation = 10;
 const populationIncreaseSpeed = 0.15;
 let isPaused = false;
 var deathRate = 0.001;
 let npcSize = cellSize;
 let babies = [];
+let maxPop = 100
 
 //game loop speed control
 const gameSpeedSlider = document.getElementById("gameSpeedSlider");
 const gameSpeedValue = document.getElementById("gameSpeedValue");
 let gameLoopInterval = null;
-let gameLoopSpeed = 30000 / parseInt(gameSpeedSlider.value);
+let gameLoopSpeed = 3000 / parseInt(gameSpeedSlider.value);
 
 gameSpeedSlider.addEventListener("input", function () {
   const newGameSpeed = parseInt(this.value);
@@ -468,7 +469,7 @@ function coupleMaker(npcs) {
   });
   console.log(`Found: ${ageFilteredCandidates.length} reproductive males 🤵`);
 
-  // Loop through ageFilteredCandidates and update their spouse
+  // 3) Loop through ageFilteredCandidates and update their spouse
   ageFilteredCandidates.forEach((npc) => {
     const availableSpouses = npcs.filter((candidate) => {
       return (
@@ -479,7 +480,7 @@ function coupleMaker(npcs) {
       );
     });
 
-    // Log the length of available spouses for the current NPC
+    //4) Log the length of available spouses for the current NPC
     console
       .log
       //`${npc.name} has ${availableSpouses.length} available spouses.`
@@ -490,28 +491,24 @@ function coupleMaker(npcs) {
           availableSpouses[Math.floor(Math.random() * availableSpouses.length)];
         npc.spouse = randomSpouse.name;
         randomSpouse.spouse = npc.name;
+        //TODO add to each spouse their "myNumber"
       
-        // Add the NPCs (couple) to a new house
-        const randomIndex = Math.floor(Math.random() * groundCells.length);
-        const selectedCell = groundCells.splice(randomIndex, 1)[0]; // Select and remove a ground cell
-      
-        const newHouseX = selectedCell.x;
-        const newHouseY = selectedCell.y;
-      
-        const newHouse = new House(newHouseX, newHouseY, cellSize);
+       
+        const newHouse = new House(npc.x / cellSize, npc.y / cellSize, cellSize);
         newHouse.addInhabitant(npc); // Add the first NPC to the house
         newHouse.addInhabitant(randomSpouse); // Add the second NPC to the house
       
         houses.push(newHouse);
-        newHouse.draw(npcCtx, cellSize);
+        newHouse.draw(treeCtx);
         console.log(`${npc.name} married ${randomSpouse.name} 👰🤵👰🤵👰🤵👰🤵`);
-        console.log(`🏠🏠🏠🏠🏠🏠🏠🏠 at ${newHouseX}, ${newHouseY}`);
       }
       
     });
   }
 
 function babyMaker(npcs) {
+  if (npcs.length < maxPop) {
+
   npcs.forEach((parentNPC) => {
     if (parentNPC.spouse) {
       const spouse = npcs.find((npc) => npc.name === parentNPC.spouse);
@@ -519,7 +516,7 @@ function babyMaker(npcs) {
       if (spouse && spouse.isAlive) {
         // Check the number of children the couple has
         const numberOfChildren =
-          parentNPC.children.length + spouse.children.length;
+          parentNPC.children.length;
           //TODO 🈵🈵🈵🈵🈵🈵
 
 
@@ -562,11 +559,15 @@ function babyMaker(npcs) {
             position: "bottomLeft",
             zindex: 1002,
             closeOnEscape: true,
+            displayMode: 2,
+            timeout: 300
           });
         }
       }
     }
-  });
+  });} else {
+    console.log('Max. Population reached all usable land.')
+  }
 }
 
 ///population chart initialize

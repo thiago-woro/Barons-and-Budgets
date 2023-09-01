@@ -208,10 +208,58 @@ function leftClick(x, y, npcCtx, cellSize) {
   
   // Draw the new house
   newHouse.draw(npcCtx, cellSize);
+drawRectanglesBetweenHouses(houses, treeCtx);
   
   // Optionally alert the user
-  alert(`House drawn at ${x}, ${y}. Current home value: ${newHouse.homeValue}`);
+  //alert(`House drawn at ${x}, ${y}. Current home value: ${newHouse.homeValue}`);
 }
+
+
+
+
+function drawRectanglesBetweenHouses(houses, ctx) {
+  const lineHeight = Math.floor(Math.random() * 7) + 1;
+  const verticalSpacing = Math.floor(Math.random() * 50) + 1;
+
+  const borderRadius = Math.floor(Math.random() * 6) + 1;
+
+  // Define an array of color options
+  const colorOptions = [
+      "#648a3b", "#9ac558","#9ac558","#9ac558",  // Muddy brown with low opacity
+      "rgba(92, 128, 0, 0.5)",    "rgba(139, 69, 19, 0.5)",   // Old grass green with low opacity
+      "rgba(240, 230, 140, 0.5)"  // Yellowish sand with low opacity
+  ];
+
+  for (let i = 0; i < houses.length - 1; i++) {
+      const house1 = houses[i];
+      const house2 = houses[i + 1];
+
+      const x1 = house1.x;
+      const y1 = house1.y;
+
+      const x2 = house2.x;
+      const y2 = house2.y;
+
+      const distance = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+      const baseAngle = Math.atan2(y2 - y1, x2 - x1);
+
+      for (let y = 0; y <= distance; y += lineHeight + verticalSpacing) {
+          const randomOffset = (Math.random() - 0.5) * lineHeight * 0.5; // Adjust the range and factor as needed
+          const angleVariation = (Math.random() - 0.5) * Math.PI / 72; // Smaller angle variation range
+          const angle = baseAngle + angleVariation;
+
+          const x = x1 + (Math.cos(angle) * y) + randomOffset;
+          const yCoord = y1 + (Math.sin(angle) * y);
+
+          // Select a random color from the colorOptions array
+          const randomColor = colorOptions[Math.floor(Math.random() * colorOptions.length)];
+
+          drawRoundedRect(pathCtx, x, yCoord, lineHeight, lineHeight, borderRadius, randomColor);
+      }
+  }
+}
+
+
 
 
 

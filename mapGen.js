@@ -52,6 +52,12 @@ const [minimapCanvas, minimapCtx] = setupCanvas(
   containerHeight
 );
 
+const [pathCanvas, pathCtx] = setupCanvas(
+  "path",
+  containerWidth,
+  containerHeight
+);
+
 let terrainGrid;
 
 
@@ -63,6 +69,8 @@ let terrainMap = [];
 let groundCells = [];
 let waterCells = [];
 let trees = [];
+let usableLand = 0.3
+
 
 
 var SAND = "#b0ad58";
@@ -146,7 +154,10 @@ function generateTerrainMap(width, height, noiseScale) {
 
   // Calculate the total number of cells
   const totalCells = groundCells.length + waterCells.length;
+  maxPop = groundCells.length * usableLand;
   console.log(`Total cells generated: `, totalCells);
+  console.log(`Max pop.: `, maxPop);
+
 
   // Call the modified function to draw ground and water cells
   drawTerrainLayer(groundCtx, groundCells, cellSize);

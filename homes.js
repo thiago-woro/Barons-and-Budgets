@@ -14,7 +14,7 @@ class House {
   }
 
   // Method to draw the house on the ground canvas
-  draw(npcCtx, cellSize) {
+  draw(treeCtx) {
     // Choose emoji character based on economic status and upgrades
     let emoji = "🏠"; // Default emoji for average house
 
@@ -27,12 +27,13 @@ class House {
     }
 
     // Draw the emoji on the canvas
-    npcCtx.font = "bold 20px Arial";
-    npcCtx.fillText(emoji, this.x, this.y );
+    treeCtx.font = "bold 20px Arial";
+    treeCtx.fillText(emoji, this.x, this.y );
 
     console.log(
       `✅ House placed on map!\n\n  X: ${this.x}, Y: ${this.y}`
     );
+    drawRectanglesBetweenHouses(houses, pathCtx)
   }
 }
 
@@ -40,7 +41,8 @@ class House {
 let houses = [];
 
 function startHouses(ctx, cellSize) {
-  const houseCount = 0; // Replace with the desired number of houses
+  console.log('drawing homes with fn startHouses() 🏡')
+  const houseCount = groundCells.length * 0.0003; // Replace with the desired number of houses
 
   for (let i = 0; i < houseCount && groundCells.length > 0; i++) {
     const randomIndex = Math.floor(Math.random() * groundCells.length);
@@ -51,11 +53,7 @@ function startHouses(ctx, cellSize) {
     house.draw(ctx, cellSize);
   }
 }
-
-  
-  // Initialize
-  
-  startHouses(groundCtx, cellSize);
+ // startHouses(treeCtx, cellSize); //DO NOT USE, CHECK IF COUPLE MAKING IS MAKING HOUSES FIRST
 
 
 
