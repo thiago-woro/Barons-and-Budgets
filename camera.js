@@ -27,6 +27,8 @@ function handleMouseDown(event) {
 
 function handleMouseMove(event) {
   if (isDragging) {
+    event.stopPropagation(); // Prevents this event from triggering parent handlers
+
     const deltaX = event.clientX - dragStartX;
     const deltaY = event.clientY - dragStartY;
     canvasX -= deltaX;
@@ -142,11 +144,74 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
+/// TO-DO ACCOUNT FOR CURRENT CANVAS ZOOM
+function highlightCellOnMouseOver(container, ctx, cellSize) {
+  container.addEventListener("mousemove", function (event) {
+    if (!isDragging) {
+    const rect = container.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    const cellRow = Math.floor(y / cellSize);
+    const cellCol = Math.floor(x / cellSize);
+
+    //console.log(`Mouse is over cell: X = ${cellCol}, Y = ${cellRow}`);
+
+    // Clear the entire npcCanvas
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+    // Draw a red overlay on the npcCanvas
+    ctx.fillStyle = 'rgba(255, 0, 0, 0.5)'; // Semi-transparent red
+    ctx.fillRect(cellCol * cellSize, cellRow * cellSize, cellSize, cellSize);
+ }});
+}
 
 
+// Attach the event listener to the canvas container and draw on npcCanvas
+highlightCellOnMouseOver(container, boatCtx, cellSize);
 
 
+//mouse clicks canvas map
+function logCellOnClick(container, ctx, cellSize) {
+  container.addEventListener("click", function(event) {
+    if (!isDragging) {
+      // Calculate the mouse position within the container.
+      const rect = container.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
 
+      // Calculate cell indices (row and column) based on mouse position.
+      const cellRow = Math.floor(y / cellSize);
+      const cellCol = Math.floor(x / cellSize);
+
+      console.log(`Cell clicked: X = ${cellCol}, Y = ${cellRow}`);
+
+      ctx.fillStyle = 'purple'; 
+      ctx.fillRect(cellCol * cellSize, cellRow * cellSize, cellSize, cellSize);
+
+      leftClick(cellCol, cellRow, npcCtx, cellSize);
+
+    }
+  });
+}
+
+// Example of how to use the function, assuming the container, npcCtx, and cellSize are already defined.
+logCellOnClick(container, boatCtx, cellSize);
+
+
+function leftClick(x, y, npcCtx, cellSize) {
+  // Create a new house
+  const newHouse = new House(x, y, cellSize);
+  
+  // Add the new house to the global array of houses
+  houses.push(newHouse);
+  
+  // Draw the new house
+  newHouse.draw(npcCtx, cellSize);
+  
+  // Optionally alert the user
+  alert(`House drawn at ${x}, ${y}. Current home value: ${newHouse.homeValue}`);
+}
 
 
 
@@ -169,7 +234,6 @@ document.addEventListener("keydown", (event) => {
   // Listen for click on the 'recenterCanvas' icon
   document.getElementById("recenterCanvas").addEventListener("click", () => {
     resetCanvasPosition();
-  });
-  
+console.log("map centered ok");
 
-  //git add . && git commit -m "Added feature: Esc key to reset camera Scale and Translate" && git push origin main
+  });

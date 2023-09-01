@@ -13,7 +13,6 @@ body {
     min-height: 100vh;
     cursor: url(./assets/cursor/skyrim.cur), auto;
     font-family: 'Press Start 2P';font-size: 1rem;
-
 }
 
 .canvas-moved {
@@ -21,12 +20,13 @@ body {
   }
   
 
-.canvas-container {
+  .canvas-container {
     position: absolute;
     top: 0;
     left: 0;
-    width: 100vw;  /* 100% of viewport width */
-    height: 100vh; /* 100% of viewport height */
+    width: 100%;  /* Adjust the width as needed */
+    height: 100%; /* Adjust the height as needed */
+    overflow: auto; /* Enable scrolling if needed */
 }
 
 .canvas-container canvas {

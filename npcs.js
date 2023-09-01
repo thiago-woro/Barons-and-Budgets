@@ -1,5 +1,5 @@
 let year = 0;
-const startingPopulation = 200;
+const startingPopulation = 20;
 const populationIncreaseSpeed = 0.15;
 let isPaused = false;
 var deathRate = 0.001;
@@ -10,7 +10,7 @@ let babies = [];
 const gameSpeedSlider = document.getElementById("gameSpeedSlider");
 const gameSpeedValue = document.getElementById("gameSpeedValue");
 let gameLoopInterval = null;
-let gameLoopSpeed = 3000 / parseInt(gameSpeedSlider.value);
+let gameLoopSpeed = 30000 / parseInt(gameSpeedSlider.value);
 
 gameSpeedSlider.addEventListener("input", function () {
   const newGameSpeed = parseInt(this.value);

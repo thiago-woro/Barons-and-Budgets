@@ -22,10 +22,11 @@
         <div class="canvas-container" id="canvas-content">
             <canvas id="groundCanvas"  style="z-index: 20;"></canvas>
             <canvas id="waterCanvas"  style="z-index: 10;"></canvas>
-            <canvas id="npcCanvas"  style="z-index: 99;"></canvas>
             <canvas id="validCells"  style="z-index: 30;"></canvas>
             <canvas id="treeCanvas"  style="z-index: 40;"></canvas>
             <canvas id="boatCanvas"  style="z-index: 50;"></canvas>
+            <canvas id="npcCanvas"  style="z-index: 99;"></canvas>
+
         </div>
         
 
@@ -44,6 +45,8 @@
 			<div class="row">
 				<button id="gen2">Generate Map</button>
 				<button id="startColony" class="blueButton">Start colony</button>
+                <span id="recenterCanvas">[m]</span>
+
             </div>
                 <div id="secondRowButtons" class="row footprint" style="margin-top: 10px;">
 				<button class="secondaryBtn" id="clearGround">Remove Land</button>

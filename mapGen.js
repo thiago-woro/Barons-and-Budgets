@@ -1,24 +1,23 @@
 let cellSize = 10;
-var gridSize = 300;
+var gridSize = 90;
 let npcs = [];
 
 function setupCanvas(canvasId, width, height) {
   const canvas = document.getElementById(canvasId);
   const ctx = canvas.getContext("2d");
-  //canvas.width = window.innerWidth;
-  //canvas.width = cellSize * gridSize;
-  //canvas.height =  cellSize * gridSize;
-  canvas.width = 3000;
-  canvas.height = 3000;
+
+  canvas.width = width; // Set canvas width to the specified width
+  canvas.height = height; // Set canvas height to the specified height
+
   return [canvas, ctx];
 }
 
 const container = document.getElementById("canvas-content");
-const containerWidth = 3000;
-const containerHeight = 3000;
+const containerWidth = container.offsetWidth; // Use offsetWidth instead of container
+const containerHeight = container.offsetHeight; // Use offsetHeight instead of container
 
-const [waterCanvas, waterCtx] = setupCanvas(
-  "waterCanvas",
+const [npcCanvas, npcCtx] = setupCanvas(
+  "npcCanvas",
   containerWidth,
   containerHeight
 );
@@ -27,30 +26,34 @@ const [groundCanvas, groundCtx] = setupCanvas(
   containerWidth,
   containerHeight
 );
-const [minimapCanvas, minimapCtx] = setupCanvas(
-  "minimap",
+
+const [waterCanvas, waterCtx] = setupCanvas(
+  "waterCanvas",
   containerWidth,
   containerHeight
 );
+
+
 const [treeCanvas, treeCtx] = setupCanvas(
   "treeCanvas",
   containerWidth,
   containerHeight
 );
-const [npcCanvas, npcCtx] = setupCanvas(
-  "npcCanvas",
-  containerWidth,
-  containerHeight
-);
+
 const [boatCanvas, boatCtx] = setupCanvas(
   "boatCanvas",
   containerWidth,
   containerHeight
 );
 
+const [minimapCanvas, minimapCtx] = setupCanvas(
+  "minimap",
+  containerWidth,
+  containerHeight
+);
+
 let terrainGrid;
 
-let trees = [];
 
 let perlinNoiseScale = 0.03; //original number is 0.025
 
@@ -59,6 +62,8 @@ let noiseValues = [];
 let terrainMap = [];
 let groundCells = [];
 let waterCells = [];
+let trees = [];
+
 
 var SAND = "#b0ad58";
 
@@ -94,7 +99,12 @@ console.log(
 );
 
 function generateTerrainMap(width, height, noiseScale) {
-  console.log("Running generateTerrainMap() in waterGen.js");
+  console.log("Running generateTerrainMap() in mapGen.js");
+
+   // Clear arrays and variables from previous run
+   waterCells = [];
+   groundCells = [];
+    trees = [];
 
   // Initialize variables
   const perlinInstance = Object.create(perlin);
@@ -134,10 +144,15 @@ function generateTerrainMap(width, height, noiseScale) {
     `2) ground cells: ${groundCells.length}, water cells: ${waterCells.length}`
   );
 
+  // Calculate the total number of cells
+  const totalCells = groundCells.length + waterCells.length;
+  console.log(`Total cells generated: `, totalCells);
+
   // Call the modified function to draw ground and water cells
   drawTerrainLayer(groundCtx, groundCells, cellSize);
   drawTerrainLayer(waterCtx, waterCells, cellSize);
   startTrees(treeCtx, cellSize);
+  //debugTerrain(npcCtx, gridSize, cellSize);
 }
 function drawTerrainLayer(ctx, cellArray, cellSize) {
   // Clear the canvas
@@ -174,8 +189,6 @@ function animateWater() {
 }
 //setInterval(animateWater, 3000);  // Call animateWater() every 1000 milliseconds (1 second)
 
-console.log("Starting to generate noise map");
-
 // Call fn to generate the terrain map with Perlin noise
 var generatedMap = generateTerrainMap(gridSize, gridSize, perlinNoiseScale);
 
@@ -187,8 +200,6 @@ const waterSymbol = "🟦";
 
 //logs map to console
 function logMap(terrainMap) {
-  console.log("using logMap() from file waterGen.js");
-
   for (let y = 0; y < terrainMap.length; y++) {
     let row = "";
     for (let x = 0; x < terrainMap[y].length; x++) {
@@ -291,11 +302,27 @@ drawValidCellsButton.addEventListener("click", function () {
 });
  */
 
+
+clearGround.addEventListener("click", function () { //DO NO DELETE
+clearCanvas(groundCtx); // Clears the ground canvas
+clearCanvas(waterCtx); // Clears the water canvas
+clearCanvas(treeCtx); // Clears the tree canvas
+});
+function clearCanvas(ctx) {
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+}
+
+
+
+
+
+
+
 /// FOR DEBUGGING ONLY - DO NOT DELETE
 function debugTerrain(ctx, gridSize, cellSize) {
   ctx.fillStyle = "black";
   ctx.textAlign = "center";
-  ctx.font = "12px Arial";
+  ctx.font = "18px Arial";
 
   for (let row = 0; row < gridSize; row++) {
     for (let col = 0; col < gridSize; col++) {
@@ -329,9 +356,13 @@ function clearNPC() {
 }
 
 function startTrees(ctx, cellSize) {
+  clearCanvas(treeCtx);
+  trees = [];
+  let treeCount = 0;
+
   const treeEmojis = ["🌳", "🌲", "🌴", "🌳", "🌵"];
 
-  const treeCount = groundCells.length * 0.01;
+  treeCount = groundCells.length * 0.01;
   console.log("will draw " + treeCount.toFixed(0) + " trees");
 
   for (let i = 0; i < treeCount && groundCells.length > 0; i++) {
@@ -401,9 +432,11 @@ function showCellnumber(ctx, gridSize, cellSize) {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
+  const cellsInRow = Math.floor(ctx.canvas.width / cellSize);
+
   for (let row = 0; row < gridSize / cellSize; row++) {
     for (let col = 0; col < gridSize / cellSize; col++) {
-      const cellIndex = row * (gridSize / cellSize) + col;
+      const cellIndex = row * cellsInRow + col;
       const x = col * cellSize + cellSize / 2;
       const y = row * cellSize + cellSize / 2;
 
@@ -417,7 +450,4 @@ function showCellnumber(ctx, gridSize, cellSize) {
     }
   }
 }
-
-
-
 
