@@ -40,24 +40,6 @@ class House {
 // Global array to store houses
 let houses = [];
 
-function startHouses(ctx, cellSize) {
-  console.log('drawing homes with fn startHouses() 🏡')
-  const houseCount = groundCells.length * 0.0003; // Replace with the desired number of houses
-
-  for (let i = 0; i < houseCount && groundCells.length > 0; i++) {
-    const randomIndex = Math.floor(Math.random() * groundCells.length);
-    const selectedCell = groundCells.splice(randomIndex, 1)[0]; // Select and remove a ground cell
-
-    const house = new House(selectedCell.x, selectedCell.y, cellSize);
-    houses.push(house);
-    house.draw(ctx, cellSize);
-  }
-}
- // startHouses(treeCtx, cellSize); //DO NOT USE, CHECK IF COUPLE MAKING IS MAKING HOUSES FIRST
-
-
-
-
 
 
   //commercial buildings

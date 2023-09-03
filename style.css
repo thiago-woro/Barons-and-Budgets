@@ -1,3 +1,49 @@
+
+:root {
+    --metal: rgb(94, 55, 55);
+    --gold: rgb(234, 190, 67);
+    --bg: #595e4e ;
+    --green:  rgb(28, 116, 28);
+    --blue:   rgb(18, 81, 130);
+
+  }
+
+  #bottomToolBar {
+    visibility: collapse;
+    display: flex;
+    flex-direction: row;
+    gap: 50px;
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%); /* Center horizontally */
+    bottom: 0;
+    background-color: rgb(65, 65, 65);
+    text-align: center;
+    padding: 15px;
+    z-index: 1000;
+    width: max-content;
+    border-radius: 10px 10px 0px 0px;
+    border-top: 1px solid var(--gold);
+    color: var(--gold);
+    font-size: 11px;
+    z-index: 3000;
+  }
+
+  #welcomeScreenRaceSelector {
+     visibility: collapse;
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%); /* Center horizontally */
+    text-align: center;
+    z-index: 1000;
+    width: max-content;
+    border-radius: 10px 10px 0px 0px;
+    border-top: 1px solid var(--gold);
+    bottom: 0;
+    margin: 0px;
+  }
+
+
 @font-face {
     font-family: 'Press Start 2P';
     src: url('./assets/fonts/PressStart2P-Regular.ttf') format('truetype');
@@ -38,6 +84,50 @@ body {
     margin: 0;
     image-rendering: pixelated;
 }
+
+#welcomePopup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    background-color: #595e4e;
+    padding: 60px;
+    border-radius: 30px;
+    border: solid 7px rgb(58, 69, 58);
+    z-index: 310;
+    text-align: center;
+    justify-content: center;
+    width: 300px;
+    align-items: center;
+    background-image: url("https://img.freepik.com/premium-vector/old-wooden-texture-cover-from-planks-seamless-pattern_191307-837.jpg?w=360");
+    background-repeat: no-repeat;
+    background-size: cover; 
+    background-position: center;
+    max-height: 550px;
+    box-shadow: inset -10px -10px 10px #00000080;
+}
+
+#welcomeScreen {
+    display: flex;
+    flex-direction: column;
+    background-color: #595e4e;
+    border-radius: 0px;
+    border: solid 0px green;
+    z-index: 310;
+    text-align: center;
+    justify-content: center;
+    width: 100vw;
+    align-items: center;
+    background-image: url("./assets/UI/welcome-background.png");
+    background-repeat: no-repeat;
+    background-size: cover; 
+    background-position: center;
+    height: 100vh;
+}
+
 
 /* Specific z-index for each canvas layer */
 #groundCanvas {
@@ -82,6 +172,12 @@ body {
     margin-left: 20px;
     justify-content: end;
   }
+
+  h1 {
+    line-height: 1.4;
+    color: var(--gold);
+    text-shadow: 3px 5px var(--green);
+  }
   
 
 .row {
@@ -121,7 +217,7 @@ body {
     border: 2px solid rgba(41, 178, 105, 0.13);
     border: 11px solid rgb(82, 82, 82);
     margin: 5px;
-    background-color: #595e4e;
+    background-color: var(--bg);
 
 }
 
@@ -161,16 +257,16 @@ user-select: none;
 }
 
 .tabSelector:hover {
-    background-color: rgb(25, 151, 86);
+    background-color: var(--green);
     transition: background-color 0.3s ease;
     }
 
     .active {
-    background-color: rgb(40, 87, 138);
+    background-color: var(--blue)
     }
 
 button {
-    background-color: rgb(28, 116, 28);
+    background-color: var(--green);
     border-radius: 8px;
     height: 50px;
     width: 200px;
@@ -179,7 +275,7 @@ button {
     cursor: pointer;
     font-family: 'Press Start 2P';
     font-size: 1rem;
-    border: solid 3px rgb(165, 128, 26);
+    border: solid 3px var(--gold);
     transition: background-color 0.3s ease;
 cursor: url(./assets/cursor/glove1.cur), auto;
 
@@ -250,6 +346,15 @@ tbody tr:hover {
     background-color: #1f41a93e;
 }
 
+range {
+    color: red;
+}
+
+input[type="range"] {
+    color: red !important;
+    background-color: red;
+}
+
 
 .male {
     background-color: rgb(25, 64, 136);
@@ -285,4 +390,99 @@ button:disabled {
     padding-right: 15px;
     width: 100%;
     border-collapse: collapse;
+}
+
+
+#elfCounselor1 {
+    position: fixed;
+    top: 50%;
+    right: 0;
+    transform: translateY(-20%);
+    bottom: 0;
+    max-height: 70vh;
+}
+
+#infoPanel {
+    background-color: #454a3fdb;
+    padding: 20px;
+    margin: 5px;
+    border: 3px solid green;
+    border-radius: 20px;
+    line-height: 1.5;
+}
+
+
+#notificationContainer {
+    max-width: 100%;
+    margin: 0 auto;
+    overflow: auto; /* Hide vertical overflow from parent */
+    max-height: 430px; /* Set the maximum height */
+
+  }
+  
+  #notificationTable {
+    width: 100%;
+    max-height: 300px; /* Set the maximum height */
+    border-collapse: collapse;
+    border: 1px solid #ccc;
+    overflow: auto; /* Add a scrollbar if needed */
+  }
+  
+  #notificationTable th,
+  #notificationTable td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
+  }
+
+
+
+  .race-card {
+    background-color: #cfbb97; /* Creamy background */
+    border: 3px solid var(--gold);
+    border-radius: 20px;
+    width: 300px;
+    text-align: center;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease;
+    margin: 0 20px;
+    color: var(--gold);
+cursor: url(./assets/cursor/glove1.cur), auto;
+transition: box-shadow 1s;
+transition: scale 1s;
+}
+
+.race-card:hover {
+    transform: translateY(-5px);
+    scale: 1.01;
+    box-shadow: 3px 8px 40px rgba(70, 19, 164, 0.803);
+}
+
+#purriesWelcomeSelector:hover {
+    box-shadow: 3px 8px 40px rgba(184, 138, 20, 0.803);
+}
+
+
+#kurohiWelcomeSelector:hover {
+    box-shadow: 3px 8px 40px rgba(0, 0, 0, 0.803);
+}
+
+.race-image {
+    max-width: 100%;
+    border-radius: 20px 20px 0px 0px;
+    border: 0px solid #8b6d46; /* Gold-colored border for the image */
+}
+
+.race-title {
+    font-size: 24px;
+    margin-top: -30px;
+    color: #d7ae17; /* Green title color */
+    text-shadow: 2px 3px black;
+}
+
+.race-description {
+    font-size: 16px;
+    margin-top: 10px;
+    color: #5b5b5b; /* Dark gray description text */
+    color: var(--bg);
 }

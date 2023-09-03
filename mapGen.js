@@ -69,7 +69,7 @@ let terrainMap = [];
 let groundCells = [];
 let waterCells = [];
 let trees = [];
-let usableLand = 0.3
+let usableLand = 0.045
 
 
 
@@ -87,7 +87,7 @@ var WATER_SHADES = [
   "#5690b7",
 ];
 var LAND_SHADES = [
-  "#e0cd77",
+  "#b0ad58",
   "#9ac558",
   "#88b14b",
   "#759e42",
@@ -98,8 +98,8 @@ var LAND_SHADES = [
   "#5aa748",
 ];
 
-document.getElementById("gen2").addEventListener("click", async function () {
-  await generateTerrainMap(gridSize, gridSize, perlinNoiseScale);
+document.getElementById("gen2").addEventListener("click", function () {
+   generateTerrainMap(gridSize, gridSize, perlinNoiseScale); 
 });
 
 console.log(
@@ -156,7 +156,7 @@ function generateTerrainMap(width, height, noiseScale) {
   const totalCells = groundCells.length + waterCells.length;
   maxPop = groundCells.length * usableLand;
   console.log(`Total cells generated: `, totalCells);
-  console.log(`Max pop.: `, maxPop);
+  console.log(`Max pop.: `, maxPop.toFixed(0));
 
 
   // Call the modified function to draw ground and water cells
@@ -201,7 +201,7 @@ function animateWater() {
 //setInterval(animateWater, 3000);  // Call animateWater() every 1000 milliseconds (1 second)
 
 // Call fn to generate the terrain map with Perlin noise
-var generatedMap = generateTerrainMap(gridSize, gridSize, perlinNoiseScale);
+//var generatedMap = generateTerrainMap(gridSize, gridSize, perlinNoiseScale);
 
 //2 step
 
@@ -406,37 +406,9 @@ function startTrees(ctx, cellSize) {
   //debugTerrain(npcCtx, gridSize, cellSize)
 }
 
-const infoPanel = document.getElementById("infoPanel");
 
-function showNPCInfo(npc) {
-  infoPanel.style.left = `${npc.x}px`;
-  infoPanel.style.top = `${npc.y}px`;
-  infoPanel.style.display = "block";
-  infoPanel.innerHTML = `
-    <strong>Name:</strong> ${npc.name}<br/>
-    <strong>Age:</strong> ${npc.age}<br/>
-    <strong>Sex:</strong> ${npc.sex}<br/>
-  `;
-}
 
-npcCanvas.addEventListener("mousemove", function (event) {
-  const rect = npcCanvas.getBoundingClientRect();
-  const x = event.clientX - rect.left;
-  const y = event.clientY - rect.top;
-  let foundNPC = false;
-  for (const npc of npcs) {
-    const distance = Math.sqrt((x - npc.x) ** 2 + (y - npc.y) ** 2);
-    if (distance < 10) {
-      // Adjust the value based on your needs
-      showNPCInfo(npc);
-      foundNPC = true;
-      break;
-    }
-  }
-  if (!foundNPC) {
-    infoPanel.style.display = "none";
-  }
-});
+
 
 function showCellnumber(ctx, gridSize, cellSize) {
   ctx.font = "12px Arial";

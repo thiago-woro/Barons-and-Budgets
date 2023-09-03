@@ -1,74 +1,211 @@
-/* document.addEventListener("DOMContentLoaded", () => {
+// Function to toggle the visibility of a tab and show the most recent clicked tab
+function toggleTab(tabId) {
+  const tab = document.getElementById(tabId);
+  const tabWindows = document.querySelectorAll(".card");
+  const tabButtons = document.querySelectorAll(".tabSelector");
 
-const resizeHandle = document.getElementById("resize-handle");
-const resizableCol = document.getElementById("game");
-const toolsCol = document.getElementById("tools");
+  // Hide all tab windows
+  tabWindows.forEach((tabWindow) => {
+    tabWindow.style.display = "none";
+  });
 
-let isResizing = false;
+  // Remove "active" class from all tab buttons
+  tabButtons.forEach((tabButton) => {
+    tabButton.classList.remove("active");
+  });
 
-   // Retrieve the stored width from local storage
-   const storedWidth = localStorage.getItem("gameWidth");
-   console.log('Found stored width: ' + storedWidth + "px")
+  // Show the clicked tab window
+  tab.style.display = "block";
 
+  // Add "active" class to the clicked tab button
+  const tabButton = document.getElementById(`${tabId}Button`);
+  tabButton.classList.add("active");
+}
 
-   // Set the initial width of the #game element
-   if (storedWidth) {
-       resizableCol.style.width = storedWidth + "px";
-   }
+let hideMenu = true;
 
-resizeHandle.addEventListener("mousedown", (e) => {
-    isResizing = true;
+// Function to toggle the visibility of a tab and show the most recent clicked tab
+function hideTabs() {
+  if (hideMenu === true) {
+    gameTab.style.display = "block";
+    statsTab.style.display = "block";
+    chartTab.style.display = "block";
+    npcTab.style.display = "block";
+    minimizeTabButton.textContent = "Hide";
+    hideMenu = false;
+  } else {
+    hideMenu = true;
+    gameTab.style.display = "none";
+    statsTab.style.display = "none";
+    chartTab.style.display = "none";
+    npcTab.style.display = "none";
+    minimizeTabButton.textContent = "Show";
+  }
 
-    // Store initial mouse position and resizable column width
-    const initialMouseX = e.clientX;
-    const initialWidth = resizableCol.offsetWidth;
+  // Store hideMenu value in localStorage
+  localStorage.setItem("hideMenu", JSON.stringify(hideMenu));
+}
 
-    // Prevent text selection during resize
-    document.body.style.userSelect = "none";
-
-    document.addEventListener("mousemove", resize);
-    document.addEventListener("mouseup", stopResize);
-
-    function resize(e) {
-        if (!isResizing) return;
-
-        const deltaX = e.clientX - initialMouseX;
-        const newWidth = initialWidth + deltaX;
-
-        // Ensure the column doesn't become too narrow
-        if (newWidth > 500) {
-            resizableCol.style.width = newWidth + "px";
-        }
+// On page load, retrieve hideMenu value from localStorage
+window.addEventListener("load", function () {
+  const storedHideMenu = localStorage.getItem("hideMenu");
+  if (storedHideMenu !== null) {
+    hideMenu = JSON.parse(storedHideMenu);
+    if (hideMenu === false) {
+      gameTab.style.display = "block";
+      statsTab.style.display = "block";
+      chartTab.style.display = "block";
+      npcTab.style.display = "block";
+      minimizeTabButton.textContent = "Hide";
     }
+  }
+});
 
-    function stopResize() {
-        if (!isResizing) return;
+function updateVariables() {
+  gridSize = parseFloat(document.getElementById("gridSizeSlider").value);
+  perlinNoiseScale = parseFloat(
+    document.getElementById("perlinNoiseScaleSlider").value
+  );
+  document.getElementById("gridSizeDisplay").textContent = gridSize;
+  document.getElementById("perlinDisplay").textContent = perlinNoiseScale;
+  console.log(
+    `Updated variables - Grid Size: ${gridSize}, Perlin Noise Scale: ${perlinNoiseScale}`
+  );
+}
 
-        isResizing = false;
-        document.body.style.userSelect = ""; // Restore text selection
+// Attach input event listeners to the sliders
+document
+  .getElementById("gridSizeSlider")
+  .addEventListener("input", function () {
+    gridSize = parseFloat(this.value);
+    updateVariables();
+  });
 
-        document.removeEventListener("mousemove", resize);
-        document.removeEventListener("mouseup", stopResize);
-          // Save the updated width to local storage
-    const newWidth = resizableCol.offsetWidth;
-    localStorage.setItem("gameWidth", newWidth);
-    console.log('saved game width as: ' + newWidth)
+document
+  .getElementById("perlinNoiseScaleSlider")
+  .addEventListener("input", function () {
+    perlinNoiseScale = parseFloat(this.value);
+    updateVariables();
+  });
+
+newGameWelcomeScreen.addEventListener("click", function () {
+  hideWelcomeScreen();
+  generateTerrainMap(gridSize, gridSize, perlinNoiseScale);
+});
+
+newGameCustomWelcomeScreen.addEventListener("click", function () {
+  welcomePopup.style.visibility = "collapse";
+  welcomePopup.style.display = "none";
+  welcomeScreenRaceSelector.style.visibility = 'visible';
+  elfCounselor1.style.visibility = "collapse";
+
+});
+
+loadGameWelcomeScreen.addEventListener("click", function () {
+  hideWelcomeScreen();
+  generateTerrainMap(gridSize, gridSize, perlinNoiseScale);
+});
+
+function hideWelcomeScreen() {
+  welcomePopup.style.visibility = "collapse";
+  welcomeScreen.style.visibility = "collapse";
+  welcomePopup.style.display = "none";
+  container.style.visibility = "visible";
+  tools.style.visibility = "visible";
+  bottomToolBar.style.visibility = "visible";
+}
+
+//appens new toast notifications to the UI table
+function addNotification(category, title, message, npcs, color) {
+  const tableBody = document.querySelector("#notificationTable tbody");
+
+  const newRow = document.createElement("tr");
+  newRow.innerHTML = `
+    <td>${category}</td>
+    <td>${title}</td>
+    <td>${message}</td>
+  `;
+
+  tableBody.appendChild(newRow);
+}
+
+//this fn show the NPC details
+npcCanvas.addEventListener("mousemove", function (event) {
+  const rect = npcCanvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  let foundNPC = false;
+  for (const npc of npcs) {
+    const distance = Math.sqrt((x - npc.x) ** 2 + (y - npc.y) ** 2);
+    if (distance < 10) {
+      // Adjust the value based on your needs
+      showNPCInfo(npc);
+      foundNPC = true;
+      break;
     }
-
-  
+  }
+  if (!foundNPC) {
+    infoPanel.style.display = "none";
+  }
 });
 
-// Prevent resizing from interfering with other interactions
-resizeHandle.addEventListener("click", (e) => {
-    e.stopPropagation();
-});
+const infoPanel = document.getElementById("infoPanel");
 
-// Adjust tools column width as resizable column changes
-window.addEventListener("resize", () => {
-    const colWidth = resizableCol.offsetWidth;
-    toolsCol.style.width = `calc(100% - ${colWidth}px)`;
-});
+//npc card details
+function showNPCInfo(npc) {
+  infoPanel.style.left = `${npc.x}px`;
+  infoPanel.style.top = `${npc.y}px`;
+  infoPanel.style.display = "block";
+
+  let infoHtml = `
+  #${npc.myNumber}<br/>
+  ${npc.race}<br/>
+
+  <strong>${npc.emoji} ${npc.name} ${
+    npc.sex === "male" ? "♂" : "♀"
+  }</strong><br/>
+  <strong>Age:</strong> ${npc.age}<br/>
+`;
+
+  if (npc.spouse) {
+    infoHtml += `<strong>💍 </strong> ${npc.spouse}<br/>`;
+  }
+
+  if (npc.age > 21) {
+    infoHtml += `
+  ${npc.profession}      
+    $ ${npc.salary}<br/>
+  `;
+  }
+
+  if (npc.children.length > 0) {
+    infoHtml += `<strong>${npc.children.length} kids:</strong><ul>`;
+    npc.children.forEach((child) => {
+      infoHtml += `<li>${child.name} - ${child.age}</li>`;
+    });
+    infoHtml += `</ul>`;
+  }
+
+  infoPanel.innerHTML = infoHtml;
+}
 
 
-console.log("imported file uitools.js 🔧");
-}); */
+
+//todo gdp should increase based on previous loop
+//crystal tons should increase based on previous loop
+//crystla tons should be mined relative to population of Miners
+//create crystal deposits
+function updateUIbottomToolbar() {
+
+  yearBottomToolBar.textContent = "Year: " + year;
+  populationBottomToolBar.textContent = "Pop. " + npcs.length;
+  GDPbottomToolBar.textContent = "GDP: ¥ " + (npcs.length * Math.floor(Math.random() * 9800)).toFixed(0);
+  crystalbottomToolBar.textContent = "Crystallite: " + (npcs.length * 0.7).toFixed(0) + " tons"
+  statsUIhomes.textContent = houses.length;
+
+  currentYear.textContent = "Year: " + year;
+
+}
+
+
+

@@ -6,6 +6,8 @@
 			name="viewport"
 			content="width=device-width, initial-scale=1.0" />
 		<title>Barons and Budgets</title>
+        <link rel="icon" type="image/x-icon" href="./assets/Favicon/logo.png">
+
 	
         <link rel="stylesheet" href="style.css">
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css">
@@ -17,9 +19,25 @@
 
 <div id="infoPanel" style="position: absolute; display: none; z-index: 2000;"></div>
 
+<div id="welcomeScreen" class="">
+<div id="welcomePopup"">
+    <h1 style="margin-top: 50px;" >Barons & Budgets</h1>
+    <img style="height: 200px; width: 200px;" src="./assets/Favicon/logo.png">
+    <div class="row col" style="margin-bottom: 50px;">
+        <button id="newGameWelcomeScreen">New Game Random</button>
+        <button id="newGameCustomWelcomeScreen">New Game Custom</button>
+        <button class="blueButton" id="loadGameWelcomeScreen">Load Game</button>
+    </div>
+</div>
+
+<img id="elfCounselor1" src="./assets/Races/elfs/female-elf-1-no-bg.png">
+
+
+</div>
+
 
 	<body>
-        <div class="canvas-container" id="canvas-content">
+        <div class="canvas-container" id="canvas-content" style="visibility: collapse;">
             <canvas id="groundCanvas"  style="z-index: 10;"></canvas>
             <canvas id="waterCanvas"  style="z-index: 20;"></canvas>
             <canvas id="path"  style="z-index: 15;"></canvas>
@@ -28,9 +46,17 @@
             <canvas id="npcCanvas"  style="z-index: 99;"></canvas>
 
         </div>
+
+        <div id="bottomToolBar" >
+            <span id="yearBottomToolBar">Year </span>
+            <span id="populationBottomToolBar" >Population </span>
+            <span id="GDPbottomToolBar" >GDP </span>
+            <span id="crystalbottomToolBar">Crystallite </span>
+
+        </div>
         
 
-        <div id="tools">
+        <div id="tools" style="visibility: collapse;">
             <div id="toolTabs" class="row" style="display: flex;   z-index: 0; background-color: rgba(0, 0, 0, 0); margin-bottom: -10;"> 
                 <span id="minimizeTabButton" class="tabSelector" onclick="hideTabs()">
                     <i style="height: 20px; width: 20px;" class="fas fa-angle-double-up"></i> hide</span>
@@ -77,8 +103,8 @@
             </div>      
             <div class="row">
             <button disabled id="startButton">Start Simulation</button>
-                <button class="curto" id="playButton">Play ⏯</button>
-                <button class="curto blueButton" id="pauseButton">Pause ⏸</button>
+        <button class="blueButton" id="saveButton">Save 💾</button>
+
                 <img id="playStatusImg" style="width: 50px; display: none;" src="https://cdn.pixabay.com/animation/2022/07/31/05/09/05-09-47-978_512.gif">
             </div>
 <div id="slidersGP" class="col footprint" style=" margin-top: 10px; padding: 15px;">
@@ -98,6 +124,12 @@
             <span id="perlinDisplay">0.025</span>
 
             <br>
+            <label for="waterAmountSlider">Water %</label>
+
+            <input type="range" id="waterAmountSlider" min="0" max="1" step="0.10" value="0.55">
+            <span id="waterAmountDisplay">0.55</span>
+
+            <br>
         
             </div>
 
@@ -115,6 +147,22 @@
             <div>Growth Rate 📈 <span id="growthRate"></span></div>
             <div>Game Speed ⏩ <span id="gameSpeed"></span></div>
             <div>Economic Activity 💰 <span id="economicGDP"></span></div>
+            <div>Available homes <span id="statsUIhomes"></span></div>
+
+            <br>
+            <h2>Game Notifications</h2>
+            <div id="notificationContainer">
+              <table id="notificationTable">
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Title</th>
+                    <th>Message</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
         </div>
 
             <div id="chartTab" class="card" style="display: none;">
@@ -123,8 +171,9 @@
             </div>
 
 
-<div style="display: none;" id="npcTab" class="card">
+<div style="display: none;" id="npcTab" class="card col">
     <h1 id="npcTableHeader" >NPC Information</h1>
+    <button>Professions</button>
     <table id="npcTable">
         <thead>
             <tr>
@@ -142,121 +191,43 @@
 
 </div>
 
+
+<div id="welcomeScreenRaceSelector" class="col" style="width: fit-content;">
+    
+    <h1>Only one will prevail, to the perish of others... Choose:</h1>
+    <div class="row">
+    
+    <div class="race-card" id="purriesWelcomeSelector">
+        <img src="./assets/Races/purries/female/2704f469aae11b8b26442e33d7df6f59ff43085e.png" alt="Purries Image" class="race-image">
+        <h2 class="race-title">Purries</h2>
+        <p class="race-description">Purries are gluttons. Bards, artists, and drunks.
+            They love to gamble, some are good chefs, poets. They have the shortest lifespan, maybe that's why they don't have a slave race to help them mine.</p>
+    </div>
+
+    <div id="kurohiWelcomeSelector" class="race-card">
+        <img src="./assets/Races/dark magicians/male/kurohi-1.png" alt="Kurohi Image" class="race-image">
+        <h2 class="race-title">Kurohi</h2>
+        <p class="race-description">They say Kurohi wear robes to protect their skin, which has a burned, ashy-like appearance. They are mostly evil and corrupted and strangely have customs and professions of a long-extinct race, "humans." They mostly don't mine and use Zombies as mining slaves.</p>
+    </div>
+
+    <div class="race-card">
+        <img src="./assets/Races/elfs/female/5.png" alt="Elf Image" class="race-image">
+        <h2 class="race-title">Elves</h2>
+        <p class="race-description">On the outside, the Elven civilization looks like the most technologically advanced. They have a strong caste system that favors the rich and makes sure the labor force stays poor. Besides that, they also created slave bots.</p>
+    </div>
+    <div>
+    </div>
 		
   <!--     <script src="./simulation.js"></script> -->
 		<script src="perlin.js"></script>
      <script src="./mapGen.js"></script>
      <script src="./uitools.js"></script>
      <script src="./arrays.js"></script>
+     <script src="./npcClass.js"></script>
      <script src="./npcs.js"></script>
      <script src="./homes.js"></script>
   <script src="./camera.js"></script> 
-    </div>
 	 <script>
-
-
-
-// Function to toggle the visibility of a tab and show the most recent clicked tab
-function toggleTab(tabId) {
-    const tab = document.getElementById(tabId);
-    const tabWindows = document.querySelectorAll(".card");
-    const tabButtons = document.querySelectorAll(".tabSelector");
-    
-    // Hide all tab windows
-    tabWindows.forEach(tabWindow => {
-        tabWindow.style.display = "none";
-    });
-    
-    // Remove "active" class from all tab buttons
-    tabButtons.forEach(tabButton => {
-        tabButton.classList.remove("active");
-    });
-    
-    // Show the clicked tab window
-    tab.style.display = "block";
-    
-    // Add "active" class to the clicked tab button
-    const tabButton = document.getElementById(`${tabId}Button`);
-    tabButton.classList.add("active");
-}
-
-/////////////////////////////hide menu 
-
-let hideMenu = true;
-
-// Function to toggle the visibility of a tab and show the most recent clicked tab
-function hideTabs() {
-
-  if (hideMenu === true) {
-    gameTab.style.display = "block";
-    statsTab.style.display = "block";
-    chartTab.style.display = "block";
-    npcTab.style.display = "block";
-    minimizeTabButton.textContent = "Hide";
-    hideMenu = false;
-  } else {
-    hideMenu = true;
-    gameTab.style.display = "none";
-    statsTab.style.display = "none";
-    chartTab.style.display = "none";
-    npcTab.style.display = "none";
-    minimizeTabButton.textContent = "Show";
-  }
-
-  // Store hideMenu value in localStorage
-  localStorage.setItem('hideMenu', JSON.stringify(hideMenu));
-}
-
-// On page load, retrieve hideMenu value from localStorage
-window.addEventListener('load', function () {
-    
-  const storedHideMenu = localStorage.getItem('hideMenu');
-  if (storedHideMenu !== null) {
-
-    hideMenu = JSON.parse(storedHideMenu);
-    if (hideMenu === false) {
-        gameTab.style.display = "block";
-      statsTab.style.display = "block";
-      chartTab.style.display = "block";
-      npcTab.style.display = "block";
-      minimizeTabButton.textContent = "Hide";
-    }
-  }
-});
-
-
-
-
-
-
-
-
-function updateVariables() {
-	gridSize = parseFloat(document.getElementById('gridSizeSlider').value);
-	perlinNoiseScale = parseFloat(document.getElementById('perlinNoiseScaleSlider').value);
-	document.getElementById('gridSizeDisplay').textContent = gridSize;
-	document.getElementById('perlinDisplay').textContent = perlinNoiseScale;
-   console.log(`Updated variables - Grid Size: ${gridSize}, Perlin Noise Scale: ${perlinNoiseScale}`);
-}
-   
-
-        // Log the initial values
-        console.log(
-            `Initial variables - Grid Size: ${gridSize}, Perlin Noise Scale: ${perlinNoiseScale}`
-        );
-
-        // Attach input event listeners to the sliders
-        document.getElementById('gridSizeSlider').addEventListener('input', function () {
-            gridSize = parseFloat(this.value);
-            thiago = parseFloat(this.value);
-            updateVariables();
-        });
-
-        document.getElementById('perlinNoiseScaleSlider').addEventListener('input', function () {
-            perlinNoiseScale = parseFloat(this.value);
-            updateVariables();
-        });
-
 
     </script>
 
