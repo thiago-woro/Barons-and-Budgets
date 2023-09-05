@@ -53,10 +53,13 @@ function gameLoop() {
     npc.ageAndDie();
 
       // Check if NPC is older than 20 and has an empty profession
-  if (npc.age > 20 && !npc.profession) {
-    // Use the generateProfession method to assign a profession
-    npc.profession = npc.generateProfession(npc.age);
-  }
+        if (!npc.profession || (npc.age >= 20 && npc.profession === "novice")) {
+        // Use the generateProfession method to assign a profession
+        npc.profession = npc.generateProfession(npc.age);
+        npc.salary = npc.calculateSalary();
+    
+        console.log(`🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗${npc.name} is now a ${npc.profession} with $${npc.salary}`);
+      }
   });
 
   console.log("Total deaths this loop: " + deathsThisLoop);
@@ -364,39 +367,6 @@ function startNPCs(ctx, cellSize) {
   });
 
   npcTableHeader.textContent = `Total Population ${npcs.length}`;
-}
-
-
-
-
-
-
-
-function getRandomGroundCellPosition() {
-  let randomXposition, randomYposition;
-  do {
-    randomXposition = Math.floor(Math.random() * 51) - 25;
-    randomYposition = Math.floor(Math.random() * 51) - 25;
-  } while (!isPositionOnGround(randomXposition, randomYposition));
-  return { x: randomXposition, y: randomYposition };
-}
-
-function isPositionOnGround(x, y) {
-  // Calculate the grid cell coordinates for the given x and y
-  const gridX = Math.floor(x / cellSize);
-  const gridY = Math.floor(y / cellSize);
-
-  // Check if the grid coordinates are valid and correspond to a ground cell
-  if (
-    gridX >= 0 &&
-    gridX < terrainMap[0].length &&
-    gridY >= 0 &&
-    gridY < terrainMap.length
-  ) {
-    return terrainMap[gridY][gridX] !== WATER_COLOR; // Replace WATER_COLOR with the color code for water cells
-  }
-
-  return false; // The position is out of bounds
 }
 
 

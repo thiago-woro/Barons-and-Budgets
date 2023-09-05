@@ -1,10 +1,9 @@
 class NPC {
-  constructor(x, y, myNumber, parents) {
+  constructor(x, y, myNumber, parents, age) {
     this.x = x * cellSize;
     this.y = y * cellSize;
     this.race = this.chooseRace();
     this.age = 0;
-    this.salary = Math.floor(Math.random() * 9800);   ///TODO make this based on profession
     this.sex = Math.random() < 0.5 ? "male" : "female";
     this.color = Math.random() < 0.5 ? "#ba8247" : "#a382ab";
     this.isClickable = true; // Can be toggled on or off
@@ -12,12 +11,21 @@ class NPC {
     this.deathAge = Math.floor(Math.random() * 80 + 20); // Age at which NPC dies
     this.name = this.generateName(); // Generate a name for the NPC
     this.spouse;
-    this.profession = this.generateProfession(); // Generate a profession for the NPC
+    this.profession = this.generateProfession(age, this.race);
     this.movementSpeed = 1;
     this.children = []; // Array to store children
     this.emoji = this.generateRandomEmoji();
     this.myNumber = myNumber; // Sequential number for creation order
     this.parents = parents || null; // Set parents to null when not provided
+
+
+    if (age >= 20) {
+      this.profession = this.generateProfession(this.age, this.race);
+      this.salary = this.calculateSalary();
+    } else {
+      this.profession = "novice";
+      this.salary = 0;
+    }
   }
 
   move() {
@@ -100,84 +108,83 @@ class NPC {
     this.children.push(childNPC);
   }
 
-  generateProfession(age) {
-    if (age < 20) {
-      // Return null for professions when age is less than 20
-      return null;
-    }
+  generateProfession(race) {
+  
+  
 
     const raceProfessions = {
       Purries: [
-        { profession: "Jester", probability: 0.05 }, // Low probability
-        { profession: "Innkeeper", probability: 0.1 }, // Medium probability
-        { profession: "Tailor", probability: 0.15 },
-        { profession: "Knight", probability: 0.05 },
-        { profession: "Archer", probability: 0.1 }, 
-        { profession: "Ranger", probability: 0.1 }, 
-        { profession: "Chef", probability: 0.1 },
-        { profession: "Cook", probability: 0.1 }, 
-        { profession: "Bard", probability: 0.1 }, 
-        { profession: "Drunk", probability: 0.1 },
-        { profession: "Researcher", probability: 0.1 }, 
-        { profession: "Poet", probability: 0.1 }, 
-        { profession: "Scientist", probability: 0.1 },  
-        { profession: "Tinkerer", probability: 0.1 },
-        { profession: "Miner", probability: 0.45 },
-        
+        { profession: "Jester", probability: 0.05, salary: 1000 },   // Low probability
+        { profession: "Innkeeper", probability: 0.1, salary: 1200 },  // Medium probability
+        { profession: "Tailor", probability: 0.15, salary: 1300 },
+        { profession: "Knight", probability: 0.05, salary: 6400 },
+        { profession: "Archer", probability: 0.1, salary: 5500 }, 
+        { profession: "Ranger", probability: 0.1, salary: 3500 }, 
+        { profession: "Chef", probability: 0.1, salary: 1600 },
+        { profession: "Cook", probability: 0.1, salary: 1600 }, 
+        { profession: "Bard", probability: 0.1, salary: 1700 }, 
+        { profession: "Drunk", probability: 0.1, salary: 1800 },
+        { profession: "Researcher", probability: 0.1, salary: 1900 }, 
+        { profession: "Poet", probability: 0.1, salary: 2000 }, 
+        { profession: "Scientist", probability: 0.1, salary: 5200 },  
+        { profession: "Tinkerer", probability: 0.1, salary: 2400 },
+        { profession: "Miner", probability: 0.45, salary: 300 },
       ],
-      Kurohi: [
-        // Professions for Humans
-        { profession: "Doctor", probability: 0.1 },
-        { profession: "Teacher", probability: 0.15 },
-        { profession: "Engineer", probability: 0.15 },
-        { profession: "Artist", probability: 0.1 },
-        { profession: "Builder", probability: 0.1 },
-        { profession: "Cook", probability: 0.1 },
-        { profession: "Sailor", probability: 0.05 },
-        { profession: "Driver", probability: 0.05 },
-        { profession: "Bartender", probability: 0.05 },
-        { profession: "Student", probability: 0.05 },
-        { profession: "Unemployed", probability: 0.05 },
-        { profession: "none", probability: 0.05 },
-        { profession: "Retired", probability: 0.05 },
-        { profession: "Police", probability: 0.05 },
-        { profession: "Nurse", probability: 0.1 },
-        { profession: "Electrician", probability: 0.1 },
-        { profession: "Mechanic", probability: 0.1 },
-        { profession: "Lawyer", probability: 0.1 },
-        { profession: "Blacksmith", probability: 0.1 },
-        { profession: "Farmer", probability: 0.05 }
 
-      ],
-      Elf: [
-        // Professions for Elves
-        { profession: "Alchemist", probability: 0.15 },
-        { profession: "Enchanter", probability: 0.15 },
-        { profession: "Mage", probability: 0.15 },
-        { profession: "Bard", probability: 0.1 },
-        { profession: "Blacksmith", probability: 0.1 },
-        { profession: "Herbalist", probability: 0.1 },
-        { profession: "Hunter", probability: 0.1 },
-        { profession: "Thief", probability: 0.05 },
-        { profession: "Minstrel", probability: 0.1 },
-        { profession: "Priest", probability: 0.1 },
-        { profession: "Wizard", probability: 0.15 },
-        { profession: "Sorcerer", probability: 0.15 },
-        { profession: "Healer", probability: 0.1 },
-        { profession: "Librarian", probability: 0.1 },
-        { profession: "Scholar", probability: 0.1 },
-        { profession: "Apothecary", probability: 0.1 },
-        { profession: "Astrologer", probability: 0.1 },
-      ],
+      Kurohi: [
+        { profession: "Doctor", probability: 0.1, salary: 30000 },
+        { profession: "Teacher", probability: 0.15, salary: 1200 },
+        { profession: "Engineer", probability: 0.15, salary: 1500 },
+        { profession: "Artist", probability: 0.1, salary: 1100 },
+        { profession: "Builder", probability: 0.1, salary: 1200 },
+        { profession: "Cook", probability: 0.1, salary: 1000 },
+        { profession: "Sailor", probability: 0.05, salary: 1000 },
+        { profession: "Driver", probability: 0.05, salary: 1000 },
+        { profession: "Bartender", probability: 0.05, salary: 1000 },
+        { profession: "Student", probability: 0.05, salary: 1000 },
+        { profession: "Unemployed", probability: 0.05, salary: 1000 },
+        { profession: "none", probability: 0.05, salary: 1000 },
+        { profession: "Retired", probability: 0.05, salary: 1000 },
+        { profession: "Police", probability: 0.05, salary: 1000 },
+        { profession: "Nurse", probability: 0.1, salary: 1300 },
+        { profession: "Electrician", probability: 0.1, salary: 1500 },
+        { profession: "Mechanic", probability: 0.1, salary: 1500 },
+        { profession: "Lawyer", probability: 0.1, salary: 1400 },
+        { profession: "Blacksmith", probability: 0.1, salary: 1200 },
+        { profession: "Farmer", probability: 0.05, salary: 1100 }],
+        
+        Elf: [
+          { profession: "Alchemist", probability: 0.15, salary: 30000 },
+          { profession: "Enchanter", probability: 0.15, salary: 28000 },
+          { profession: "Mage", probability: 0.15, salary: 27000 },
+          { profession: "Bard", probability: 0.1, salary: 2000 },
+          { profession: "Blacksmith", probability: 0.1, salary: 1500 },
+          { profession: "Herbalist", probability: 0.1, salary: 1200 },
+          { profession: "Hunter", probability: 0.1, salary: 1400 },
+          { profession: "Thief", probability: 0.05, salary: 1000 },
+          { profession: "Minstrel", probability: 0.1, salary: 19000 },
+          { profession: "Priest", probability: 0.1, salary: 17000 },
+          { profession: "Wizard", probability: 0.15, salary: 25000 },
+          { profession: "Sorcerer", probability: 0.15, salary: 26000 },
+          { profession: "Healer", probability: 0.1, salary: 8000 },
+          { profession: "Librarian", probability: 0.1, salary: 1300 },
+          { profession: "Scholar", probability: 0.1, salary: 1700 },
+          { profession: "Apothecary", probability: 0.1, salary: 19000 },
+          { profession: "Astrologer", probability: 0.1, salary: 2100 },
+        ]
     };
 
-    // Get the profession array for the NPC's race
-    const professionArray = raceProfessions[this.race];
 
-    if (!professionArray) {
-      // Handle the case where the race is not found
-      return "Unemployed"; // Example: Return "Unemployed" if race is not found
-    }
+    
+// Ensure that this.race matches one of the keys in raceProfessions
+if (!(this.race in raceProfessions)) {
+  // Handle the case where the race is not found
+  return { profession: "race not found", salary: 1000 };
+}
+
+// Get the profession array for the NPC's race
+const professionArray = raceProfessions[this.race];
+
 
     // Calculate total probability for the race's professions
     const totalProbability = professionArray.reduce(
@@ -193,13 +200,94 @@ class NPC {
     for (const profession of professionArray) {
       cumulativeProbability += profession.probability;
       if (randomValue <= cumulativeProbability) {
+      // return { profession: profession.profession, salary: profession.salary };
         return profession.profession;
       }
     }
 
     // If no profession is selected, return a default or handle it as needed
-    return "Unemployed"; // Example: Return "Unemployed" if nothing matches
+    return; // Example: Return "Unemployed" if nothing matches
   }
+
+
+  calculateSalary() {
+    // Calculate salary based on the profession
+    if (this.profession) {
+      const raceProfessions = {
+        Purries: [
+          { profession: "Jester", probability: 0.05, salary: 1000 },   // Low probability
+          { profession: "Innkeeper", probability: 0.1, salary: 1200 },  // Medium probability
+          { profession: "Tailor", probability: 0.15, salary: 1300 },
+          { profession: "Knight", probability: 0.05, salary: 6400 },
+          { profession: "Archer", probability: 0.1, salary: 5500 }, 
+          { profession: "Ranger", probability: 0.1, salary: 3500 }, 
+          { profession: "Chef", probability: 0.1, salary: 1600 },
+          { profession: "Cook", probability: 0.1, salary: 1600 }, 
+          { profession: "Bard", probability: 0.1, salary: 1700 }, 
+          { profession: "Drunk", probability: 0.1, salary: 1800 },
+          { profession: "Researcher", probability: 0.1, salary: 1900 }, 
+          { profession: "Poet", probability: 0.1, salary: 2000 }, 
+          { profession: "Scientist", probability: 0.1, salary: 5200 },  
+          { profession: "Tinkerer", probability: 0.1, salary: 2400 },
+          { profession: "Miner", probability: 0.45, salary: 300 },
+        ],
+  
+        Kurohi: [
+          { profession: "Doctor", probability: 0.1, salary: 30000 },
+          { profession: "Teacher", probability: 0.15, salary: 1200 },
+          { profession: "Engineer", probability: 0.15, salary: 1500 },
+          { profession: "Artist", probability: 0.1, salary: 1100 },
+          { profession: "Builder", probability: 0.1, salary: 1200 },
+          { profession: "Cook", probability: 0.1, salary: 1000 },
+          { profession: "Sailor", probability: 0.05, salary: 1000 },
+          { profession: "Driver", probability: 0.05, salary: 1000 },
+          { profession: "Bartender", probability: 0.05, salary: 1000 },
+          { profession: "Student", probability: 0.05, salary: 1000 },
+          { profession: "Unemployed", probability: 0.05, salary: 1000 },
+          { profession: "none", probability: 0.05, salary: 1000 },
+          { profession: "Retired", probability: 0.05, salary: 1000 },
+          { profession: "Police", probability: 0.05, salary: 1000 },
+          { profession: "Nurse", probability: 0.1, salary: 1300 },
+          { profession: "Electrician", probability: 0.1, salary: 1500 },
+          { profession: "Mechanic", probability: 0.1, salary: 1500 },
+          { profession: "Lawyer", probability: 0.1, salary: 1400 },
+          { profession: "Blacksmith", probability: 0.1, salary: 1200 },
+          { profession: "Farmer", probability: 0.05, salary: 1100 }],
+          
+          Elf: [
+            { profession: "Alchemist", probability: 0.15, salary: 30000 },
+            { profession: "Enchanter", probability: 0.15, salary: 28000 },
+            { profession: "Mage", probability: 0.15, salary: 27000 },
+            { profession: "Bard", probability: 0.1, salary: 2000 },
+            { profession: "Blacksmith", probability: 0.1, salary: 1500 },
+            { profession: "Herbalist", probability: 0.1, salary: 1200 },
+            { profession: "Hunter", probability: 0.1, salary: 1400 },
+            { profession: "Thief", probability: 0.05, salary: 1000 },
+            { profession: "Minstrel", probability: 0.1, salary: 19000 },
+            { profession: "Priest", probability: 0.1, salary: 17000 },
+            { profession: "Wizard", probability: 0.15, salary: 25000 },
+            { profession: "Sorcerer", probability: 0.15, salary: 26000 },
+            { profession: "Healer", probability: 0.1, salary: 8000 },
+            { profession: "Librarian", probability: 0.1, salary: 1300 },
+            { profession: "Scholar", probability: 0.1, salary: 1700 },
+            { profession: "Apothecary", probability: 0.1, salary: 19000 },
+            { profession: "Astrologer", probability: 0.1, salary: 2100 },
+          ]
+      };
+      const professionArray = raceProfessions[this.race];
+      const selectedProfession = professionArray.find(
+        (profession) => profession.profession === this.profession
+      );
+
+      if (selectedProfession) {
+        return selectedProfession.salary;
+      }
+    }
+    // Return 0 if the profession is not found
+    return 0;
+  }
+
+
 
   // Method to generate a random name based on gender
   generateName() {

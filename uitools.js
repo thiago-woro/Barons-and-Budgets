@@ -263,15 +263,11 @@ function showNPCInfo(npc) {
 
 
   if (npc.spouse) {
-    infoHtml += `Married to: <strong> ${npc.spouse} 💍</strong><br/>`;
+    infoHtml += `<br/>Married to: <strong> ${npc.spouse} 💍</strong><br/>`;
   }
 
-  if (npc.age > 21) {
-    infoHtml += `
-  ${npc.profession}      
-    $ ${npc.salary}<br/>
-  `;
-  }
+  if (!npc.profession) {
+    infoHtml += `${npc.profession}       $ ${npc.salary}<br/> `}
 
   if (npc.children.length > 0) {
     infoHtml += `<br/><strong>${npc.children.length} kids:</strong><ul>`;
@@ -281,13 +277,25 @@ function showNPCInfo(npc) {
     infoHtml += `</ul>`;
   }
   
+  // Create an img element
+  const imgElement = document.createElement('img');
+  
 
-  infoPanel.innerHTML = infoHtml;
+  // Set the image source, height, and width
+  imgElement.src = './assets/Races/purries/catgirl.png'
+  imgElement.height = 100; // Set the height (adjust to your desired height)
+  imgElement.width = 100; // Set the width (adjust to your desired width)
+  
+  // Append the img element to infoPanel
+  const infoPanel = document.getElementById('infoPanel'); // Make sure to get the infoPanel element
+  infoPanel.innerHTML = infoHtml; // Set the content of infoPanel
+  infoPanel.appendChild(imgElement); // Append the image to infoPanel
 }
 
 
 
 //todo gdp should increase based on previous loop
+//gdp should be sum of all npcs professions salary
 //crystal tons should increase based on previous loop
 //crystla tons should be mined relative to population of Miners
 //create crystal deposits
