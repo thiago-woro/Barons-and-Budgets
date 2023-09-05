@@ -1,4 +1,5 @@
 
+
 function setupCanvas(canvasId, width, height) {
   const canvas = document.getElementById(canvasId);
   const ctx = canvas.getContext("2d");
@@ -209,66 +210,71 @@ function addNotification(category, title, message, npcs, color) {
   tableBody.appendChild(newRow);
 }
 
+infoPanel.addEventListener('click', () => {
+  // Toggle the visibility property
+  infoPanel.style.visibility = 'collapse'
+  foundNPC = false;
+});
+
+let foundNPC = false;
+
 //this fn show the NPC details deets
 npcCanvas.addEventListener("mousemove", function (event) {
   const rect = npcCanvas.getBoundingClientRect();
   const x = event.clientX - rect.left;
   const y = event.clientY - rect.top;
-  let foundNPC = false;
   for (const npc of npcs) {
     const distance = Math.sqrt((x - npc.x) ** 2 + (y - npc.y) ** 2);
     if (distance < 10) {
       // Adjust the value based on your needs
+      console.log('found npc ' + npc.name)
       showNPCInfo(npc);
       foundNPC = true;
+  infoPanel.style.visibility = 'visible'
+
       break;
     }
   }
 
-/*   
-  if (!foundNPC) {
-    infoPanel.style.display = "none";
-  }
- */
 
+ 
+ 
+
+  
+  
 
 });
 
-const infoPanel = document.getElementById("infoPanel");
+
 
 //npc card details
 function showNPCInfo(npc) {
  // infoPanel.style.left = `${npc.x}px`;
  // infoPanel.style.top = `${npc.y}px`;
  // infoPanel.style.display = "block";
+ //infoPanel.style.visibility = "visible";
+
   let emoji;
   if (npc.race === "Purries") {emoji = "🐈";}
   if (npc.race === "Kurohi") {emoji = "🧛‍♂️";}
   if (npc.race === "Elf") {emoji = "🧝‍♂️";}
 
-
   let infoHtml = `
-
-  <strong>${npc.name} ${
+  <strong style="font-size: 23px;">${npc.name} ${
     npc.sex === "male" ? "♂" : "♀"
   }</strong><br/>
   Race: ${npc.race}  ${emoji}<br/>
   Age: <strong>${npc.age}</strong><br/>
   #${npc.myNumber}<br/><br/>`;
-
   // Check if parents exist before adding parent information
   if (npc.parents && npc.parents.length > 0) {
     infoHtml += `<br/>Parent: ${npc.parents[0].name}, ${npc.parents[0].race}`;
   }
-
-
   if (npc.spouse) {
-    infoHtml += `<br/>Married to: <strong> ${npc.spouse} 💍</strong><br/>`;
+    infoHtml += `<br/>Married to: <strong> ${npc.spouse} 💍</strong><br/> `;
   }
-
-  if (!npc.profession) {
-    infoHtml += `${npc.profession}       $ ${npc.salary}<br/> `}
-
+  infoHtml += `<br/>Profession:<br/>${npc.profession}       
+  <span style="color: green;">$ ${npc.salary}</span><br/> `;
   if (npc.children.length > 0) {
     infoHtml += `<br/><strong>${npc.children.length} kids:</strong><ul>`;
     npc.children.forEach((child) => {
@@ -290,7 +296,12 @@ function showNPCInfo(npc) {
   const infoPanel = document.getElementById('infoPanel'); // Make sure to get the infoPanel element
   infoPanel.innerHTML = infoHtml; // Set the content of infoPanel
   infoPanel.appendChild(imgElement); // Append the image to infoPanel
+
+
 }
+
+
+
 
 
 

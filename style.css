@@ -408,7 +408,7 @@ button:disabled {
 
 /* displays individual npc info */
 #infoPanel {
-    background-color: #454a3fdb;
+    background-color: #454a3f;
     padding: 20px;
     margin: 5px;
     border: 3px solid green;

@@ -19,6 +19,7 @@ class NPC {
     this.parents = parents || null; // Set parents to null when not provided
 
 
+   
     if (age >= 20) {
       this.profession = this.generateProfession(this.age, this.race);
       this.salary = this.calculateSalary();

@@ -58,7 +58,7 @@ function gameLoop() {
         npc.profession = npc.generateProfession(npc.age);
         npc.salary = npc.calculateSalary();
     
-        console.log(`🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗${npc.name} is now a ${npc.profession} with $${npc.salary}`);
+        console.log(`🚗🛠🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗 ${npc.name} is now a ${npc.profession}, Salary: $${npc.salary}`);
       }
   });
 
