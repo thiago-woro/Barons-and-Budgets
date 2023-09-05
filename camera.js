@@ -143,7 +143,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-
+/* 
 /// TO-DO ACCOUNT FOR CURRENT CANVAS ZOOM
 function highlightCellOnMouseOver(container, ctx, cellSize) {
   container.addEventListener("mousemove", function (event) {
@@ -157,7 +157,8 @@ function highlightCellOnMouseOver(container, ctx, cellSize) {
 
     //console.log(`Mouse is over cell: X = ${cellCol}, Y = ${cellRow}`);
 
-    // Clear the entire npcCanvas
+    // Clear the entire canvas to avoid drawing on the screen
+    //important, pass an empty canvas as
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
     // Draw a red overlay on the npcCanvas
@@ -165,14 +166,166 @@ function highlightCellOnMouseOver(container, ctx, cellSize) {
     ctx.fillRect(cellCol * cellSize, cellRow * cellSize, cellSize, cellSize);
  }});
 }
-
-
 // Attach the event listener to the canvas container and draw on npcCanvas
 highlightCellOnMouseOver(container, boatCtx, cellSize);
+ */
+
+function highlightAdjacentCellsOnMouseOver(container, ctx, cellSize) {
+  const adjacentCells = [];
+
+  container.addEventListener("mousemove", function (event) {
+    if (!isDragging) {
+      const rect = container.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+
+      const cellRow = Math.floor(y / cellSize);
+      const cellCol = Math.floor(x / cellSize);
+
+      // Define the offsets for adjacent cells
+      const offsets = [
+        { row: -1, col: -1 },
+        { row: -1, col: 0 },
+        { row: -1, col: 1 },
+        { row: 0, col: -1 },
+        { row: 0, col: 0 }, // Highlight the current cell as well
+        { row: 0, col: 1 },
+        { row: 1, col: -1 },
+        { row: 1, col: 0 },
+        { row: 1, col: 1 },
+      ];
+
+      adjacentCells.length = 0; // Clear the previous adjacent cells
+
+      // Calculate and store the positions of adjacent cells
+      for (const offset of offsets) {
+        const adjacentRow = cellRow + offset.row;
+        const adjacentCol = cellCol + offset.col;
+        if (
+          adjacentRow >= 0 &&
+          adjacentRow * cellSize < ctx.canvas.height &&
+          adjacentCol >= 0 &&
+          adjacentCol * cellSize < ctx.canvas.width
+        ) {
+          adjacentCells.push({ row: adjacentRow, col: adjacentCol });
+        }
+      }
+
+      // Clear the entire canvas to avoid drawing on the screen
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+      // Draw a red overlay on the adjacent cells
+      ctx.fillStyle = 'rgba(255, 0, 0, 0.5)'; // Semi-transparent red
+      for (const cell of adjacentCells) {
+        ctx.fillRect(
+          cell.col * cellSize,
+          cell.row * cellSize,
+          cellSize,
+          cellSize
+        );
+      }
+    }
+  });
+  console.dir(adjacentCells);
+
+  return adjacentCells; // Return the array of adjacent cells
+}
+
+highlightAdjacentCellsOnMouseOver(container, boatCtx, cellSize);
+
+
+///this works - do not delete
+function getAdjacentCells(targetCell) {
+  const { row: targetRow, col: targetCol } = targetCell;
+
+  // Define the offsets for adjacent cells
+  const offsets = [
+    { row: -1, col: -1 },
+    { row: -1, col: 0 },
+    { row: -1, col: 1 },
+    { row: 0, col: -1 },
+    { row: 0, col: 0 }, // Target cell
+    { row: 0, col: 1 },
+    { row: 1, col: -1 },
+    { row: 1, col: 0 },
+    { row: 1, col: 1 },
+  ];
+
+  const adjacentCells = [];
+
+  // Calculate and store the positions of adjacent cells relative to the target cell
+  for (const offset of offsets) {
+    const adjacentRow = targetRow + offset.row;
+    const adjacentCol = targetCol + offset.col;
+    adjacentCells.push({ row: adjacentRow, col: adjacentCol });
+  }
+
+  return adjacentCells;
+}
+
+
+///this works - do not delete
+function drawNearCells(ctx, x, y, color, radius) {
+  const adjacentCells = [];
+
+  for (let r = 1; r <= radius; r++) {
+    for (let angle = 0; angle < 360; angle += 45) {
+      const radians = (angle * Math.PI) / 180;
+      const adjacentRow = y + Math.round(Math.sin(radians) * r);
+      const adjacentCol = x + Math.round(Math.cos(radians) * r);
+
+      const adjacentX = adjacentCol * cellSize; // Make sure to define cellSize
+      const adjacentY = adjacentRow * cellSize; // Make sure to define cellSize
+      const width = cellSize; // Make sure to define cellSize
+      const height = cellSize; // Make sure to define cellSize
+
+      ctx.fillStyle = color;
+      ctx.fillRect(adjacentX, adjacentY, width, height);
+
+      adjacentCells.push({ row: adjacentRow, col: adjacentCol });
+    }
+  }
+
+  return adjacentCells;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 //mouse clicks canvas map
 function logCellOnClick(container, ctx, cellSize) {
+  console.log(`loading cell logger`);
   container.addEventListener("click", function(event) {
     if (!isDragging) {
       // Calculate the mouse position within the container.
@@ -189,14 +342,52 @@ function logCellOnClick(container, ctx, cellSize) {
       ctx.fillStyle = 'purple'; 
       ctx.fillRect(cellCol * cellSize, cellRow * cellSize, cellSize, cellSize);
 
-      leftClick(cellCol, cellRow, npcCtx, cellSize);
+      //leftClick(cellCol, cellRow, npcCtx, cellSize);
+      //  const adjacentCells = getAdjacentCells(cellCol, cellRow, 3, 5, 5);  //didnt work use 
 
     }
   });
 }
 
 // Example of how to use the function, assuming the container, npcCtx, and cellSize are already defined.
-logCellOnClick(container, boatCtx, cellSize);
+//  logCellOnClick(container, boatCtx, cellSize); // OG FUNCTION - THIS WORKS OK
+
+
+  container.addEventListener("click", function (event) {
+    const rect = container.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    const cellRow = Math.floor(y / cellSize);
+    const cellCol = Math.floor(x / cellSize);
+
+    // Define the offsets for adjacent cells
+    const offsets = [
+      { row: -1, col: -1 },
+      { row: -1, col: 0 },
+      { row: -1, col: 1 },
+      { row: 0, col: -1 },
+      { row: 0, col: 0 }, // Clicked cell
+      { row: 0, col: 1 },
+      { row: 1, col: -1 },
+      { row: 1, col: 0 },
+      { row: 1, col: 1 },
+    ];
+
+    const adjacentCells = [];
+
+    // Calculate and store the positions of adjacent cells
+    for (const offset of offsets) {
+      const adjacentRow = cellRow + offset.row;
+      const adjacentCol = cellCol + offset.col;
+      adjacentCells.push({ row: adjacentRow, col: adjacentCol });
+    }
+
+    console.log("Clicked cell:", { row: cellRow, col: cellCol });
+    console.log("Adjacent cells:", adjacentCells);
+    console.dir(adjacentCells);
+
+  });
 
 
 function leftClick(x, y, npcCtx, cellSize) {
@@ -212,51 +403,6 @@ drawRectanglesBetweenHouses(houses, treeCtx);
   
   // Optionally alert the user
   //alert(`House drawn at ${x}, ${y}. Current home value: ${newHouse.homeValue}`);
-}
-
-
-
-
-function drawRectanglesBetweenHouses(houses, ctx) {
-  const lineHeight = Math.floor(Math.random() * 7) + 1;
-  const verticalSpacing = Math.floor(Math.random() * 50) + 1;
-
-  const borderRadius = Math.floor(Math.random() * 6) + 1;
-
-  // Define an array of color options
-  const colorOptions = [
-      "#648a3b", "#9ac558","#9ac558","#9ac558",  // Muddy brown with low opacity
-      "rgba(92, 128, 0, 0.5)",    "rgba(139, 69, 19, 0.5)",   // Old grass green with low opacity
-      "rgba(240, 230, 140, 0.5)"  // Yellowish sand with low opacity
-  ];
-
-  for (let i = 0; i < houses.length - 1; i++) {
-      const house1 = houses[i];
-      const house2 = houses[i + 1];
-
-      const x1 = house1.x;
-      const y1 = house1.y;
-
-      const x2 = house2.x;
-      const y2 = house2.y;
-
-      const distance = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
-      const baseAngle = Math.atan2(y2 - y1, x2 - x1);
-
-      for (let y = 0; y <= distance; y += lineHeight + verticalSpacing) {
-          const randomOffset = (Math.random() - 0.5) * lineHeight * 0.5; // Adjust the range and factor as needed
-          const angleVariation = (Math.random() - 0.5) * Math.PI / 72; // Smaller angle variation range
-          const angle = baseAngle + angleVariation;
-
-          const x = x1 + (Math.cos(angle) * y) + randomOffset;
-          const yCoord = y1 + (Math.sin(angle) * y);
-
-          // Select a random color from the colorOptions array
-          const randomColor = colorOptions[Math.floor(Math.random() * colorOptions.length)];
-
-          drawRoundedRect(pathCtx, x, yCoord, lineHeight, lineHeight, borderRadius, randomColor);
-      }
-  }
 }
 
 

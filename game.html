@@ -17,7 +17,9 @@
 
 </head>
 
-<div id="infoPanel" style="position: absolute; display: none; z-index: 2000;"></div>
+<div id="infoPanel" style="position: absolute; display: block; z-index: 2000; bottom: 0;">
+<img src="./assets/Races/purries/female/1.jpg" style="height: 200px; width: 200px;">
+</div>
 
 <div id="welcomeScreen" class="">
 <div id="welcomePopup"">
@@ -41,10 +43,12 @@
             <canvas id="groundCanvas"  style="z-index: 10;"></canvas>
             <canvas id="waterCanvas"  style="z-index: 20;"></canvas>
             <canvas id="path"  style="z-index: 15;"></canvas>
-            <canvas id="treeCanvas"  style="z-index: 40;"></canvas>
+            <canvas id="oreDeposits"  style="z-index: 40;"></canvas>
+            <canvas id="treeCanvas"  style="z-index: 41;"></canvas>
+            <canvas id="npcInfoOverlay"  style="z-index: 42; visibility: hidden;"></canvas>
             <canvas id="boatCanvas"  style="z-index: 50;"></canvas>
             <canvas id="npcCanvas"  style="z-index: 99;"></canvas>
-
+            <canvas id="homes"  style="z-index: 98;"></canvas>
         </div>
 
         <div id="bottomToolBar" >
@@ -195,34 +199,34 @@
 <div id="welcomeScreenRaceSelector" class="col" style="width: fit-content;">
     
     <h1>Only one will prevail, to the perish of others... Choose:</h1>
-    <div class="row">
+    <div class="row" style="background-color: #423d3e;">
     
     <div class="race-card" id="purriesWelcomeSelector">
         <img src="./assets/Races/purries/female/2704f469aae11b8b26442e33d7df6f59ff43085e.png" alt="Purries Image" class="race-image">
         <h2 class="race-title">Purries</h2>
-        <p class="race-description">Purries are gluttons. Bards, artists, and drunks.
-            They love to gamble, some are good chefs, poets. They have the shortest lifespan, maybe that's why they don't have a slave race to help them mine.</p>
+        <p class="race-description">Purries are gluttons. Bards, artists, and drunks.</p><p>
+            They love to <span style="color: rgb(106, 81, 18);">gamble</span>, some are good chefs, poets. They have the shortest lifespan, maybe that's why they don't have a slave race to help them mine.</p>
     </div>
 
     <div id="kurohiWelcomeSelector" class="race-card">
         <img src="./assets/Races/dark magicians/male/kurohi-1.png" alt="Kurohi Image" class="race-image">
         <h2 class="race-title">Kurohi</h2>
-        <p class="race-description">They say Kurohi wear robes to protect their skin, which has a burned, ashy-like appearance. They are mostly evil and corrupted and strangely have customs and professions of a long-extinct race, "humans." They mostly don't mine and use Zombies as mining slaves.</p>
+        <p class="race-description">They say Kurohi wear robes to protect their skin, which has a burned, ashy-like appearance. </p><p>Mostly are evil and corrupted. Strangely, their customs and professions resemble of a long-extinct race, "humans"  </p><p> They created a <span style="color: rgb(28, 28, 28);">zombie</span> race as mining slaves.</p>
     </div>
 
     <div class="race-card">
         <img src="./assets/Races/elfs/female/5.png" alt="Elf Image" class="race-image">
         <h2 class="race-title">Elves</h2>
-        <p class="race-description">On the outside, the Elven civilization looks like the most technologically advanced. They have a strong caste system that favors the rich and makes sure the labor force stays poor. Besides that, they also created slave bots.</p>
+        <p class="race-description">On the outside, the Elven civilization looks like the most technologically advanced. They have a strong <span style="color: rgb(87, 22, 87);">caste</span> system that favors the rich and makes sure the labor force stays poor. Besides that, they also created slave bots.</p>
     </div>
     <div>
     </div>
 		
   <!--     <script src="./simulation.js"></script> -->
+  <script src="globalvariables.js"></script>
+  <script src="./uitools.js"></script>
 		<script src="perlin.js"></script>
      <script src="./mapGen.js"></script>
-     <script src="./uitools.js"></script>
-     <script src="./arrays.js"></script>
      <script src="./npcClass.js"></script>
      <script src="./npcs.js"></script>
      <script src="./homes.js"></script>

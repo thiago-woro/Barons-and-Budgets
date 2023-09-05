@@ -41,6 +41,9 @@
     border-top: 1px solid var(--gold);
     bottom: 0;
     margin: 0px;
+    background-color: #3a3334;
+    box-shadow: -10px 10px 10px #00000080;
+
   }
 
 
@@ -402,6 +405,8 @@ button:disabled {
     max-height: 70vh;
 }
 
+
+/* displays individual npc info */
 #infoPanel {
     background-color: #454a3fdb;
     padding: 20px;
@@ -409,6 +414,8 @@ button:disabled {
     border: 3px solid green;
     border-radius: 20px;
     line-height: 1.5;
+    max-width: 500px;
+    max-height: 500px;
 }
 
 
@@ -450,6 +457,8 @@ button:disabled {
 cursor: url(./assets/cursor/glove1.cur), auto;
 transition: box-shadow 1s;
 transition: scale 1s;
+box-shadow: inset -10px -10px 10px #00000080;
+
 }
 
 .race-card:hover {
@@ -483,6 +492,11 @@ transition: scale 1s;
 .race-description {
     font-size: 16px;
     margin-top: 10px;
-    color: #5b5b5b; /* Dark gray description text */
+}
+
+.race-card p {
+    text-align:left;
     color: var(--bg);
+    margin-left: 5px;
+    font-size: 13px;
 }

@@ -1,15 +1,7 @@
 
 
 
-let year = 2700;
-const startingPopulation = 10;
-const populationIncreaseSpeed = 0.15;
-let isPaused = false;
-var deathRate = 0.001;
-let npcSize = cellSize;
-let babies = [];
-let maxPop = 100
-let populationLimit = 300;
+
 
 //game loop speed control
 const gameSpeedSlider = document.getElementById("gameSpeedSlider");
@@ -79,8 +71,11 @@ function gameLoop() {
 
   sortNPCTable()
 
-  npcCtx.clearRect(0, 0, npcCanvas.width, npcCanvas.height); // Clear the canvas
 
+  clearCanvas(npcCtx);
+  clearCanvas(npcInfoOverlayCtx);
+
+ 
     // This will move and redraw each NPC, including new babies
     npcs.forEach(npc => {
       npc.move();
@@ -167,7 +162,7 @@ function coupleMaker(npcs) {
     }
     return false;
   });
-  console.log(`Started marrying people, Found: ${maleCandidates.length} 👨`);
+ // console.log(`Started marrying people, Found: ${maleCandidates.length} 👨`);
 
   // Function2: Filter maleCandidates for ages between 22 and 40
   const ageFilteredCandidates = maleCandidates.filter((npc) => {
@@ -179,12 +174,8 @@ function coupleMaker(npcs) {
       //console.log(`[Rule 2] ${npc.name} is filtered out due to having a spouse.`);
       return false;
     }
-    console.log(
-      `Candidate: ${npc.emoji} ${npc.name}, ${npc.age}, single, ${npc.profession}.`
-    );
     return true;
   });
-  console.log(`Found: ${ageFilteredCandidates.length} reproductive males 🤵`);
 
   // 3) Loop through ageFilteredCandidates and update their spouse
   ageFilteredCandidates.forEach((npc) => {
@@ -216,7 +207,7 @@ function coupleMaker(npcs) {
         newHouse.addInhabitant(randomSpouse); // Add the second NPC to the house
       
         houses.push(newHouse);
-        newHouse.draw(treeCtx);
+        newHouse.draw(homesCtx);
         console.log(`${npc.name} married ${randomSpouse.name} 👰🤵👰🤵👰🤵👰🤵`);
       }
       
@@ -229,7 +220,7 @@ function babyMaker(npcs) {
     return 
   }
     
-  if (npcs.length < maxPop) {
+  if (npcs.length < maxLandPopulation) {
 
   npcs.forEach((parentNPC) => {
     if (parentNPC.spouse) {
@@ -239,7 +230,7 @@ function babyMaker(npcs) {
         // Check the number of children the couple has
         const numberOfChildren =
           parentNPC.children.length;
-          //TODO 🈵🈵🈵🈵🈵🈵
+          //TODO 🈵
 
 
         // Decrease the chance to 0 if they have 3 or more children
@@ -250,11 +241,18 @@ function babyMaker(npcs) {
             `${parentNPC.name} and ${spouse.name} are trying to make a baby... 👶🍼, \r\nThey have ${numberOfChildren}`
           );
 
+          let myParents = [parentNPC, spouse]
+
+    console.error('parents: ' , myParents.length)
+    console.dir(myParents)
+
+
+
           const newChild = new NPC(
             parentNPC.x,
             parentNPC.y,
-            cellSize,
-            npcs.length + 1
+            npcs.length + 1,
+            myParents
           );
 
           const randomIndex = Math.floor(Math.random() * groundCells.length);
@@ -273,7 +271,7 @@ function babyMaker(npcs) {
             `Born: ${newChild.name}, #${newChild.myNumber}, AGE: ${newChild.age}, is born to ${parentNPC.name} and ${spouse.name}! 🍼`
           );
 
-          addNotification("Birth", "New Baby", "A new baby has been born!");
+          addNotification("Birth", "New Baby", `${newChild.name} has been born! - ${newChild.race}`);
 
 
 
@@ -340,6 +338,7 @@ function updatePopulationChart(year, population, medianAge) {
 }
 
 
+//console.log("ground cells array: \n\n", groundCells, "\n\n\n")
 
 function startNPCs(ctx, cellSize) {
 
@@ -356,23 +355,50 @@ function startNPCs(ctx, cellSize) {
   }
 
   npcs.forEach((npc) => {
-    const previousAge = npc.age;
     npc.age = Math.floor(Math.random() * 16) + 20;
-
-    // console.log(`${npc.emoji} ${npc.name} age changed from ${previousAge} to ${npc.age}`);
   });
 
   npcs.forEach((npc) => {
-    const randomIndex = Math.floor(Math.random() * groundCells.length);
-    const selectedCell = groundCells[randomIndex];
-    npc.x = selectedCell.x * cellSize;
-    npc.y = selectedCell.y * cellSize;
     drawNPC(npc, ctx, cellSize);
     addNPCToTable(npc);
   });
 
   npcTableHeader.textContent = `Total Population ${npcs.length}`;
 }
+
+
+
+
+
+
+
+function getRandomGroundCellPosition() {
+  let randomXposition, randomYposition;
+  do {
+    randomXposition = Math.floor(Math.random() * 51) - 25;
+    randomYposition = Math.floor(Math.random() * 51) - 25;
+  } while (!isPositionOnGround(randomXposition, randomYposition));
+  return { x: randomXposition, y: randomYposition };
+}
+
+function isPositionOnGround(x, y) {
+  // Calculate the grid cell coordinates for the given x and y
+  const gridX = Math.floor(x / cellSize);
+  const gridY = Math.floor(y / cellSize);
+
+  // Check if the grid coordinates are valid and correspond to a ground cell
+  if (
+    gridX >= 0 &&
+    gridX < terrainMap[0].length &&
+    gridY >= 0 &&
+    gridY < terrainMap.length
+  ) {
+    return terrainMap[gridY][gridX] !== WATER_COLOR; // Replace WATER_COLOR with the color code for water cells
+  }
+
+  return false; // The position is out of bounds
+}
+
 
 
 function drawNPC(npc, ctx) {
@@ -385,12 +411,25 @@ function drawNPC(npc, ctx) {
   } else {
     emoji = npc.sex === "male" ? "👨" : "👩";
   }
+
+   // Check if npc.race is equal to "Purries" and set emoji accordingly
+   if (npc.race === "Purries") {
+    emoji = "🐈";
+  }
+
+
+  if (npc.race === "Kurohi") {
+    emoji = "🧛‍♂️";
+  }
+
+
   ctx.font = "bold 20px Arial"; // Increase font size for the emoji
   ctx.fillText(emoji, npc.x, npc.y);
+  //draw names
   const text = `${npc.name}, ${npc.age}`;
-  ctx.fillStyle = 'black';
-  ctx.font = "900 15px Arial"; // Use a bolder font weight
-  ctx.fillText(text, npc.x, npc.y + 25); // Adjust Y-coordinate for the text
+  npcInfoOverlayCtx.fillStyle = 'black';
+  npcInfoOverlayCtx.font = "900 15px Arial"; // Use a bolder font weight
+  npcInfoOverlayCtx.fillText(text, npc.x, npc.y + 25); // Adjust Y-coordinate for the text
 }
 
 

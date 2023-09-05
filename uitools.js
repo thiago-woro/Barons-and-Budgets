@@ -1,3 +1,84 @@
+
+function setupCanvas(canvasId, width, height) {
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext("2d");
+
+  canvas.width = width; // Set canvas width to the specified width
+  canvas.height = height; // Set canvas height to the specified height
+
+  return [canvas, ctx];
+}
+
+const container = document.getElementById("canvas-content");
+const containerWidth = container.offsetWidth; // Use offsetWidth instead of container
+const containerHeight = container.offsetHeight; // Use offsetHeight instead of container
+
+const [npcCanvas, npcCtx] = setupCanvas(
+  "npcCanvas",
+  containerWidth,
+  containerHeight
+);
+const [groundCanvas, groundCtx] = setupCanvas(
+  "groundCanvas",
+  containerWidth,
+  containerHeight
+);
+
+const [waterCanvas, waterCtx] = setupCanvas(
+  "waterCanvas",
+  containerWidth,
+  containerHeight
+);
+
+
+const [treeCanvas, treeCtx] = setupCanvas(
+  "treeCanvas",
+  containerWidth,
+  containerHeight
+);
+
+const [boatCanvas, boatCtx] = setupCanvas(
+  "boatCanvas",
+  containerWidth,
+  containerHeight
+);
+
+const [minimapCanvas, minimapCtx] = setupCanvas(
+  "minimap",
+  containerWidth,
+  containerHeight
+);
+
+const [pathCanvas, pathCtx] = setupCanvas(
+  "path",
+  containerWidth,
+  containerHeight
+);
+
+const [npcInfoOverlayCanvas, npcInfoOverlayCtx] = setupCanvas(
+  "npcInfoOverlay",
+  containerWidth,
+  containerHeight
+);
+
+const [oreDepositsCanvas, oreDepositsCtx] = setupCanvas(
+  "oreDeposits",
+  containerWidth,
+  containerHeight
+);
+const [homesCanvas, homesCtx] = setupCanvas(
+  "homes",
+  containerWidth,
+  containerHeight
+);
+
+
+
+
+
+
+
+
 // Function to toggle the visibility of a tab and show the most recent clicked tab
 function toggleTab(tabId) {
   const tab = document.getElementById(tabId);
@@ -22,7 +103,6 @@ function toggleTab(tabId) {
   tabButton.classList.add("active");
 }
 
-let hideMenu = true;
 
 // Function to toggle the visibility of a tab and show the most recent clicked tab
 function hideTabs() {
@@ -129,7 +209,7 @@ function addNotification(category, title, message, npcs, color) {
   tableBody.appendChild(newRow);
 }
 
-//this fn show the NPC details
+//this fn show the NPC details deets
 npcCanvas.addEventListener("mousemove", function (event) {
   const rect = npcCanvas.getBoundingClientRect();
   const x = event.clientX - rect.left;
@@ -144,31 +224,46 @@ npcCanvas.addEventListener("mousemove", function (event) {
       break;
     }
   }
+
+/*   
   if (!foundNPC) {
     infoPanel.style.display = "none";
   }
+ */
+
+
 });
 
 const infoPanel = document.getElementById("infoPanel");
 
 //npc card details
 function showNPCInfo(npc) {
-  infoPanel.style.left = `${npc.x}px`;
-  infoPanel.style.top = `${npc.y}px`;
-  infoPanel.style.display = "block";
+ // infoPanel.style.left = `${npc.x}px`;
+ // infoPanel.style.top = `${npc.y}px`;
+ // infoPanel.style.display = "block";
+  let emoji;
+  if (npc.race === "Purries") {emoji = "🐈";}
+  if (npc.race === "Kurohi") {emoji = "🧛‍♂️";}
+  if (npc.race === "Elf") {emoji = "🧝‍♂️";}
+
 
   let infoHtml = `
-  #${npc.myNumber}<br/>
-  ${npc.race}<br/>
 
-  <strong>${npc.emoji} ${npc.name} ${
+  <strong>${npc.name} ${
     npc.sex === "male" ? "♂" : "♀"
   }</strong><br/>
-  <strong>Age:</strong> ${npc.age}<br/>
-`;
+  Race: ${npc.race}  ${emoji}<br/>
+  Age: <strong>${npc.age}</strong><br/>
+  #${npc.myNumber}<br/><br/>`;
+
+  // Check if parents exist before adding parent information
+  if (npc.parents && npc.parents.length > 0) {
+    infoHtml += `<br/>Parent: ${npc.parents[0].name}, ${npc.parents[0].race}`;
+  }
+
 
   if (npc.spouse) {
-    infoHtml += `<strong>💍 </strong> ${npc.spouse}<br/>`;
+    infoHtml += `Married to: <strong> ${npc.spouse} 💍</strong><br/>`;
   }
 
   if (npc.age > 21) {
@@ -179,12 +274,13 @@ function showNPCInfo(npc) {
   }
 
   if (npc.children.length > 0) {
-    infoHtml += `<strong>${npc.children.length} kids:</strong><ul>`;
+    infoHtml += `<br/><strong>${npc.children.length} kids:</strong><ul>`;
     npc.children.forEach((child) => {
       infoHtml += `<li>${child.name} - ${child.age}</li>`;
     });
     infoHtml += `</ul>`;
   }
+  
 
   infoPanel.innerHTML = infoHtml;
 }

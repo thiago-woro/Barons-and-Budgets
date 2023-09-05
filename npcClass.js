@@ -1,5 +1,5 @@
 class NPC {
-  constructor(x, y, cellSize, myNumber) {
+  constructor(x, y, myNumber, parents) {
     this.x = x * cellSize;
     this.y = y * cellSize;
     this.race = this.chooseRace();
@@ -17,6 +17,7 @@ class NPC {
     this.children = []; // Array to store children
     this.emoji = this.generateRandomEmoji();
     this.myNumber = myNumber; // Sequential number for creation order
+    this.parents = parents || null; // Set parents to null when not provided
   }
 
   move() {
@@ -76,11 +77,21 @@ class NPC {
     }
   }
 
+
+
   chooseRace() {
-    const race = ["Elf", "Purries", "Kurohi"];
-    const randomIndex = Math.floor(Math.random() * race.length);
-    return race[randomIndex];
+
+    if (this.parents && this.parents.length > 0) {
+    console.error('parents: ' + this.parents.length)
+
+      return this.parents[0].race; // Set race to the race of the first parent
+    } else {
+      const race = ["Elf", "Purries", "Kurohi"];
+      const randomIndex = Math.floor(Math.random() * race.length);
+      return race[randomIndex];
+    }
   }
+
 
   addChild(childNPC) {
     if (!this.children) {
