@@ -15,8 +15,19 @@ let terrainMap = [];
 let groundCells = [];
 let waterCells = [];
 let trees = [];
+const treePositions = [];  //array format: treePositions.push({ x, y, emoji: selectedEmoji });
+
 let treePercentageofLand = 0.07
 let usableLand = 0.045
+
+let flatLandCells = [];
+
+
+
+
+
+
+
 
 
 //npcs

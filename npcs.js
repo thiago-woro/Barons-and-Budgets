@@ -245,6 +245,17 @@ function createHouseForCouple(npc1, npc2) {
     houses.push(newHouse);
     newHouse.draw(homesCtx);
   }
+
+
+
+      addNotification(
+        "Economy",
+        `🏡 New House built! `,
+        `${newHouse.x}, ${newHouse.y}`,
+        npc1,
+        "#4f753c"
+      );
+
 }
 
 
@@ -357,17 +368,26 @@ function updatePopulationChart(year, population, medianAge) {
   populationChart.update();
 }
 
-//console.log("ground cells array: \n\n", groundCells, "\n\n\n")
 
 function startNPCs(ctx, cellSize) {
+
+//more suitable for Houses
+flatLandCells = groundCells.filter(cell => {
+  const noiseValue = parseFloat(cell.noise);
+  return noiseValue >= 0.2 && noiseValue <= 0.245;
+});
+
+
+console.log(`From ${groundCells.length} down to  ${flatLandCells.length}`)
+
   // Calculate the maximum index based on the size of the groundCells array.
-  const maxIndex = Math.min(30, groundCells.length);
+  const maxIndex = Math.min(30, flatLandCells.length);
 
   for (let i = 0; i < startingPopulation && maxIndex > 0; i++) {
     // Only select from the first 'maxIndex' cells.
     const randomIndex = Math.floor(Math.random() * maxIndex);
 
-    const selectedCell = groundCells.splice(randomIndex, 1)[0];
+    const selectedCell = flatLandCells.splice(randomIndex, 1)[0];
     const npc = new NPC(selectedCell.x, selectedCell.y, cellSize, i + 1);
     npcs.push(npc);
   }

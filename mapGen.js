@@ -225,7 +225,6 @@ function startTrees(ctx, cellSize) {
   treeCount = groundCells.length * treePercentageofLand;
   console.log("will draw " + treeCount.toFixed(0) + " trees");
 
-  const treePositions = [];
 
   // Sort groundCells by noise value from lowest to highest
   groundCells.sort((a, b) => a.noise - b.noise);
@@ -275,6 +274,8 @@ function startTrees(ctx, cellSize) {
 function drawTrees(ctx, cellSize, treePositions, occupiedCells) {
   clearCanvas(ctx);
 
+  console.log('drawing trees 🌵🌵')
+
   treePositions.sort((a, b) => {
     if (a.y === b.y) {
       // If Y coordinates are the same, sort by X coordinates in descending order
@@ -311,6 +312,7 @@ function drawTrees(ctx, cellSize, treePositions, occupiedCells) {
     ctx.font = "bold 20px Arial";
     ctx.fillText(tree.emoji, x, y);
   });
+
 }
 
 function distributeOreDeposits(ctx) {
