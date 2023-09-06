@@ -1,20 +1,14 @@
-
-
-
-
-
 //game loop speed control
 const gameSpeedSlider = document.getElementById("gameSpeedSlider");
 const gameSpeedValue = document.getElementById("gameSpeedValue");
 let gameLoopInterval = null;
-let gameLoopSpeed = 3000 / parseInt(gameSpeedSlider.value);
+let gameLoopSpeed = 3000 / parseInt(gameSpeedSlider.value); //300 = super fast  //30000 super slow
 
 gameSpeedSlider.addEventListener("input", function () {
   const newGameSpeed = parseInt(this.value);
   gameLoopSpeed = 10000 / newGameSpeed;
   gameSpeedValue.textContent = `Game Speed: ${newGameSpeed}`;
 });
-
 
 startButton.addEventListener("click", function () {
   if (gameLoopInterval === null) {
@@ -41,10 +35,11 @@ function gameLoop() {
     playStatusImg.style.display = "block";
   }
 
-  year++;
-  updateUIbottomToolbar()
-  updatePopulationChart(year, npcs.length);
+  let totalSalaries = 0; // Variable to store the sum of all salaries
+  let salaryCount = 0; // Variable to store the number of NPCs with salaries
 
+  year++;
+  updatePopulationChart(year, npcs.length);
 
   npcTableHeader.textContent = `Total Population ${npcs.length}`;
 
@@ -52,69 +47,76 @@ function gameLoop() {
   npcs.forEach((npc) => {
     npc.ageAndDie();
 
-      // Check if NPC is older than 20 and has an empty profession
-        if (!npc.profession || (npc.age >= 20 && npc.profession === "novice")) {
-        // Use the generateProfession method to assign a profession
-        npc.profession = npc.generateProfession(npc.age);
-        npc.salary = npc.calculateSalary();
-    
-        console.log(`🚗🛠🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗🚗 ${npc.name} is now a ${npc.profession}, Salary: $${npc.salary}`);
-      }
+    // Check if NPC is older than 20 and has an empty profession
+    if (!npc.profession || (npc.age >= 20 && npc.profession === "novice")) {
+      // Use the generateProfession method to assign a profession
+      npc.profession = npc.generateProfession(npc.age);
+      npc.salary = npc.calculateSalary();
+
+      addNotification(
+        "Economy",
+        `🔨 ${npc.name} is now a ${npc.profession}`,
+        `Salary: $${npc.salary}`,
+        npc,
+        "#4a7ba8"
+      );
+    }
+
+    if (npc.salary > 0) {
+      totalSalaries += npc.salary;
+      salaryCount++;
+    }
   });
 
-  console.log("Total deaths this loop: " + deathsThisLoop);
-  console.log(
-    `%cPopulation: ${npcs.length} 👥`,
-    "font-weight: 900; color: red;"
-  );
+  // Calculate the medium salary (average salary) if at least one NPC has a salary
+  let mediumSalary = salaryCount > 0 ? totalSalaries / salaryCount : 0;
+  //  console.error(`medium salary: ${mediumSalary} total salaries: ${totalSalaries}, salary count: ${salaryCount}`);
+  updateUIbottomToolbar(totalSalaries);
 
   coupleMaker(npcs);
   babyMaker(npcs);
-  console.log("Total: " + babies.length + " born");
+  //console.log("Total: " + babies.length + " born");
 
-  sortNPCTable()
-
+  //sortNPCTable();
 
   clearCanvas(npcCtx);
   clearCanvas(npcInfoOverlayCtx);
 
- 
-    // This will move and redraw each NPC, including new babies
-    npcs.forEach(npc => {
-      npc.move();
-      drawNPC(npc, npcCtx);
-    });
+  // This will move and redraw each NPC, including new babies
+  npcs.forEach((npc) => {
+    npc.move();
+    drawNPC(npc, npcCtx);
 
-  document.getElementById("currentPopulation").textContent = npcs.length;
-  document.getElementById("growthRate").textContent = populationIncreaseSpeed;
-  document.getElementById("gameSpeed").textContent =
+    //console.log(`${npc.name} - ${npc.profession}  $ ${npc.salary}`);
+  });
+
+
+  //growthRate.textContent = populationIncreaseSpeed;
+  currentPopulation.textContent = npcs.length;
+  gameSpeed.textContent =
     "x " + gameLoopSpeed.toFixed(0);
-  document.getElementById("economicGDP").textContent = "$ " + economicGDP;
-  console.log("End of year " + year + "🏁");
+  //economicGDP.textContent = "$ " + economicGDP;
+  // console.log("End of year " + year + "🏁");
 
   // Game over condition
   if (npcs.length < 2) {
     console.log("Game over! Population reached below 2.");
     isPaused = true;
     playStatusImg.style.display = "none";
-  } 
+  }
 }
-
-
-
 
 //start Colony
 // Assuming terrainMap and noiseValues are available in your scope
 
 // Function to add NPC information to the table
 function addNPCToTable(npc) {
-  const tableBody = document.querySelector("#npcTable tbody");
   const newRow = tableBody.insertRow();
   // Assign a unique ID to the row
   newRow.id = `npcRow-${npc.myNumber}`; // <-- This line sets the ID
 
   const nameCell = newRow.insertCell();
-  nameCell.textContent = npc.emoji + " " + npc.name; // Concatenate emoji and name
+  nameCell.textContent = npc.name; // Concatenate emoji and name
 
   const ageCell = newRow.insertCell();
   ageCell.textContent = npc.age;
@@ -131,11 +133,15 @@ function addNPCToTable(npc) {
   newRow.classList.add(npc.sex);
 
   // Change background color to yellow if age is below 10
-  if (npc.age < 10) {
-    // newRow.style.backgroundColor = "yellow";
-  }
+  // if (npc.age < 10) { newRow.style.backgroundColor = "#b5ab62"; }
 
   // newRow.style.backgroundColor = npc.color;
+  // Check if the table has more than 30 rows
+  const maxRows = 30;
+  if (tableBody.children.length > maxRows) {
+    // Remove the last row
+    tableBody.removeChild(tableBody.lastChild);
+  }
 }
 
 function sortNPCTable() {
@@ -165,7 +171,7 @@ function coupleMaker(npcs) {
     }
     return false;
   });
- // console.log(`Started marrying people, Found: ${maleCandidates.length} 👨`);
+  // console.log(`Started marrying people, Found: ${maleCandidates.length} 👨`);
 
   // Function2: Filter maleCandidates for ages between 22 and 40
   const ageFilteredCandidates = maleCandidates.filter((npc) => {
@@ -197,88 +203,99 @@ function coupleMaker(npcs) {
       //`${npc.name} has ${availableSpouses.length} available spouses.`
       ();
 
-      if (availableSpouses.length > 0) {
-        const randomSpouse =
-          availableSpouses[Math.floor(Math.random() * availableSpouses.length)];
-        npc.spouse = randomSpouse.name;
-        randomSpouse.spouse = npc.name;
-        //TODO add to each spouse their "myNumber"
-      
-       
-        const newHouse = new House(npc.x / cellSize, npc.y / cellSize, cellSize);
-        newHouse.addInhabitant(npc); // Add the first NPC to the house
-        newHouse.addInhabitant(randomSpouse); // Add the second NPC to the house
-      
-        houses.push(newHouse);
-        newHouse.draw(homesCtx);
-        console.log(`${npc.name} married ${randomSpouse.name} 👰🤵👰🤵👰🤵👰🤵`);
-      }
-      
-    });
+    if (availableSpouses.length > 0) {
+      const randomSpouse =
+        availableSpouses[Math.floor(Math.random() * availableSpouses.length)];
+      npc.spouse = randomSpouse.name;
+      randomSpouse.spouse = npc.name;
+      //TODO add to each spouse their "myNumber"
+
+      // Create a house for the married couple
+      createHouseForCouple(npc, randomSpouse);
+
+      let couple = [npc, randomSpouse];
+
+      addNotification(
+        "Marriage",
+        `${npc.name} married ${randomSpouse.name}`,
+        `👰🤵`,
+        couple,
+        "#c197cc"
+      );
+    }
+  });
+}
+
+function createHouseForCouple(npc1, npc2) {
+  if (validCells.length > 0) {
+    // Pick a random valid cell from the validCells array
+    const randomIndex = Math.floor(Math.random() * validCells.length);
+    const randomCell = validCells.splice(randomIndex, 1)[0]; // Remove the chosen cell from the array
+
+    const newHouse = new House(randomCell.x, randomCell.y);
+    newHouse.addInhabitant(npc1);
+    newHouse.addInhabitant(npc2);
+    houses.push(newHouse);
+    newHouse.draw(homesCtx);
+  } else {
+    // If validCells is empty, create a new house at npc1's position
+    const newHouse = new House(npc1.x / cellSize, npc1.y / cellSize);
+    newHouse.addInhabitant(npc1);
+    newHouse.addInhabitant(npc2);
+    houses.push(newHouse);
+    newHouse.draw(homesCtx);
   }
+}
+
+
 
 function babyMaker(npcs) {
-
   if (npcs.length >= populationLimit) {
-    return 
+    return;
   }
-    
+
   if (npcs.length < maxLandPopulation) {
+    npcs.forEach((parentNPC) => {
+      if (parentNPC.spouse) {
+        const spouse = npcs.find((npc) => npc.name === parentNPC.spouse);
 
-  npcs.forEach((parentNPC) => {
-    if (parentNPC.spouse) {
-      const spouse = npcs.find((npc) => npc.name === parentNPC.spouse);
-
-      if (spouse && spouse.isAlive) {
-        // Check the number of children the couple has
-        const numberOfChildren =
-          parentNPC.children.length;
+        if (spouse && spouse.isAlive) {
+          // Check the number of children the couple has
+          const numberOfChildren = parentNPC.children.length;
           //TODO 🈵
 
+          // Decrease the chance to 0 if they have 3 or more children
+          const chanceOfChild = numberOfChildren < 3 ? 0.1 : 0;
 
-        // Decrease the chance to 0 if they have 3 or more children
-        const chanceOfChild = numberOfChildren < 3 ? 0.1 : 0;
+          if (Math.random() < chanceOfChild) {
+            let myParents = [parentNPC, spouse];
 
-        if (Math.random() < chanceOfChild) {
-          console.log(
-            `${parentNPC.name} and ${spouse.name} are trying to make a baby... 👶🍼, \r\nThey have ${numberOfChildren}`
-          );
+            const newChild = new NPC(
+              parentNPC.x,
+              parentNPC.y,
+              npcs.length + 1,
+              myParents
+            );
 
-          let myParents = [parentNPC, spouse]
+            const randomIndex = Math.floor(Math.random() * groundCells.length);
+            const selectedCell = groundCells[randomIndex];
+            newChild.x = selectedCell.x * cellSize;
+            newChild.y = selectedCell.y * cellSize;
 
-    console.error('parents: ' , myParents.length)
-    console.dir(myParents)
+            parentNPC.addChild(newChild); // Add child to parent's children array
+            spouse.addChild(newChild); // Add child to spouse's children array
+            npcs.push(newChild); // Add the new child NPC to the main NPCs array
+            babies.push(newChild);
 
+            addNPCToTable(newChild);
 
+            addNotification(
+              "Birth",
+              "New Baby",
+              `${newChild.name} has been born! - ${newChild.race}`
+            );
 
-          const newChild = new NPC(
-            parentNPC.x,
-            parentNPC.y,
-            npcs.length + 1,
-            myParents
-          );
-
-          const randomIndex = Math.floor(Math.random() * groundCells.length);
-          const selectedCell = groundCells[randomIndex];
-          newChild.x = selectedCell.x * cellSize;
-          newChild.y = selectedCell.y * cellSize;
-          
-          parentNPC.addChild(newChild); // Add child to parent's children array
-          spouse.addChild(newChild); // Add child to spouse's children array
-          npcs.push(newChild); // Add the new child NPC to the main NPCs array
-          babies.push(newChild);
-
-          addNPCToTable(newChild);
-
-          console.log(
-            `Born: ${newChild.name}, #${newChild.myNumber}, AGE: ${newChild.age}, is born to ${parentNPC.name} and ${spouse.name}! 🍼`
-          );
-
-          addNotification("Birth", "New Baby", `${newChild.name} has been born! - ${newChild.race}`);
-
-
-
-/* 
+            /* 
           iziToast.success({
             title: `${newChild.name} 👶`,
             message: `born to ${parentNPC.name} and ${spouse.name}! 🍼`,
@@ -290,12 +307,12 @@ function babyMaker(npcs) {
             displayMode: 2,
             timeout: 300
           }); */
-
+          }
         }
       }
-    }
-  });} else {
-    console.log('Max. Population reached all usable land.')
+    });
+  } else {
+    console.log("Max. Population reached all usable land.");
   }
 }
 
@@ -340,11 +357,9 @@ function updatePopulationChart(year, population, medianAge) {
   populationChart.update();
 }
 
-
 //console.log("ground cells array: \n\n", groundCells, "\n\n\n")
 
 function startNPCs(ctx, cellSize) {
-
   // Calculate the maximum index based on the size of the groundCells array.
   const maxIndex = Math.min(30, groundCells.length);
 
@@ -369,8 +384,6 @@ function startNPCs(ctx, cellSize) {
   npcTableHeader.textContent = `Total Population ${npcs.length}`;
 }
 
-
-
 function drawNPC(npc, ctx) {
   ctx.textAlign = "center";
   let emoji;
@@ -382,27 +395,23 @@ function drawNPC(npc, ctx) {
     emoji = npc.sex === "male" ? "👨" : "👩";
   }
 
-   // Check if npc.race is equal to "Purries" and set emoji accordingly
-   if (npc.race === "Purries") {
+  // Check if npc.race is equal to "Purries" and set emoji accordingly
+  if (npc.race === "Purries") {
     emoji = "🐈";
   }
-
 
   if (npc.race === "Kurohi") {
     emoji = "🧛‍♂️";
   }
 
-
   ctx.font = "bold 20px Arial"; // Increase font size for the emoji
   ctx.fillText(emoji, npc.x, npc.y);
   //draw names
   const text = `${npc.name}, ${npc.age}`;
-  npcInfoOverlayCtx.fillStyle = 'black';
+  npcInfoOverlayCtx.fillStyle = "black";
   npcInfoOverlayCtx.font = "900 15px Arial"; // Use a bolder font weight
   npcInfoOverlayCtx.fillText(text, npc.x, npc.y + 25); // Adjust Y-coordinate for the text
 }
-
-
 
 ///ground work for save/load game
 // Save game state
@@ -417,27 +426,27 @@ function saveGame() {
   };
 
   const gameStateString = JSON.stringify(gameState);
-  localStorage.setItem('savedGameState', gameStateString);
+  localStorage.setItem("savedGameState", gameStateString);
 }
 
 // Load game state
 function loadGame() {
-  const savedGameStateString = localStorage.getItem('savedGameState');
+  const savedGameStateString = localStorage.getItem("savedGameState");
   if (savedGameStateString) {
     const savedGameState = JSON.parse(savedGameStateString);
-    
+
     year = savedGameState.year;
     startingPopulation = savedGameState.startingPopulation;
     populationIncreaseSpeed = savedGameState.populationIncreaseSpeed;
     // ... update other variables
-    
+
     npcs = savedGameState.npcs; // Load the NPCs array
     // ... update other arrays or state that needs to be loaded
-    
+
     // Update UI or game logic to reflect the loaded state
   }
 }
 
 // Call the save and load functions as needed, for example on button clicks
-saveButton.addEventListener('click', saveGame);
-loadGameWelcomeScreen.addEventListener('click', loadGame);
+saveButton.addEventListener("click", saveGame);
+loadGameWelcomeScreen.addEventListener("click", loadGame);

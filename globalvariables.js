@@ -4,7 +4,7 @@
 
 //map generation - global variables
 let cellSize = 12;
-var gridSize = 200;
+var gridSize = 100;
 
 let terrainGrid;
 let perlinNoiseScale = 0.03; //original number is 0.025
@@ -29,15 +29,35 @@ var deathRate = 0.001;
 let npcSize = cellSize;
 let babies = [];
 let maxLandPopulation = 100 //varies/updates according to usable land
-let populationLimit = 300;  //hard limit to avoid game chrash
+let populationLimit = 700;  //hard limit to avoid game 
+
+
+//cache reusable elements
+const playStatusImg = document.getElementById("playStatusImg");
+const npcTableHeader = document.getElementById("npcTableHeader");
+const currentPopulation = document.getElementById("currentPopulation");
+const growthRate = document.getElementById("growthRate");
+const gameSpeed = document.getElementById("gameSpeed");
+const economicGDP = document.getElementById("economicGDP");
+const tableBody = document.querySelector("#npcTable tbody");
+
+
+
+
 
 // Global array to store houses
 let houses = [];
 let building = []
+let lastHouseCoords = []
+let validCells = [];
 
 
 //ui
 let hideMenu = true;
+const gameNotifications = [];
+
+
+
 
 //Mining
 let oreDeposits = []

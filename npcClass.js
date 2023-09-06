@@ -14,7 +14,6 @@ class NPC {
     this.profession = this.generateProfession(age, this.race);
     this.movementSpeed = 1;
     this.children = []; // Array to store children
-    this.emoji = this.generateRandomEmoji();
     this.myNumber = myNumber; // Sequential number for creation order
     this.parents = parents || null; // Set parents to null when not provided
 
@@ -62,7 +61,9 @@ class NPC {
     if (this.age >= 96 || (this.age > 80 && Math.random() < deathRate)) {
       this.die();
       deathsThisLoop++; // Increment deaths count
-      return;
+     // Create a death notification
+     addNotification('Death', `${this.name} has died`, `Age: ${this.age} years`, this, "#424042");
+     return;
     }
 
     // Update age in the table
@@ -77,7 +78,7 @@ class NPC {
   die() {
     // Remove the NPC from the array
     npcs.splice(npcs.indexOf(this), 1);
-    console.log(this.name + " dead at age " + this.age + " 💀");
+   // console.log(this.name + " dead at age " + this.age + " 💀");
 
     // Remove the NPC's row from the table
     const npcRow = document.getElementById(`npcRow-${this.myNumber}`);
@@ -135,11 +136,11 @@ class NPC {
       Kurohi: [
         { profession: "Doctor", probability: 0.1, salary: 30000 },
         { profession: "Teacher", probability: 0.15, salary: 1200 },
-        { profession: "Engineer", probability: 0.15, salary: 1500 },
+        { profession: "Engineer", probability: 0.15, salary: 15000 },
         { profession: "Artist", probability: 0.1, salary: 1100 },
         { profession: "Builder", probability: 0.1, salary: 1200 },
         { profession: "Cook", probability: 0.1, salary: 1000 },
-        { profession: "Sailor", probability: 0.05, salary: 1000 },
+        { profession: "Sailor", probability: 0.05, salary: 7000 },
         { profession: "Driver", probability: 0.05, salary: 1000 },
         { profession: "Bartender", probability: 0.05, salary: 1000 },
         { profession: "Student", probability: 0.05, salary: 1000 },
@@ -151,8 +152,10 @@ class NPC {
         { profession: "Electrician", probability: 0.1, salary: 1500 },
         { profession: "Mechanic", probability: 0.1, salary: 1500 },
         { profession: "Lawyer", probability: 0.1, salary: 1400 },
-        { profession: "Blacksmith", probability: 0.1, salary: 1200 },
-        { profession: "Farmer", probability: 0.05, salary: 1100 }],
+        { profession: "Blacksmith", probability: 0.1, salary: 3200 },
+        { profession: "Farmer", probability: 0.05, salary: 1100 },
+        { profession: "Miner", probability: 0.45, salary: 300 },],
+
         
         Elf: [
           { profession: "Alchemist", probability: 0.15, salary: 30000 },
@@ -405,21 +408,5 @@ const professionArray = raceProfessions[this.race];
 
     return name;
   }
-  generateRandomEmoji() {
-    const emojis = [
-      "😀",
-      "😎",
-      "👩‍🌾",
-      "🕺",
-      "👩‍🍳",
-      "👨‍🎤",
-      "👨‍🚀",
-      "🤖",
-      "🐶",
-      "🐱",
-      "🦄",
-    ];
-    const randomIndex = Math.floor(Math.random() * emojis.length);
-    return emojis[randomIndex];
-  }
+
 }

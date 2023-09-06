@@ -206,8 +206,30 @@ function addNotification(category, title, message, npcs, color) {
     <td>${title}</td>
     <td>${message}</td>
   `;
+  newRow.style.backgroundColor = color;
 
   tableBody.appendChild(newRow);
+
+  // Create a notification object and push it into the global array
+  const notification = {
+    category: category,
+    title: title,
+    message: message,
+    npcs: npcs,
+    color: color
+  };
+  
+// Check if the table has more than 30 rows
+const maxRows = 30;
+if (tableBody.children.length > maxRows) {
+  // Remove the last row(s) until the row count is 30
+  while (tableBody.children.length > maxRows) {
+    tableBody.removeChild(tableBody.children[0]); // Remove the first row
+  }
+}
+
+gameNotificationsTableHeader.textContent = `${tableBody.children.length} Notifications`
+
 }
 
 infoPanel.addEventListener('click', () => {
@@ -226,23 +248,12 @@ npcCanvas.addEventListener("mousemove", function (event) {
   for (const npc of npcs) {
     const distance = Math.sqrt((x - npc.x) ** 2 + (y - npc.y) ** 2);
     if (distance < 10) {
-      // Adjust the value based on your needs
-      console.log('found npc ' + npc.name)
       showNPCInfo(npc);
       foundNPC = true;
   infoPanel.style.visibility = 'visible'
-
       break;
     }
   }
-
-
- 
- 
-
-  
-  
-
 });
 
 
@@ -310,16 +321,60 @@ function showNPCInfo(npc) {
 //crystal tons should increase based on previous loop
 //crystla tons should be mined relative to population of Miners
 //create crystal deposits
-function updateUIbottomToolbar() {
+function updateUIbottomToolbar(totalSalaries) {
+
+  function formatGDP(gdp) {
+    if (gdp >= 1e9) {
+      return (gdp / 1e9).toFixed(2) + " Bi"; // Convert to billions
+    } else if (gdp >= 1e6) {
+      return (gdp / 1e6).toFixed(2) + " M"; // Convert to millions
+    } else {
+      return gdp.toFixed(0); // Keep as is if less than a million
+    }
+  }
 
   yearBottomToolBar.textContent = "Year: " + year;
   populationBottomToolBar.textContent = "Pop. " + npcs.length;
-  GDPbottomToolBar.textContent = "GDP: ¥ " + (npcs.length * Math.floor(Math.random() * 9800)).toFixed(0);
+  GDPbottomToolBar.textContent = "GDP: ¥ " + formatGDP(totalSalaries);
+
   crystalbottomToolBar.textContent = "Crystallite: " + (npcs.length * 0.7).toFixed(0) + " tons"
   statsUIhomes.textContent = houses.length;
 
   currentYear.textContent = "Year: " + year;
 
+}
+
+
+
+
+function drawNearCells(ctx, x, y, color, radius) {
+  const adjacentCells = [];
+
+  // Calculate the top-left corner coordinates of the square
+  const topLeftX = (x - radius) * cellSize;
+  const topLeftY = (y - radius) * cellSize;
+
+  // Calculate the width and height of the square
+  const squareSize = (radius * 2 + 1) * cellSize;
+
+  ctx.fillStyle = color;
+  ctx.fillRect(topLeftX, topLeftY, squareSize, squareSize);
+
+  for (let r = -radius; r <= radius; r++) {
+    for (let c = -radius; c <= radius; c++) {
+      const adjacentRow = y + r;
+      const adjacentCol = x + c;
+
+      adjacentCells.push({ row: adjacentRow, col: adjacentCol });
+    }
+  }
+
+  const numRows = radius * 2 + 1; // Calculate the number of rows
+
+  console.log("Number of Rows: " + numRows);
+
+  console.log("Square size: " + squareSize  + " Radius: " + radius + ". Adjacent cells to this House: ", adjacentCells.length);
+  return adjacentCells;
 }
 
 

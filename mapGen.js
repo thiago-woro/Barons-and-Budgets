@@ -230,6 +230,8 @@ function startTrees(ctx, cellSize) {
   // Sort groundCells by noise value from lowest to highest
   groundCells.sort((a, b) => a.noise - b.noise);
 
+  
+
   // Assign tree emojis based on noise values
   groundCells.forEach((cell) => {
     let selectedEmoji
@@ -242,9 +244,10 @@ function startTrees(ctx, cellSize) {
       selectedEmoji = "🌲";  // Higher noise values
     } 
 
-
-      
-    treeEmojis[selectedEmoji].push(cell);
+    if (treeEmojis[selectedEmoji]) {
+      treeEmojis[selectedEmoji].push(cell);
+    }
+    
   });
 
   // Generate tree positions
@@ -330,7 +333,7 @@ function distributeOreDeposits(ctx) {
 
    // console.error("writing ore deposits at: ", randomClusterX, randomClusterY);
 
-    let color = 'rgba(127, 115, 121, 0.9)'
+    let color = 'rgba(127, 115, 121, 0.4)'
     drawNearCells(groundCtx, randomClusterX, randomClusterY, color, 5)
 
 

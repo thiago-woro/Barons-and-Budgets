@@ -320,12 +320,13 @@ input {
   /* Style the table */
 table {
     border-collapse: collapse;
-    border: 1px solid #cccccc4e;
     background-color: rgba(46, 131, 60, 0.414);
     box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
     border-radius: 5px;
     width: 80%;
     max-width: 800px;
+    max-height: 400px !important;
+    height: 375px;
 }
 
 /* Style table headers */
@@ -383,8 +384,11 @@ button:disabled {
 
 
 #npcTab {
+        /* Adjust the value considering the header's height */
     /* Allow the table to have a vertical scrollbar when it exceeds the parent's height */
-    max-height: calc(100% - 90px); /* Adjust the value considering the header's height */
+/*     max-height: calc(100% - 90px);
+ */
+    max-height: calc(100vh - 168px); 
     overflow-y: auto;
 }
 
@@ -393,6 +397,7 @@ button:disabled {
     padding-right: 15px;
     width: 100%;
     border-collapse: collapse;
+    height: 350px;
 }
 
 
@@ -424,7 +429,6 @@ button:disabled {
     margin: 0 auto;
     overflow: auto; /* Hide vertical overflow from parent */
     max-height: 430px; /* Set the maximum height */
-
   }
   
   #notificationTable {

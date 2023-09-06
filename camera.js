@@ -231,7 +231,7 @@ function highlightAdjacentCellsOnMouseOver(container, ctx, cellSize) {
   return adjacentCells; // Return the array of adjacent cells
 }
 
-highlightAdjacentCellsOnMouseOver(container, boatCtx, cellSize);
+//highlightAdjacentCellsOnMouseOver(container, boatCtx, cellSize);
 
 
 ///this works - do not delete
@@ -264,58 +264,6 @@ function getAdjacentCells(targetCell) {
 }
 
 
-///this works - do not delete
-function drawNearCells(ctx, x, y, color, radius) {
-  const adjacentCells = [];
-
-  for (let r = 1; r <= radius; r++) {
-    for (let angle = 0; angle < 360; angle += 45) {
-      const radians = (angle * Math.PI) / 180;
-      const adjacentRow = y + Math.round(Math.sin(radians) * r);
-      const adjacentCol = x + Math.round(Math.cos(radians) * r);
-
-      const adjacentX = adjacentCol * cellSize; // Make sure to define cellSize
-      const adjacentY = adjacentRow * cellSize; // Make sure to define cellSize
-      const width = cellSize; // Make sure to define cellSize
-      const height = cellSize; // Make sure to define cellSize
-
-      ctx.fillStyle = color;
-      ctx.fillRect(adjacentX, adjacentY, width, height);
-
-      adjacentCells.push({ row: adjacentRow, col: adjacentCol });
-    }
-  }
-
-  return adjacentCells;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -325,7 +273,7 @@ function drawNearCells(ctx, x, y, color, radius) {
 
 //mouse clicks canvas map
 function logCellOnClick(container, ctx, cellSize) {
-  console.log(`loading cell logger`);
+ // console.log(`loading cell logger`);
   container.addEventListener("click", function(event) {
     if (!isDragging) {
       // Calculate the mouse position within the container.
@@ -337,7 +285,7 @@ function logCellOnClick(container, ctx, cellSize) {
       const cellRow = Math.floor(y / cellSize);
       const cellCol = Math.floor(x / cellSize);
 
-      console.log(`Cell clicked: X = ${cellCol}, Y = ${cellRow}`);
+     // console.log(`Cell clicked: X = ${cellCol}, Y = ${cellRow}`);
 
       ctx.fillStyle = 'purple'; 
       ctx.fillRect(cellCol * cellSize, cellRow * cellSize, cellSize, cellSize);
@@ -383,9 +331,9 @@ function logCellOnClick(container, ctx, cellSize) {
       adjacentCells.push({ row: adjacentRow, col: adjacentCol });
     }
 
-    console.log("Clicked cell:", { row: cellRow, col: cellCol });
-    console.log("Adjacent cells:", adjacentCells);
-    console.dir(adjacentCells);
+    //console.log("Clicked cell:", { row: cellRow, col: cellCol });
+    //console.log("Adjacent cells:", adjacentCells);
+   //console.dir(adjacentCells);
 
   });
 

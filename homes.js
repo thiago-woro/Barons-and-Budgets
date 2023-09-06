@@ -8,11 +8,6 @@ class House {
     this.homeValue = Math.floor(Math.random() * 100000) + 50000; // Random home value
   }
 
-  // Method to add an NPC to this house
-  addInhabitant(npc) {
-    this.inhabitants.push(npc);
-  }
-
   // Method to draw the house on the ground canvas
   draw(ctx) {
     if (npcs.length >= maxLandPopulation) {
@@ -33,9 +28,66 @@ class House {
     ctx.font = "bold 20px Arial";
     ctx.fillText(emoji, this.x, this.y);
 
-    drawRectanglesBetweenHouses(houses, pathCtx);
+    //ctx.fillText("home " + houses.length, this.x, this.y - 30); // You can adjust the position as needed
+
+
+
+    // Use drawNearCells to draw nearby cells
+    const color = "rgba(170, 174, 181, 0.3)"; // Set the color you want for nearby cells
+    const radius = 2; // Set the radius for nearby cells
+    lastHouseCoords =  drawNearCells(groundCtx, this.x / cellSize, this.y / cellSize, color, radius);
+
+  console.log("This are the last house coords: " , lastHouseCoords.length);
+  console.log("This are available ground Cells: " , groundCells.length);
+
+
+  validCells = []
+
+// Loop through each element in groundCells
+for (const groundCell of groundCells) {
+  // Calculate the relative position of the groundCell to the home
+  const relativeX = groundCell.x - Math.floor(this.x / cellSize);
+  const relativeY = groundCell.y - Math.floor(this.y / cellSize);
+
+  // Check if the relative position is within the range of the radius
+  if (Math.abs(relativeX) <= radius && Math.abs(relativeY) <= radius) {
+    // If it's within the range, add the groundCell to validCells
+    validCells.push(groundCell);
+
+    // Draw a red rectangle for the validCell
+    ////groundCtx.fillStyle = "rgba(255, 99, 71, 0.2)";
+    //groundCtx.fillRect(groundCell.x * cellSize, groundCell.y * cellSize, cellSize, cellSize);
   }
 }
+
+
+// Now, validCells contains the common cells between lastHouseCoords and groundCells
+console.log("Common Cells:", validCells.length);
+console.log(validCells);
+
+
+
+   // drawRectanglesBetweenHouses(houses, pathCtx);
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+  
+addInhabitant(npc) {
+  this.inhabitants.push(npc);
+}
+}
+
+
 
 function drawRectanglesBetweenHouses(houses, ctx) {
   const lineHeight = Math.floor(Math.random() * 7) + 1;
