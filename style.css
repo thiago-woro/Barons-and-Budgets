@@ -75,7 +75,7 @@ body {
     left: 0;
     width: 100%;  /* Adjust the width as needed */
     height: 100%; /* Adjust the height as needed */
-    overflow: auto; /* Enable scrolling if needed */
+    overflow:visible;
 }
 
 .canvas-container canvas {
@@ -504,3 +504,58 @@ box-shadow: inset -10px -10px 10px #00000080;
     margin-left: 5px;
     font-size: 13px;
 }
+
+#logoWelcomeScreen {
+    height: 200px;
+    width: 200px;
+}
+
+#mobileAlert {
+    display: none;
+}
+
+
+
+
+@media only screen and (max-width: 600px) {
+    
+
+
+    button {
+        font-size: 12px;
+        height: 40px !important;
+    }
+
+    #welcomePopup {
+        max-height: fit-content;
+        padding: 10px;
+        gap: 5px;
+        width: fit-content;
+    }
+
+
+
+    #titleWelcomeScreen {
+font-size: 16px;
+    }
+
+    #logoWelcomeScreen {
+        height: 100px;
+        width: 100px;
+    }
+
+
+    #elfCounselor1 {
+        max-height: 50vh;
+        top: 60%;
+
+    }
+
+    #mobileAlert {
+        display: block;
+        visibility: visible;
+    }
+
+
+
+  }

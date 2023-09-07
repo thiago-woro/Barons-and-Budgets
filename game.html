@@ -23,13 +23,15 @@
 
 <div id="welcomeScreen" class="">
 <div id="welcomePopup"">
-    <h1 style="margin-top: 50px;" >Barons & Budgets</h1>
-    <img style="height: 200px; width: 200px;" src="./assets/Favicon/logo.png">
+    <h1 id="titleWelcomeScreen" style="margin-top: 50px;" >Barons & Budgets</h1>
+    <img id="logoWelcomeScreen" src="./assets/Favicon/logo.png">
     <div class="row col" style="margin-bottom: 50px;">
         <button id="newGameWelcomeScreen">New Game Random</button>
         <button id="newGameCustomWelcomeScreen">New Game Custom</button>
-        <button class="blueButton" id="loadGameWelcomeScreen">Load Game</button>
+        <button disabled class="blueButton" id="loadGameWelcomeScreen">Load Game</button>
     </div>
+    
+    <span id="mobileAlert" style="color: rgb(255, 190, 13);">Game not ready for mobile 🙇‍♂️</span>
 </div>
 
 <img id="elfCounselor1" src="./assets/Races/elfs/female-elf-1-no-bg.png">
@@ -39,7 +41,7 @@
 
 
 	<body>
-        <div class="canvas-container" id="canvas-content" style="visibility: collapse;">
+        <div class="canvas-container" id="container" style="visibility: collapse;">
             <canvas id="groundCanvas"  style="z-index: 10;"></canvas>
             <canvas id="waterCanvas"  style="z-index: 20;"></canvas>
             <canvas id="path"  style="z-index: 15;"></canvas>
@@ -202,7 +204,7 @@
     <div class="row" style="background-color: #423d3e;">
     
     <div class="race-card" id="purriesWelcomeSelector">
-        <img src="./assets/Races/purries/female/2704f469aae11b8b26442e33d7df6f59ff43085e.png" alt="Purries Image" class="race-image">
+        <img src="./assets/Races/purries/female/catgirl (4).png" alt="Purries Image" class="race-image">
         <h2 class="race-title">Purries</h2>
         <p class="race-description">Purries are gluttons. Bards, artists, and drunks.</p><p>
             They love to <span style="color: rgb(106, 81, 18);">gamble</span>, some are good chefs, poets. They have the shortest lifespan, maybe that's why they don't have a slave race to help them mine.</p>

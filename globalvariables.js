@@ -3,7 +3,7 @@
 
 
 //map generation - global variables
-let cellSize = 12;
+let cellSize = 10;
 var gridSize = 100;
 
 let terrainGrid;
@@ -25,11 +25,6 @@ let flatLandCells = [];
 
 
 
-
-
-
-
-
 //npcs
 let npcs = [];
 let year = 2700;
@@ -41,6 +36,9 @@ let npcSize = cellSize;
 let babies = [];
 let maxLandPopulation = 100 //varies/updates according to usable land
 let populationLimit = 700;  //hard limit to avoid game 
+let onScreenNPCSlimit = 50 //limits move(), draw() to only these, npcs on screen still rotate because babies and deaths are processed in other loop. this is done for performance mainly
+
+
 
 
 //cache reusable elements
@@ -51,6 +49,7 @@ const growthRate = document.getElementById("growthRate");
 const gameSpeed = document.getElementById("gameSpeed");
 const economicGDP = document.getElementById("economicGDP");
 const tableBody = document.querySelector("#npcTable tbody");
+const container = document.getElementById("container");
 
 
 

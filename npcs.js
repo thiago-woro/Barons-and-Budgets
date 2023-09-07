@@ -83,18 +83,17 @@ function gameLoop() {
   clearCanvas(npcInfoOverlayCtx);
 
   // This will move and redraw each NPC, including new babies
-  npcs.forEach((npc) => {
+  const onScreenNPCS = npcs.slice(0, onScreenNPCSlimit); // Get the first XX NPCs, global variable -> onScreenNPCSlimit
+
+  onScreenNPCS.forEach((npc) => {
     npc.move();
     drawNPC(npc, npcCtx);
-
-    //console.log(`${npc.name} - ${npc.profession}  $ ${npc.salary}`);
   });
-
+  
 
   //growthRate.textContent = populationIncreaseSpeed;
   currentPopulation.textContent = npcs.length;
-  gameSpeed.textContent =
-    "x " + gameLoopSpeed.toFixed(0);
+  gameSpeed.textContent = "x " + gameLoopSpeed.toFixed(0);
   //economicGDP.textContent = "$ " + economicGDP;
   // console.log("End of year " + year + "🏁");
 
@@ -208,10 +207,7 @@ function coupleMaker(npcs) {
         availableSpouses[Math.floor(Math.random() * availableSpouses.length)];
       npc.spouse = randomSpouse.name;
       randomSpouse.spouse = npc.name;
-      //TODO add to each spouse their "myNumber"
-
-      // Create a house for the married couple
-      createHouseForCouple(npc, randomSpouse);
+      //TODO add to each spouse their "myNumber" - to reference their Spouse unique ID
 
       let couple = [npc, randomSpouse];
 
@@ -222,43 +218,43 @@ function coupleMaker(npcs) {
         couple,
         "#c197cc"
       );
+
+
+      if (npcs.length < maxLandPopulation) {
+        // Create a house for the married couple
+        createHouseForCouple(npc, randomSpouse);
+      }
     }
   });
 }
 
 function createHouseForCouple(npc1, npc2) {
-  if (validCells.length > 0) {
-    // Pick a random valid cell from the validCells array
-    const randomIndex = Math.floor(Math.random() * validCells.length);
-    const randomCell = validCells.splice(randomIndex, 1)[0]; // Remove the chosen cell from the array
-
-    const newHouse = new House(randomCell.x, randomCell.y);
+  let newHouse;
+  if (houses.length > 0) {
+  
+    newHouse = new House(npc1.x, npc1.y);
     newHouse.addInhabitant(npc1);
     newHouse.addInhabitant(npc2);
     houses.push(newHouse);
+    newHouse.validateCells();
     newHouse.draw(homesCtx);
   } else {
     // If validCells is empty, create a new house at npc1's position
-    const newHouse = new House(npc1.x / cellSize, npc1.y / cellSize);
+    newHouse = new House(npc1.x / cellSize, npc1.y / cellSize);
     newHouse.addInhabitant(npc1);
     newHouse.addInhabitant(npc2);
     houses.push(newHouse);
     newHouse.draw(homesCtx);
   }
-
-
-
-      addNotification(
-        "Economy",
-        `🏡 New House built! `,
-        `${newHouse.x}, ${newHouse.y}`,
-        npc1,
-        "#4f753c"
-      );
-
+  addNotification(
+    "Economy",
+    `🏡 New House built! `,
+    `${newHouse.x}, ${newHouse.y}`,
+    npc1,
+    "#4f753c"
+  );
+  //console.log('last house coords:' , lastHouseCoords)
 }
-
-
 
 function babyMaker(npcs) {
   if (npcs.length >= populationLimit) {
@@ -368,17 +364,14 @@ function updatePopulationChart(year, population, medianAge) {
   populationChart.update();
 }
 
-
 function startNPCs(ctx, cellSize) {
+  //more suitable for Houses
+  flatLandCells = groundCells.filter((cell) => {
+    const noiseValue = parseFloat(cell.noise);
+    return noiseValue >= 0.2 && noiseValue <= 0.245;
+  });
 
-//more suitable for Houses
-flatLandCells = groundCells.filter(cell => {
-  const noiseValue = parseFloat(cell.noise);
-  return noiseValue >= 0.2 && noiseValue <= 0.245;
-});
-
-
-console.log(`From ${groundCells.length} down to  ${flatLandCells.length}`)
+  console.log(`From ${groundCells.length} down to  ${flatLandCells.length}`);
 
   // Calculate the maximum index based on the size of the groundCells array.
   const maxIndex = Math.min(30, flatLandCells.length);

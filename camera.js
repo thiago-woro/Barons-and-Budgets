@@ -128,22 +128,36 @@ function updateLoop() {
 function setInitialCanvasPosition() {
   const containerRect = container.getBoundingClientRect();
   canvasX = 0;
-  canvasY = containerRect.height - containerRect.height / zoomLevel;
+  canvasY = 0;
 }
 
-// Update canvas position continuously
-function updateLoop() {
-  updateCanvasPosition();
-  requestAnimationFrame(updateLoop);
-}
-
+//initialize
 document.addEventListener("DOMContentLoaded", () => {
   setInitialCanvasPosition();  // Set the initial position
   updateLoop();  // Start the update loop
 });
 
+function updateCanvasPosition() {
+  if (keys["ArrowLeft"] || keys["a"]) {
+    canvasX -= canvasSpeed;
+  }
+  if (keys["ArrowRight"] || keys["d"]) {
+    console.log(">");
+    canvasX += canvasSpeed;
+  }
+  if (keys["ArrowUp"] || keys["w"]) {
+    canvasY -= canvasSpeed;
+  }
+  if (keys["ArrowDown"] || keys["s"]) {
+    canvasY += canvasSpeed;
+  }
 
-/* 
+  // Apply CSS transform to move and zoom the canvas container
+  container.style.transform = `scale(${zoomLevel}) translate(${-canvasX}px, ${-canvasY}px)`;
+}
+
+
+
 /// TO-DO ACCOUNT FOR CURRENT CANVAS ZOOM
 function highlightCellOnMouseOver(container, ctx, cellSize) {
   container.addEventListener("mousemove", function (event) {
@@ -168,7 +182,7 @@ function highlightCellOnMouseOver(container, ctx, cellSize) {
 }
 // Attach the event listener to the canvas container and draw on npcCanvas
 highlightCellOnMouseOver(container, boatCtx, cellSize);
- */
+ 
 
 function highlightAdjacentCellsOnMouseOver(container, ctx, cellSize) {
   const adjacentCells = [];
@@ -226,7 +240,6 @@ function highlightAdjacentCellsOnMouseOver(container, ctx, cellSize) {
       }
     }
   });
-  console.dir(adjacentCells);
 
   return adjacentCells; // Return the array of adjacent cells
 }
@@ -290,7 +303,7 @@ function logCellOnClick(container, ctx, cellSize) {
       ctx.fillStyle = 'purple'; 
       ctx.fillRect(cellCol * cellSize, cellRow * cellSize, cellSize, cellSize);
 
-      //leftClick(cellCol, cellRow, npcCtx, cellSize);
+      leftClick(cellCol, cellRow, npcCtx, cellSize);
       //  const adjacentCells = getAdjacentCells(cellCol, cellRow, 3, 5, 5);  //didnt work use 
 
     }
@@ -300,42 +313,27 @@ function logCellOnClick(container, ctx, cellSize) {
 // Example of how to use the function, assuming the container, npcCtx, and cellSize are already defined.
 //  logCellOnClick(container, boatCtx, cellSize); // OG FUNCTION - THIS WORKS OK
 
+//error here:
+container.addEventListener("click", function (event) {
+  const rect = container.getBoundingClientRect();
+  const x = (event.clientX - rect.left) / zoomLevel; // Remove canvasX
+  const y = (event.clientY - rect.top) / zoomLevel;   // Remove canvasY
+  console.log(`X ${x}, Y ${y}`);
 
-  container.addEventListener("click", function (event) {
-    const rect = container.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+  const cellRow = Math.floor(y / cellSize);
+  const cellCol = Math.floor(x / cellSize);
 
-    const cellRow = Math.floor(y / cellSize);
-    const cellCol = Math.floor(x / cellSize);
+  console.log("Clicked cell:", { row: cellRow, col: cellCol });
 
-    // Define the offsets for adjacent cells
-    const offsets = [
-      { row: -1, col: -1 },
-      { row: -1, col: 0 },
-      { row: -1, col: 1 },
-      { row: 0, col: -1 },
-      { row: 0, col: 0 }, // Clicked cell
-      { row: 0, col: 1 },
-      { row: 1, col: -1 },
-      { row: 1, col: 0 },
-      { row: 1, col: 1 },
-    ];
+  // Draw on the canvas where the click occurred (without subtracting canvasX and canvasY)
+  treeCtx.fillStyle = 'purple';
+  treeCtx.fillRect(cellCol * cellSize, cellRow * cellSize, cellSize, cellSize);
+});
 
-    const adjacentCells = [];
 
-    // Calculate and store the positions of adjacent cells
-    for (const offset of offsets) {
-      const adjacentRow = cellRow + offset.row;
-      const adjacentCol = cellCol + offset.col;
-      adjacentCells.push({ row: adjacentRow, col: adjacentCol });
-    }
 
-    //console.log("Clicked cell:", { row: cellRow, col: cellCol });
-    //console.log("Adjacent cells:", adjacentCells);
-   //console.dir(adjacentCells);
 
-  });
+
 
 
 function leftClick(x, y, npcCtx, cellSize) {

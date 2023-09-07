@@ -1,80 +1,55 @@
 
 
+
+//all this is just to make sure all canvas have the correct width and height, that is the gridsize * cellsize
 function setupCanvas(canvasId, width, height) {
   const canvas = document.getElementById(canvasId);
   const ctx = canvas.getContext("2d");
+ 
+  // Set canvas width and height
 
-  canvas.width = width; // Set canvas width to the specified width
-  canvas.height = height; // Set canvas height to the specified height
-
+  canvas.width = gridSize * cellSize; // Set canvas width to the specified width
+  canvas.height = gridSize * cellSize; // Set canvas height to the specified heig
+  
+  // Set canvas position relative to the container
+  canvas.style.position = "absolute";
+  canvas.style.top = "0";
+  canvas.style.left = "0";
+  
   return [canvas, ctx];
 }
 
-const container = document.getElementById("canvas-content");
-const containerWidth = container.offsetWidth; // Use offsetWidth instead of container
-const containerHeight = container.offsetHeight; // Use offsetHeight instead of container
 
-const [npcCanvas, npcCtx] = setupCanvas(
+const canvasElements = [
   "npcCanvas",
-  containerWidth,
-  containerHeight
-);
-const [groundCanvas, groundCtx] = setupCanvas(
   "groundCanvas",
-  containerWidth,
-  containerHeight
-);
-
-const [waterCanvas, waterCtx] = setupCanvas(
   "waterCanvas",
-  containerWidth,
-  containerHeight
-);
-
-
-const [treeCanvas, treeCtx] = setupCanvas(
   "treeCanvas",
-  containerWidth,
-  containerHeight
-);
-
-const [boatCanvas, boatCtx] = setupCanvas(
   "boatCanvas",
-  containerWidth,
-  containerHeight
-);
-
-const [minimapCanvas, minimapCtx] = setupCanvas(
   "minimap",
-  containerWidth,
-  containerHeight
-);
-
-const [pathCanvas, pathCtx] = setupCanvas(
   "path",
-  containerWidth,
-  containerHeight
-);
-
-const [npcInfoOverlayCanvas, npcInfoOverlayCtx] = setupCanvas(
   "npcInfoOverlay",
-  containerWidth,
-  containerHeight
-);
-
-const [oreDepositsCanvas, oreDepositsCtx] = setupCanvas(
   "oreDeposits",
-  containerWidth,
-  containerHeight
-);
-const [homesCanvas, homesCtx] = setupCanvas(
   "homes",
-  containerWidth,
-  containerHeight
-);
+];
 
+const ctxElements = {};
 
+for (const canvasId of canvasElements) {
+  ctxElements[canvasId] = setupCanvas(canvasId);
+}
 
+const [npcCanvas, npcCtx] = ctxElements["npcCanvas"];
+const [groundCanvas, groundCtx] = ctxElements["groundCanvas"];
+const [waterCanvas, waterCtx] = ctxElements["waterCanvas"];
+const [treeCanvas, treeCtx] = ctxElements["treeCanvas"];
+const [boatCanvas, boatCtx] = ctxElements["boatCanvas"];
+const [minimapCanvas, minimapCtx] = ctxElements["minimap"];
+const [pathCanvas, pathCtx] = ctxElements["path"];
+const [npcInfoOverlayCanvas, npcInfoOverlayCtx] = ctxElements["npcInfoOverlay"];
+const [oreDepositsCanvas, oreDepositsCtx] = ctxElements["oreDeposits"];
+const [homesCanvas, homesCtx] = ctxElements["homes"];
+//finished canvases setup
 
 
 
@@ -260,15 +235,20 @@ npcCanvas.addEventListener("mousemove", function (event) {
 
 //npc card details
 function showNPCInfo(npc) {
- // infoPanel.style.left = `${npc.x}px`;
- // infoPanel.style.top = `${npc.y}px`;
- // infoPanel.style.display = "block";
- //infoPanel.style.visibility = "visible";
-
   let emoji;
   if (npc.race === "Purries") {emoji = "🐈";}
   if (npc.race === "Kurohi") {emoji = "🧛‍♂️";}
   if (npc.race === "Elf") {emoji = "🧝‍♂️";}
+
+
+  // Get random conversation line based on npc's profession
+  const conversationLines = purryNPCConversations[npc.profession];
+  let randomLine = "";
+  
+  if (conversationLines && conversationLines.length > 0) {
+    const randomIndex = Math.floor(Math.random() * conversationLines.length);
+    randomLine = conversationLines[randomIndex];
+  }
 
   let infoHtml = `
   <strong style="font-size: 23px;">${npc.name} ${
@@ -286,6 +266,11 @@ function showNPCInfo(npc) {
   }
   infoHtml += `<br/>Profession:<br/>${npc.profession}       
   <span style="color: green;">$ ${npc.salary}</span><br/> `;
+
+  infoHtml += `<br/><style="font-size: 13px;">${randomLine} meow.</style=>`;
+
+
+
   if (npc.children.length > 0) {
     infoHtml += `<br/><strong>${npc.children.length} kids:</strong><ul>`;
     npc.children.forEach((child) => {
@@ -379,3 +364,15 @@ function drawNearCells(ctx, x, y, color, radius) {
 
 
 
+function drawCircle(ctx, x, y, diameter, fillColor) {
+  //console.log('drawing circle')
+  ctx.fillStyle = fillColor;
+
+  // Calculate the radius based on the diameter
+  const radius = diameter / 2;
+
+  // Draw a filled circle
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.fill();
+}

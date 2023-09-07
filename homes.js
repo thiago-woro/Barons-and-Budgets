@@ -8,14 +8,71 @@ class House {
     this.homeValue = Math.floor(Math.random() * 100000) + 50000; // Random home value
   }
 
+  validateCells() {  // TODO IMPORTANT, after selectedCell, check if coords are already being used on Houses array, if yes, go back 1 step and pick again
+    //console.log("🏠❓ validating cells to build a House...");
+
+    // Find the current cell coordinates of the house
+    const randomHouse = houses[Math.floor(Math.random() * houses.length)];
+
+    // Use the x and y coordinates of the random house
+    const currentX = Math.floor(randomHouse.x / cellSize);
+    const currentY = Math.floor(randomHouse.y / cellSize);
+
+
+    // Generate the coordinates for adjacent cells
+    const adjacentCells = [
+      { x: currentX - 3, y: currentY },
+      { x: currentX + 3, y: currentY },
+      { x: currentX, y: currentY - 3 },
+      { x: currentX, y: currentY + 3 },
+    ];
+
+    // Filter out cells that are not ground cells
+    const validAdjacentCells = adjacentCells.filter((cell) =>
+      groundCells.some(
+        (groundCell) => groundCell.x === cell.x && groundCell.y === cell.y
+      )
+    );
+
+    // If there are valid adjacent ground cells to move to
+    if (validAdjacentCells.length > 0) {
+      // Pick a random valid adjacent cell
+      const randomIndex = Math.floor(Math.random() * validAdjacentCells.length);
+      const selectedCell = validAdjacentCells[randomIndex];
+
+      // Update the house's position to the new cell
+      this.x = selectedCell.x * cellSize;
+      this.y = selectedCell.y * cellSize;
+      //console.log(`🏠✅ Yes, Building House at ${this.x}, ${this.y}`);
+    }
+  }
+
   // Method to draw the house on the ground canvas
   draw(ctx) {
-    if (npcs.length >= maxLandPopulation) {
-      return;
-    }
-    // Choose emoji character based on economic status and upgrades
-    let emoji = "🏠"; // Default emoji for average house
+    let emoji;
+    const randomValue = Math.random();
 
+    if (randomValue < 0.33) {
+      emoji = "🏠"; // 33% chance
+    } else if (randomValue < 0.87) {
+      emoji = "🏡";
+    } else {
+      emoji = "🏚️";
+    }
+
+    ctx.font = "bold 20px Arial";
+    ctx.fillText(emoji, this.x, this.y);
+
+
+      // Determine the position and size of the circle
+  const x = this.x; // Use the x-coordinate of the house
+  const y = this.y; // Use the y-coordinate of the house
+  const diameter = 40; // Set the diameter of the circle
+
+  // Use the drawCircle function to draw the filled circle
+  drawCircle(pathCtx, x, y, diameter, "rgba(208, 225, 208, 0.34)");
+
+    /* 
     if (this.economicStatus === "Wealthy") {
       emoji = "🏡"; // Emoji for wealthy house
     } else if (this.economicStatus === "Poor") {
@@ -23,68 +80,72 @@ class House {
     } else if (this.upgrades.length > 0) {
       emoji = "🏢"; // Emoji for house with upgrades
     }
+ */
+     //drawRectanglesBetweenHouses(houses, pathCtx);
+     drawPaths(houses, pathCtx);
 
-    // Draw the emoji on the canvas
-    ctx.font = "bold 20px Arial";
-    ctx.fillText(emoji, this.x, this.y);
+  }
 
-    //ctx.fillText("home " + houses.length, this.x, this.y - 30); // You can adjust the position as needed
-
-
-
-    // Use drawNearCells to draw nearby cells
-    const color = "rgba(170, 174, 181, 0.3)"; // Set the color you want for nearby cells
-    const radius = 2; // Set the radius for nearby cells
-    lastHouseCoords =  drawNearCells(groundCtx, this.x / cellSize, this.y / cellSize, color, radius);
-
-  console.log("This are the last house coords: " , lastHouseCoords.length);
-  console.log("This are available ground Cells: " , groundCells.length);
-
-
-  validCells = []
-
-// Loop through each element in groundCells
-for (const groundCell of groundCells) {
-  // Calculate the relative position of the groundCell to the home
-  const relativeX = groundCell.x - Math.floor(this.x / cellSize);
-  const relativeY = groundCell.y - Math.floor(this.y / cellSize);
-
-  // Check if the relative position is within the range of the radius
-  if (Math.abs(relativeX) <= radius && Math.abs(relativeY) <= radius) {
-    // If it's within the range, add the groundCell to validCells
-    validCells.push(groundCell);
-
-    // Draw a red rectangle for the validCell
-    ////groundCtx.fillStyle = "rgba(255, 99, 71, 0.2)";
-    //groundCtx.fillRect(groundCell.x * cellSize, groundCell.y * cellSize, cellSize, cellSize);
+  addInhabitant(npc) {
+    this.inhabitants.push(npc);
   }
 }
 
 
-// Now, validCells contains the common cells between lastHouseCoords and groundCells
-console.log("Common Cells:", validCells.length);
-console.log(validCells);
+
+function drawPaths(houses, ctx) {
+  const lineHeight = Math.floor(Math.random() * 7) + 1;
+  const verticalSpacing = Math.floor(Math.random() * 50) + 1;
+
+  for (let i = 0; i < houses.length - 1; i++) {
+    const house1 = houses[i];
+    const house2 = houses[i + 1];
+
+    const distance = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
 
 
+    if (distance <= 9 * cellSize) {
 
-   // drawRectanglesBetweenHouses(houses, pathCtx);
+
+    const x1 = house1.x;
+    const y1 = house1.y;
+
+    const x2 = house2.x;
+    const y2 = house2.y;
+
+    const baseAngle = Math.atan2(y2 - y1, x2 - x1);
+
+    for (let y = 0; y <= distance; y += lineHeight + verticalSpacing) {
+      const randomOffset = 3 //(Math.random() - 0.5) * lineHeight * 0.5;
+      const angleVariation = ((Math.random() - 0.5) * Math.PI) / 72;
+      const angle = baseAngle + angleVariation;
+
+      const x = x1 + Math.cos(angle) * y + randomOffset;
+      const yCoord = y1 + Math.sin(angle) * y;
+
+      // Select a random color for the path
+      const colorOptions = [
+        "#9ac558", // Muddy brown with low opacity
+        "rgba(92, 128, 0, 0.5)",
+        "rgba(240, 230, 140, 0.5)", // Yellowish sand with low opacity
+        "rgba(208, 225, 208, 0.34)",
+        "rgba(208, 225, 208, 0.34)",
+        "rgba(208, 225, 208, 0.34)",
+      ];
+      const randomColor =
+        colorOptions[Math.floor(Math.random() * colorOptions.length)];
+
+      drawRoundedRect(
+        ctx,
+        x,
+        yCoord,
+        lineHeight,
+        lineHeight,
+        5,
+        randomColor
+      );
+    }}
   }
-
-
-
-
-
-
-
-
-
-
-
-
-  
-addInhabitant(npc) {
-  this.inhabitants.push(npc);
-}
 }
 
 
@@ -149,7 +210,7 @@ function drawRectanglesBetweenHouses(houses, ctx) {
       // Check if the cell is already in the occupiedCells array
       if (!occupiedCells.some((cell) => cell.x === cellX && cell.y === cellY)) {
         occupiedCells.push({ x: cellX, y: cellY });
-       // console.error("added:   ", cellX, cellY );
+        // console.error("added:   ", cellX, cellY );
       }
     }
   }
@@ -168,21 +229,10 @@ function drawRectanglesBetweenHouses(houses, ctx) {
       console.error("🌲❌ antes" + trees.length);
       trees.splice(i, 1);
       console.error("🌲❌  depois" + trees.length);
-      drawTrees(treeCtx, cellSize, occupiedCells)
-
+      drawTrees(treeCtx, cellSize, occupiedCells);
     }
   }
 }
-
-
-
-
-
-
-
-
-
-
 
 //commercial buildings
 

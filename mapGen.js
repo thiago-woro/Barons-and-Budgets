@@ -2,10 +2,6 @@ document.getElementById("gen2").addEventListener("click", function () {
   generateTerrainMap(gridSize, gridSize, perlinNoiseScale);
 });
 
-console.log(
-  `ground cells: ${groundCells.length}, water cells: ${waterCells.length}`
-);
-
 function generateTerrainMap(width, height, noiseScale) {
   console.log("Running generateTerrainMap() in mapGen.js");
 
@@ -19,8 +15,6 @@ function generateTerrainMap(width, height, noiseScale) {
   terrainMap = new Array(height);
   noiseValues = new Array(height);
 
-
-
   // Reseed the Perlin noise generator
   perlin.seed();
 
@@ -31,10 +25,7 @@ function generateTerrainMap(width, height, noiseScale) {
     for (let x = 0; x < width; x++) {
       const noiseValue =
         perlinInstance.get(x * noiseScale, y * noiseScale) - 0.5 + offset;
-
-      // Store the noise value
-     // noiseValues[y][x] = noiseValue;  //not needed anymore bc its saved on ground cells
-
+        
       // Determine terrain type based on noise value
       let shadeIndex;
       if (noiseValue < 0) {
@@ -51,7 +42,7 @@ function generateTerrainMap(width, height, noiseScale) {
     }
   }
   console.log(
-    `2) ground cells: ${groundCells.length}, water cells: ${waterCells.length}`
+    `🟩 Ground cells: ${groundCells.length}, 🌊 water cells: ${waterCells.length}`
   );
 
   // Calculate the total number of cells
@@ -62,12 +53,7 @@ function generateTerrainMap(width, height, noiseScale) {
 
   
 
-  // Call the modified function to draw ground and water cells
-  console.log('drawing ground cells: \n\n 🌍')
-
   drawTerrainLayer(groundCtx, groundCells, cellSize);
-  console.log('drawing water cells: \n\n 🌊')
-
   drawTerrainLayer(waterCtx, waterCells, cellSize);
   startTrees(treeCtx, cellSize);
   distributeOreDeposits(oreDepositsCtx);
@@ -336,8 +322,9 @@ function distributeOreDeposits(ctx) {
    // console.error("writing ore deposits at: ", randomClusterX, randomClusterY);
 
     let color = 'rgba(127, 115, 121, 0.4)'
-    drawNearCells(groundCtx, randomClusterX, randomClusterY, color, 5)
-
+    //drawNearCells(groundCtx, randomClusterX, randomClusterY, color, 5)
+     drawCircle(groundCtx, randomClusterX * cellSize, randomClusterY *cellSize, 50, color);
+    
 
     // Draw the first ore deposit in the random cluster X, Y
     drawOreDeposit(ctx, randomClusterX, randomClusterY);
