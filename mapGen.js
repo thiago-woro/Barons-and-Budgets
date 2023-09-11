@@ -63,7 +63,6 @@ function generateTerrainMap() {
 
   drawTerrainLayer(groundCtx, groundCells, cellSize);
   drawTerrainLayer(waterCtx, waterCells, cellSize);
-  //startTrees(treeCtx, cellSize);
   distributeOreDeposits(oreDepositsCtx);
 
   flatLandCells = groundCells.filter((cell) => {
@@ -91,7 +90,6 @@ function drawTerrainLayer(ctx, cellArray, cellSize) {
 }
 
 
-
 function startTrees(ctx, cellSize) {
   clearCanvas(ctx);
   let treeCount = 0;
@@ -105,19 +103,26 @@ function startTrees(ctx, cellSize) {
   };
 
   treeCount = groundCells.length * treePercentageofLand;
-  console.log("will draw " + treeCount.toFixed(0) + " trees");
+  //console.log("will draw " + treeCount.toFixed(0) + " trees");
+ // console.log( adjacentOreCells);
 
+ // Filter out cells with ore deposits from groundCells
+groundCells = groundCells.filter((cell) => {
+  // Check if the cell coordinates are occupied by an ore deposit
+  return !adjacentOreCells.some(
+    (coords) =>
+      coords.x === cell.x && coords.y === cell.y
+  );
+});
 
-  // Sort groundCells by noise value from lowest to highest
-  groundCells.sort((a, b) => a.noise - b.noise);
+    treeCount = groundCells.length * treePercentageofLand;
 
-  
 
   // Assign tree emojis based on noise values
   groundCells.forEach((cell) => {
     let selectedEmoji
 
-    if (cell.noise > 0.0) {
+    if (cell.noise > 0.05) {
       selectedEmoji = "🌴";  // Lower noise values
     }  if (cell.noise > 0.13) {
       selectedEmoji = "🌳";  // Medium noise values
@@ -151,7 +156,6 @@ function startTrees(ctx, cellSize) {
   drawTrees(treeCtx, cellSize, treePositions, occupiedCells);
   return treePositions;
 }
-
 
 function drawTrees(ctx, cellSize, treePositions, occupiedCells) {
   clearCanvas(ctx);
@@ -197,6 +201,8 @@ function drawTrees(ctx, cellSize, treePositions, occupiedCells) {
 
 }
 
+
+
 function distributeOreDeposits(ctx) {
   clearCanvas(oreDepositsCtx);
   oreDeposits = [];
@@ -234,6 +240,10 @@ function distributeOreDeposits(ctx) {
       randomClusterX,
       randomClusterY
     );
+
+       // Store the adjacent cells in the global variable
+       adjacentOreCells = [...adjacentOreCells, ...adjacentCells];
+
     const depositsToDraw = Math.min(depositsPerCluster, adjacentCells.length);
 
     for (let i = 0; i < depositsToDraw; i++) {
@@ -241,6 +251,9 @@ function distributeOreDeposits(ctx) {
       drawOreDeposit(ctx, x, y);
     }
   }
+
+  startTrees(treeCtx, cellSize);
+
 }
 
 function calculateAdjacentCells(x, y) {
@@ -252,7 +265,6 @@ function calculateAdjacentCells(x, y) {
       const adjacentY = y + yOffset;
 
       // Skip the center cell and check if the cell is valid (within bounds)
-      if (xOffset === 0 && yOffset === 0) continue;
       if (isValidCell(adjacentX, adjacentY)) {
         adjacentCells.push({ x: adjacentX, y: adjacentY });
       }
@@ -262,10 +274,6 @@ function calculateAdjacentCells(x, y) {
   return adjacentCells;
 }
 
-function isValidCell(x, y) {
-  // Check if the cell (x, y) is in the groundCells array
-  return groundCells.some((cell) => cell.x === x && cell.y === y);
-}
 
 function drawOreDeposit(ctx, x, y) {
   const offsetX = cellSize / 2;
@@ -287,7 +295,6 @@ function drawOreDeposit(ctx, x, y) {
   ctx.font = "bold 12px Arial";
   ctx.fillText(selectedEmoji, xCoord, yCoord);
 
-  //console.log("ore: ", oreDeposits.length, " X: ", xCoord.toFixed(0), "Y: ", yCoord.toFixed(0))
 }
 
 function showCellnumber(ctx, gridSize, cellSize) {
@@ -313,6 +320,12 @@ function showCellnumber(ctx, gridSize, cellSize) {
     }
   }
 }
+
+function isValidCell(x, y) {
+  // Check if the cell (x, y) is in the groundCells array
+  return groundCells.some((cell) => cell.x === x && cell.y === y);
+}
+
 
 /// FOR DEBUGGING ONLY - DO NOT DELETE
 function debugTerrain(ctx, gridSize, cellSize) {

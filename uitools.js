@@ -87,7 +87,7 @@ function hideTabs() {
     statsTab.style.display = "block";
     chartTab.style.display = "block";
     npcTab.style.display = "block";
-    minimizeTabButton.textContent = "Hide";
+    minimizeTabButton.textContent = "📂"; //open folder pasta
     hideMenu = false;
   } else {
     hideMenu = true;
@@ -95,7 +95,7 @@ function hideTabs() {
     statsTab.style.display = "none";
     chartTab.style.display = "none";
     npcTab.style.display = "none";
-    minimizeTabButton.textContent = "Show";
+    minimizeTabButton.textContent = "📂"; //abre pasta
   }
 
   // Store hideMenu value in localStorage
