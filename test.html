@@ -22,17 +22,21 @@
     </style>
 
     <div class="canvas-container" id="canvas-content">
-      <canvas id="gameCanvas"></canvas>
+      <canvas id="groundCanvas"></canvas>
     </div>
 
     <script>
-      const canvas = document.getElementById("gameCanvas");
+      const canvas = document.getElementById("groundCanvas");
       const ctx = canvas.getContext("2d");
       const gridSize = 200;
-      const rows = 5;
+      const rows = 4;
 
       canvas.width = gridSize * rows;
       canvas.height = gridSize * rows;
+
+       //const container = document.getElementById("canvas-content");
+       const container = canvas; // Now, 'container' directly refers to the canvas element
+
 
       // Generate a terrain map
       const terrainMap = generateTerrainMap();
@@ -105,11 +109,9 @@
       const zoomSpeed = 0.1; // Adjust this for zoom speed
       const minZoom = 0.5; // Minimum zoom level
       const maxZoom = 3; // Maximum zoom level
-      const canvasSpeed = 5;
+      const canvasSpeed = 16;
 
-      //const container = document.getElementById("canvas-content");
-      const container = canvas; // Now, 'container' directly refers to the canvas element
-
+     
       function handleKeyDown(event) {
         keys[event.key] = true;
       }
@@ -247,7 +249,7 @@
 
         // Debug log
         console.log(
-          `mouseX: ${mouseX}, mouseY: ${mouseY}, canvasX: ${canvasX}, canvasY: ${canvasY}, zoomLevel: ${zoomLevel}`
+          `mouseX: ${mouseX}, mouseY: ${mouseY}, zoomLevel: ${zoomLevel}`
         );
         console.log(`Hovering over cell: Row ${cellRow}, Col ${cellCol}`);
 

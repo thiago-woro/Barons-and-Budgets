@@ -1,31 +1,39 @@
 document.getElementById("gen2").addEventListener("click", function () {
-  generateTerrainMap(gridSize, gridSize, perlinNoiseScale);
+   trees = [];
+ treePositions = []; 
+  //startTrees(treeCtx, cellSize)
+  generateTerrainMap();
 });
 
-function generateTerrainMap(width, height, noiseScale) {
+
+
+//function generateTerrainMap(width, height, noiseScale) {
+
+function generateTerrainMap() {
   console.log("Running generateTerrainMap() in mapGen.js");
 
   // Clear arrays and variables from previous run
   waterCells = [];
   groundCells = [];
   trees = [];
+ treePositions = []; 
+
 
   // Initialize variables
   const perlinInstance = Object.create(perlin);
-  terrainMap = new Array(height);
-  noiseValues = new Array(height);
+  noiseValues = new Array(gridSize);
 
   // Reseed the Perlin noise generator
   perlin.seed();
 
-  for (let y = 0; y < height; y++) {
-    terrainMap[y] = new Array(width);
+  for (let y = 0; y < rows; y++) {
+    terrainMap[y] = new Array(rows);
    // noiseValues[y] = new Array(width); // Initialize noiseValues for this row
 
-    for (let x = 0; x < width; x++) {
+    for (let x = 0; x < rows; x++) {
       const noiseValue =
-        perlinInstance.get(x * noiseScale, y * noiseScale) - 0.5 + offset;
-        
+        perlinInstance.get(x * perlinNoiseScale, y * perlinNoiseScale) - 0.5 + offset;
+
       // Determine terrain type based on noise value
       let shadeIndex;
       if (noiseValue < 0) {
@@ -55,8 +63,15 @@ function generateTerrainMap(width, height, noiseScale) {
 
   drawTerrainLayer(groundCtx, groundCells, cellSize);
   drawTerrainLayer(waterCtx, waterCells, cellSize);
-  startTrees(treeCtx, cellSize);
+  //startTrees(treeCtx, cellSize);
   distributeOreDeposits(oreDepositsCtx);
+
+  flatLandCells = groundCells.filter((cell) => {
+    const noiseValue = parseFloat(cell.noise);
+    return noiseValue >= 0.2 && noiseValue <= 0.245;
+  });
+
+  console.log(`From ${groundCells.length} ground cells, down to ${flatLandCells.length} usable, flat lands cells`);
 
   //debugTerrain(npcCtx, gridSize, cellSize);
 }
@@ -71,130 +86,11 @@ function drawTerrainLayer(ctx, cellArray, cellSize) {
     //console.log(cell.x)
 
     //console.log(`cell  X: ${cell.x}, Y: ${cell.y}, ${cell.color}`)
-    drawRoundedRect(ctx, x * cellSize, y * cellSize, cellSize * 1.2, cellSize * 1.2, 3.5, color);
-  }
-}
-
-function animateWater() {
-  for (let cell of waterCells) {
-    let currentShadeIndex = WATER_SHADES.indexOf(cell.color);
-    let nextShadeIndex = (currentShadeIndex + 1) % WATER_SHADES.length;
-    cell.color = WATER_SHADES[nextShadeIndex];
-  }
-
-  // Redraw water layer
-  drawTerrainLayer(waterCtx, waterCells, cellSize);
-}
-//setInterval(animateWater, 3000);  // Call animateWater() every 1000 milliseconds (1 second)
-
-// Call fn to generate the terrain map with Perlin noise
-//var generatedMap = generateTerrainMap(gridSize, gridSize, perlinNoiseScale);
-
-//logs map to console
-function logMap(terrainMap) {
-  const landSymbol = "🟫";
-  const waterSymbol = "🟦";
-  for (let y = 0; y < terrainMap.length; y++) {
-    let row = "";
-    for (let x = 0; x < terrainMap[y].length; x++) {
-      if (terrainMap[y][x] === WATER_SHADES[0]) {
-        row += waterSymbol;
-      } else {
-        row += landSymbol;
-      }
-    }
-    console.log(row);
+    drawRoundedRect(ctx, x * cellSize, y * cellSize, cellSize * 1.2, 3.5, color);
   }
 }
 
 
-function drawRoundedRect(ctx, x, y, width, height, borderRadius, color) {
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.moveTo(x + borderRadius, y);
-  ctx.lineTo(x + height - borderRadius, y);
-  ctx.arc(
-    x + height - borderRadius,
-    y + borderRadius,
-    borderRadius,
-    -Math.PI / 2,
-    0
-  );
-  ctx.lineTo(x + height, y + height - borderRadius);
-  ctx.arc(
-    x + height - borderRadius,
-    y + height - borderRadius,
-    borderRadius,
-    0,
-    Math.PI / 2
-  );
-  ctx.lineTo(x + borderRadius, y + height);
-  ctx.arc(
-    x + borderRadius,
-    y + height - borderRadius,
-    borderRadius,
-    Math.PI / 2,
-    Math.PI
-  );
-  ctx.lineTo(x, y + borderRadius);
-  ctx.arc(
-    x + borderRadius,
-    y + borderRadius,
-    borderRadius,
-    Math.PI,
-    -Math.PI / 2
-  );
-  ctx.closePath();
-  ctx.fill();
-}
-
-/* 
-function drawValidCells(ctx, validCells) {
-  // Loop through the array of valid cells and draw each one
-  validCells.forEach((cell) => {
-    const x = cell.x * cellSize;
-    const y = cell.y * cellSize;
-
-    // Draw a square or any shape at this position
-    ctx.fillStyle = "rgba(255, 0, 0, 0.3)";
-    ctx.fillRect(x, y, cellSize, cellSize);
-  });
-
-  console.log(
-    `Finished drawing %c${validCells.length} %cvalid cells.`,
-    "font-weight: bold; color: green;",
-    "font-weight: normal; color: inherit;"
-  );
-}
-
-drawValidCellsButton.addEventListener("click", function () {
-  console.log(validCells, cellSize, cellSize);
-  drawValidCells(validCellsCtx, validCells);
-});
- */
-
-clearGround.addEventListener("click", function () {
-  //DO NO DELETE
-  clearCanvas(groundCtx); // Clears the ground canvas
-  clearCanvas(waterCtx); // Clears the water canvas
-  clearCanvas(treeCtx); // Clears the tree canvas
-});
-
-function clearCanvas(ctx) {
-  // DO NOT DELETE - super useful to clear any canvas before regen/redraw
-  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-}
-
-// Function to clear npcs array and npcCanvas
-function clearNPC() {
-  // Clear the npcs array
-  npcs = [];
-
-  // Clear the npcCanvas
-  npcCtx.clearRect(0, 0, npcCanvas.width, npcCanvas.height);
-  groundCtx.clearRect(0, 0, npcCanvas.width, npcCanvas.height);
-  waterCtx.clearRect(0, 0, npcCanvas.width, npcCanvas.height);
-}
 
 function startTrees(ctx, cellSize) {
   clearCanvas(ctx);
@@ -305,15 +201,19 @@ function distributeOreDeposits(ctx) {
   clearCanvas(oreDepositsCtx);
   oreDeposits = [];
 
-  oreDepositsCount = groundCells.length * 0.001;
-  console.error("ore count : ", oreDepositsCount);
+
+  betterOreCellsDistribution = groundCells.filter((cell) => {
+    const noiseValue = parseFloat(cell.noise);
+    return noiseValue >= 0.42;
+  });
+
 
   const clusterCount = 5; // Number of ore deposit clusters
   const depositsPerCluster = 3;
 
   for (let cluster = 0; cluster < clusterCount; cluster++) {
     const randomGroundCell =
-      groundCells[Math.floor(Math.random() * groundCells.length)];
+    betterOreCellsDistribution[Math.floor(Math.random() * betterOreCellsDistribution.length)];
 
     // Calculate the starting coordinates for the cluster within the selected ground cell
     const randomClusterX = randomGroundCell.x;
@@ -323,7 +223,7 @@ function distributeOreDeposits(ctx) {
 
     let color = 'rgba(127, 115, 121, 0.4)'
     //drawNearCells(groundCtx, randomClusterX, randomClusterY, color, 5)
-     drawCircle(groundCtx, randomClusterX * cellSize, randomClusterY *cellSize, 50, color);
+     drawCircle(groundCtx, randomClusterX * cellSize, randomClusterY *cellSize, 70, color);
     
 
     // Draw the first ore deposit in the random cluster X, Y
@@ -438,4 +338,68 @@ function debugTerrain(ctx, gridSize, cellSize) {
   }
 
   console.log("Finished drawing terrain with indices");
+}
+
+
+function drawRoundedRect(ctx, x, y, height, borderRadius, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x + borderRadius, y);
+  ctx.lineTo(x + height - borderRadius, y);
+  ctx.arc(
+    x + height - borderRadius,
+    y + borderRadius,
+    borderRadius,
+    -Math.PI / 2,
+    0
+  );
+  ctx.lineTo(x + height, y + height - borderRadius);
+  ctx.arc(
+    x + height - borderRadius,
+    y + height - borderRadius,
+    borderRadius,
+    0,
+    Math.PI / 2
+  );
+  ctx.lineTo(x + borderRadius, y + height);
+  ctx.arc(
+    x + borderRadius,
+    y + height - borderRadius,
+    borderRadius,
+    Math.PI / 2,
+    Math.PI
+  );
+  ctx.lineTo(x, y + borderRadius);
+  ctx.arc(
+    x + borderRadius,
+    y + borderRadius,
+    borderRadius,
+    Math.PI,
+    -Math.PI / 2
+  );
+  ctx.closePath();
+  ctx.fill();
+}
+
+clearGround.addEventListener("click", function () {
+  //DO NO DELETE
+  clearCanvas(groundCtx); // Clears the ground canvas
+  clearCanvas(waterCtx); // Clears the water canvas
+  clearCanvas(treeCtx); // Clears the tree canvas
+});
+
+function clearCanvas(ctx) {
+  // DO NOT DELETE - super useful to clear any canvas before regen/redraw
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+}
+
+// Function to clear npcs array and npcCanvas
+function clearNPC() {
+  // Clear the npcs array
+  npcs = [];
+
+  // Clear the npcCanvas
+  npcCtx.clearRect(0, 0, npcCanvas.width, npcCanvas.height);
+  groundCtx.clearRect(0, 0, npcCanvas.width, npcCanvas.height);
+  waterCtx.clearRect(0, 0, npcCanvas.width, npcCanvas.height);
 }

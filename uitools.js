@@ -3,19 +3,19 @@
 
 //all this is just to make sure all canvas have the correct width and height, that is the gridsize * cellsize
 function setupCanvas(canvasId, width, height) {
+  //console.log('setting ' + canvasId + "to "  + gridSize + " x " + rows +" rows")
   const canvas = document.getElementById(canvasId);
   const ctx = canvas.getContext("2d");
- 
-  // Set canvas width and height
+  //canvas.width = gridSize * cellSize; // Set canvas width to the specified width
+  //canvas.height = gridSize * cellSize; // Set canvas height to the specified heig
+  canvas.width = cellSize * rows;
+  canvas.height = cellSize * rows;
+ // console.log('new width  ' + canvas.width)
 
-  canvas.width = gridSize * cellSize; // Set canvas width to the specified width
-  canvas.height = gridSize * cellSize; // Set canvas height to the specified heig
-  
   // Set canvas position relative to the container
   canvas.style.position = "absolute";
   canvas.style.top = "0";
   canvas.style.left = "0";
-  
   return [canvas, ctx];
 }
 
@@ -145,8 +145,26 @@ document
   });
 
 newGameWelcomeScreen.addEventListener("click", function () {
+  
   hideWelcomeScreen();
   generateTerrainMap(gridSize, gridSize, perlinNoiseScale);
+});
+
+const raceCards = document.querySelectorAll(".race-card");
+
+// Add an event listener to each "race-card" element
+raceCards.forEach((raceCard) => {
+  raceCard.addEventListener("click", function (event) {
+    // Your event handling code  welcomePopup.style.visibility = "collapse";
+  welcomePopup.style.display = "none";
+  welcomeScreenRaceSelector.style.visibility = 'collapse';
+  elfCounselor1.style.visibility = "collapse";
+
+    startTrees(treeCtx, cellSize)
+    hideWelcomeScreen();
+    generateTerrainMap(gridSize, gridSize, perlinNoiseScale);
+    console.log("Race card clicked!");
+  });
 });
 
 newGameCustomWelcomeScreen.addEventListener("click", function () {
@@ -376,3 +394,43 @@ function drawCircle(ctx, x, y, diameter, fillColor) {
   ctx.arc(x, y, radius, 0, Math.PI * 2);
   ctx.fill();
 }
+
+
+
+
+
+/* 
+const canvases = container.querySelectorAll("canvas");
+        let translateX = 0;
+        let translateY = 0;
+
+        // Adjust the translation values based on your desired speed
+        const translateSpeed = 10;
+
+        window.addEventListener("keydown", (event) => {
+            const key = event.key.toLowerCase();
+
+            switch (key) {
+                case "a":
+                    translateX += translateSpeed;
+                    break;
+                case "d":
+                    translateX -= translateSpeed;
+                    break;
+                case "w":
+                    translateY += translateSpeed;
+                    break;
+                case "s":
+                    translateY -= translateSpeed;
+                    break;
+            }
+
+            // Apply the translation to all canvas elements
+            canvases.forEach((canvas) => {
+                canvas.style.transform = `translate(${translateX}px, ${translateY}px)`;
+            });
+        });
+
+
+
+ */

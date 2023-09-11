@@ -366,13 +366,7 @@ function updatePopulationChart(year, population, medianAge) {
 
 function startNPCs(ctx, cellSize) {
   //more suitable for Houses
-  flatLandCells = groundCells.filter((cell) => {
-    const noiseValue = parseFloat(cell.noise);
-    return noiseValue >= 0.2 && noiseValue <= 0.245;
-  });
-
-  console.log(`From ${groundCells.length} down to  ${flatLandCells.length}`);
-
+ 
   // Calculate the maximum index based on the size of the groundCells array.
   const maxIndex = Math.min(30, flatLandCells.length);
 

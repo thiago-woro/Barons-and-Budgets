@@ -1,3 +1,53 @@
+function highlightHoveredCell(event) {
+  // Get the computed style of the container
+  const containerStyle = getComputedStyle(container);
+
+  // Parse the 'transform' value to extract the translation values
+  const transformValue = containerStyle.getPropertyValue("transform");
+  const matrix = new DOMMatrixReadOnly(transformValue);
+
+  // Get mouse coordinates relative to the container
+  const rect = groundCanvas.getBoundingClientRect();
+  const scaledMouseX = (event.clientX - rect.left) / zoomLevel;
+  const scaledMouseY = (event.clientY - rect.top) / zoomLevel;
+
+  // Adjust mouse coordinates based on CSS translation and zoom level
+  const adjustedMouseX = (scaledMouseX - matrix.m41) / zoomLevel;
+  const adjustedMouseY = (scaledMouseY - matrix.m42) / zoomLevel;
+
+  // Calculate the cell row and column based on the adjusted mouse position
+  const cellRow = Math.floor(adjustedMouseY / cellSize);
+  const cellCol = Math.floor(adjustedMouseX / cellSize);
+
+  // Clear the canvas and redraw the terrain
+  boatCtx.clearRect(0, 0, groundCanvas.width, groundCanvas.height);
+
+  // Highlight the hovered cell
+  boatCtx.save();
+  boatCtx.fillStyle = "rgba(128, 0, 128, 0.5)"; // Purple with 50% transparency
+  boatCtx.fillRect(
+    cellCol * cellSize,
+    cellRow * cellSize,
+    cellSize,
+    cellSize
+  );
+  boatCtx.restore();
+}
+
+
+
+
+
+
+// Add mousemove event listener to the container to trigger the function when mouse moves
+container.addEventListener("mousemove", highlightHoveredCell);
+
+
+
+
+
+///camera 
+
 ////////////////////CAMERA FUNCTIONS
 let keys = {};
 let isDragging = false;
@@ -158,94 +208,6 @@ function updateCanvasPosition() {
 
 
 
-/// TO-DO ACCOUNT FOR CURRENT CANVAS ZOOM
-function highlightCellOnMouseOver(container, ctx, cellSize) {
-  container.addEventListener("mousemove", function (event) {
-    if (!isDragging) {
-    const rect = container.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-
-    const cellRow = Math.floor(y / cellSize);
-    const cellCol = Math.floor(x / cellSize);
-
-    //console.log(`Mouse is over cell: X = ${cellCol}, Y = ${cellRow}`);
-
-    // Clear the entire canvas to avoid drawing on the screen
-    //important, pass an empty canvas as
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
-    // Draw a red overlay on the npcCanvas
-    ctx.fillStyle = 'rgba(255, 0, 0, 0.5)'; // Semi-transparent red
-    ctx.fillRect(cellCol * cellSize, cellRow * cellSize, cellSize, cellSize);
- }});
-}
-// Attach the event listener to the canvas container and draw on npcCanvas
-highlightCellOnMouseOver(container, boatCtx, cellSize);
- 
-
-function highlightAdjacentCellsOnMouseOver(container, ctx, cellSize) {
-  const adjacentCells = [];
-
-  container.addEventListener("mousemove", function (event) {
-    if (!isDragging) {
-      const rect = container.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
-
-      const cellRow = Math.floor(y / cellSize);
-      const cellCol = Math.floor(x / cellSize);
-
-      // Define the offsets for adjacent cells
-      const offsets = [
-        { row: -1, col: -1 },
-        { row: -1, col: 0 },
-        { row: -1, col: 1 },
-        { row: 0, col: -1 },
-        { row: 0, col: 0 }, // Highlight the current cell as well
-        { row: 0, col: 1 },
-        { row: 1, col: -1 },
-        { row: 1, col: 0 },
-        { row: 1, col: 1 },
-      ];
-
-      adjacentCells.length = 0; // Clear the previous adjacent cells
-
-      // Calculate and store the positions of adjacent cells
-      for (const offset of offsets) {
-        const adjacentRow = cellRow + offset.row;
-        const adjacentCol = cellCol + offset.col;
-        if (
-          adjacentRow >= 0 &&
-          adjacentRow * cellSize < ctx.canvas.height &&
-          adjacentCol >= 0 &&
-          adjacentCol * cellSize < ctx.canvas.width
-        ) {
-          adjacentCells.push({ row: adjacentRow, col: adjacentCol });
-        }
-      }
-
-      // Clear the entire canvas to avoid drawing on the screen
-      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
-      // Draw a red overlay on the adjacent cells
-      ctx.fillStyle = 'rgba(255, 0, 0, 0.5)'; // Semi-transparent red
-      for (const cell of adjacentCells) {
-        ctx.fillRect(
-          cell.col * cellSize,
-          cell.row * cellSize,
-          cellSize,
-          cellSize
-        );
-      }
-    }
-  });
-
-  return adjacentCells; // Return the array of adjacent cells
-}
-
-//highlightAdjacentCellsOnMouseOver(container, boatCtx, cellSize);
-
 
 ///this works - do not delete
 function getAdjacentCells(targetCell) {
@@ -313,23 +275,6 @@ function logCellOnClick(container, ctx, cellSize) {
 // Example of how to use the function, assuming the container, npcCtx, and cellSize are already defined.
 //  logCellOnClick(container, boatCtx, cellSize); // OG FUNCTION - THIS WORKS OK
 
-//error here:
-container.addEventListener("click", function (event) {
-  const rect = container.getBoundingClientRect();
-  const x = (event.clientX - rect.left) / zoomLevel; // Remove canvasX
-  const y = (event.clientY - rect.top) / zoomLevel;   // Remove canvasY
-  console.log(`X ${x}, Y ${y}`);
-
-  const cellRow = Math.floor(y / cellSize);
-  const cellCol = Math.floor(x / cellSize);
-
-  console.log("Clicked cell:", { row: cellRow, col: cellCol });
-
-  // Draw on the canvas where the click occurred (without subtracting canvasX and canvasY)
-  treeCtx.fillStyle = 'purple';
-  treeCtx.fillRect(cellCol * cellSize, cellRow * cellSize, cellSize, cellSize);
-});
-
 
 
 
@@ -367,6 +312,12 @@ function resetCanvasPosition() {
   // Listen for 'Esc' key
 document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
+      hideMenu = true;
+      gameTab.style.display = "none";
+      statsTab.style.display = "none";
+      chartTab.style.display = "none";
+      npcTab.style.display = "none";
+      minimizeTabButton.textContent = "Show";
       resetCanvasPosition();
     }
   });

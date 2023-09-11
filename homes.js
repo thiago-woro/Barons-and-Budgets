@@ -6,46 +6,33 @@ class House {
     this.upgrades = []; // Array to store home upgrades
     this.economicStatus = "Average"; // Economic status of the house
     this.homeValue = Math.floor(Math.random() * 100000) + 50000; // Random home value
+    this.floors = 1;
   }
 
-  validateCells() {  // TODO IMPORTANT, after selectedCell, check if coords are already being used on Houses array, if yes, go back 1 step and pick again
-    //console.log("🏠❓ validating cells to build a House...");
+// Main function to validate and update house cells
+ validateCells() {
+  let validCellFound = false;
 
-    // Find the current cell coordinates of the house
+  while (!validCellFound) {
     const randomHouse = houses[Math.floor(Math.random() * houses.length)];
-
-    // Use the x and y coordinates of the random house
     const currentX = Math.floor(randomHouse.x / cellSize);
     const currentY = Math.floor(randomHouse.y / cellSize);
 
+    const validAdjacentCells = findValidAdjacentCells(currentX, currentY, houses);
 
-    // Generate the coordinates for adjacent cells
-    const adjacentCells = [
-      { x: currentX - 3, y: currentY },
-      { x: currentX + 3, y: currentY },
-      { x: currentX, y: currentY - 3 },
-      { x: currentX, y: currentY + 3 },
-    ];
-
-    // Filter out cells that are not ground cells
-    const validAdjacentCells = adjacentCells.filter((cell) =>
-      groundCells.some(
-        (groundCell) => groundCell.x === cell.x && groundCell.y === cell.y
-      )
-    );
-
-    // If there are valid adjacent ground cells to move to
     if (validAdjacentCells.length > 0) {
-      // Pick a random valid adjacent cell
       const randomIndex = Math.floor(Math.random() * validAdjacentCells.length);
       const selectedCell = validAdjacentCells[randomIndex];
 
-      // Update the house's position to the new cell
       this.x = selectedCell.x * cellSize;
       this.y = selectedCell.y * cellSize;
-      //console.log(`🏠✅ Yes, Building House at ${this.x}, ${this.y}`);
+
+      validCellFound = true;
     }
   }
+}
+
+  
 
   // Method to draw the house on the ground canvas
   draw(ctx) {
@@ -91,7 +78,37 @@ class House {
   }
 }
 
+// Helper function to find valid adjacent cells
+function findValidAdjacentCells(currentX, currentY, houses) {
+  const adjacentCells = [
+    { x: currentX - 2, y: currentY },
+    { x: currentX + 2, y: currentY },
+    { x: currentX, y: currentY - 2 },
+    { x: currentX, y: currentY + 2 },
+  ];
 
+  return adjacentCells.filter((cell) => isValidGroundCell(cell, houses));
+}
+
+// Helper function to check if a cell is a valid ground cell
+function isValidGroundCell(cell, houses) {
+
+  betterLandforHouses = groundCells.filter((cell) => {
+    const noiseValue = parseFloat(cell.noise);
+    return noiseValue >= 0.2;
+  });
+
+  return betterLandforHouses.some(
+    (groundCell) =>
+      groundCell.x === cell.x &&
+      groundCell.y === cell.y &&
+      !houses.some(
+        (existingHouse) =>
+          Math.floor(existingHouse.x / cellSize) === cell.x &&
+          Math.floor(existingHouse.y / cellSize) === cell.y
+      )
+  );
+}
 
 function drawPaths(houses, ctx) {
   const lineHeight = Math.floor(Math.random() * 7) + 1;
@@ -101,52 +118,51 @@ function drawPaths(houses, ctx) {
     const house1 = houses[i];
     const house2 = houses[i + 1];
 
-    const distance = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
-
-
-    if (distance <= 9 * cellSize) {
-
-
     const x1 = house1.x;
     const y1 = house1.y;
 
     const x2 = house2.x;
     const y2 = house2.y;
 
-    const baseAngle = Math.atan2(y2 - y1, x2 - x1);
+    const distance = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
 
-    for (let y = 0; y <= distance; y += lineHeight + verticalSpacing) {
-      const randomOffset = 3 //(Math.random() - 0.5) * lineHeight * 0.5;
-      const angleVariation = ((Math.random() - 0.5) * Math.PI) / 72;
-      const angle = baseAngle + angleVariation;
+    if (distance <= 9 * cellSize) {
+      const baseAngle = Math.atan2(y2 - y1, x2 - x1);
 
-      const x = x1 + Math.cos(angle) * y + randomOffset;
-      const yCoord = y1 + Math.sin(angle) * y;
+      for (let y = 0; y <= distance; y += lineHeight + verticalSpacing) {
+        const randomOffset = 3; //(Math.random() - 0.5) * lineHeight * 0.5;
+        const angleVariation = ((Math.random() - 0.5) * Math.PI) / 72;
+        const angle = baseAngle + angleVariation;
 
-      // Select a random color for the path
-      const colorOptions = [
-        "#9ac558", // Muddy brown with low opacity
-        "rgba(92, 128, 0, 0.5)",
-        "rgba(240, 230, 140, 0.5)", // Yellowish sand with low opacity
-        "rgba(208, 225, 208, 0.34)",
-        "rgba(208, 225, 208, 0.34)",
-        "rgba(208, 225, 208, 0.34)",
-      ];
-      const randomColor =
-        colorOptions[Math.floor(Math.random() * colorOptions.length)];
+        const x = x1 + Math.cos(angle) * y + randomOffset;
+        const yCoord = y1 + Math.sin(angle) * y;
 
-      drawRoundedRect(
-        ctx,
-        x,
-        yCoord,
-        lineHeight,
-        lineHeight,
-        5,
-        randomColor
-      );
-    }}
+        // Select a random color for the path
+        const colorOptions = [
+          "#9ac558", // Muddy brown with low opacity
+          "rgba(92, 128, 0, 0.5)",
+          "rgba(240, 230, 140, 0.5)", // Yellowish sand with low opacity
+          "rgba(208, 225, 208, 0.34)",
+          "rgba(208, 225, 208, 0.34)",
+          "rgba(208, 225, 208, 0.34)",
+        ];
+        const randomColor =
+          colorOptions[Math.floor(Math.random() * colorOptions.length)];
+
+        drawRoundedRect(
+          ctx,
+          x,
+          yCoord,
+          lineHeight,
+          lineHeight,
+          5,
+          randomColor
+        );
+      }
+    }
   }
 }
+
 
 
 
