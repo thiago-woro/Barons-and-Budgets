@@ -237,7 +237,7 @@ function createHouseForCouple(npc1, npc2) {
     newHouse.addInhabitant(npc2);
     houses.push(newHouse);
     newHouse.validateCells();
-    newHouse.draw(homesCtx);
+    //newHouse.draw(homesCtx);
   } else {
     // If validCells is empty, create a new house at npc1's position
     newHouse = new House(npc1.x / cellSize, npc1.y / cellSize);

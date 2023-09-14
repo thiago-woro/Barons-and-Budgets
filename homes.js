@@ -1,3 +1,5 @@
+
+
 class House {
   constructor(x, y) {
     this.x = x * cellSize;
@@ -10,27 +12,133 @@ class House {
   }
 
 // Main function to validate and update house cells
- validateCells() {
-  let validCellFound = false;
 
-  while (!validCellFound) {
+    // Main function to validate and update house cells
+   // Main function to validate and update house cells
+validateCells() {
+  // Initialize a variable to track whether a valid cell has been found
+  let validCellFound = false;
+  let i = 1;
+
+  // Keep looping until a valid cell is found
+  while (i < 4) {        //while(!validCellFound)
+
+    console.log('trying to place house n #', houses.length)
+    console.log('trying #', i)
+
+
+    // Find the current cell coordinates of the house
     const randomHouse = houses[Math.floor(Math.random() * houses.length)];
+
+    // Use the x and y coordinates of the random house
     const currentX = Math.floor(randomHouse.x / cellSize);
     const currentY = Math.floor(randomHouse.y / cellSize);
 
-    const validAdjacentCells = findValidAdjacentCells(currentX, currentY, houses);
+    // Generate the coordinates for adjacent cells
+    const adjacentCells = [
+      { x: currentX - 2, y: currentY },
+      { x: currentX + 2, y: currentY },
+      { x: currentX, y: currentY - 2 },
+      { x: currentX, y: currentY + 2 },
+    ];
 
+    // Filter out cells that are not ground cells and not already occupied by a house
+    const validAdjacentCells = adjacentCells.filter((cell) =>
+    availableHouseCells.some(
+        (groundCell) =>
+          groundCell.x === cell.x &&
+          groundCell.y === cell.y &&
+          !houses.some(
+            (existingHouse) =>
+              Math.floor(existingHouse.x / cellSize) === cell.x &&
+              Math.floor(existingHouse.y / cellSize) === cell.y
+          )
+      )
+    );
+
+    // If there are valid adjacent ground cells to move to
     if (validAdjacentCells.length > 0) {
-      const randomIndex = Math.floor(Math.random() * validAdjacentCells.length);
+      // Pick a random valid adjacent cell
+      const randomIndex = Math.floor(
+        Math.random() * validAdjacentCells.length
+      );
       const selectedCell = validAdjacentCells[randomIndex];
 
+      // Update the house's position to the new cell
       this.x = selectedCell.x * cellSize;
       this.y = selectedCell.y * cellSize;
 
+      // Set the flag to true to exit the loop
       validCellFound = true;
     }
+    i++;
+
   }
 }
+  
+    // Helper function to find a random adjacent cell
+    findRandomAdjacentCell() {
+      const currentX = Math.floor(this.x / cellSize);
+      const currentY = Math.floor(this.y / cellSize);
+  
+      const adjacentCells = [
+        { x: currentX - 2, y: currentY },
+        { x: currentX + 2, y: currentY },
+        { x: currentX, y: currentY - 2 },
+        { x: currentX, y: currentY + 2 },
+      ];
+  
+      const validAdjacentCells = adjacentCells.filter((cell) =>
+        availableHouseCells.some(
+          (groundCell) =>
+            groundCell.x === cell.x &&
+            groundCell.y === cell.y &&
+            !houses.some(
+              (existingHouse) =>
+                Math.floor(existingHouse.x / cellSize) === cell.x &&
+                Math.floor(existingHouse.y / cellSize) === cell.y
+            )
+        )
+      );
+  
+      if (validAdjacentCells.length > 0) {
+        const randomIndex = Math.floor(
+          Math.random() * validAdjacentCells.length
+        );
+        console.log(`Found a place for 🏠✅ `);
+        
+        return validAdjacentCells[randomIndex];
+      }
+  
+      return null; // No valid adjacent cell found
+    }
+  
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   
 
@@ -50,7 +158,6 @@ class House {
     ctx.font = "bold 20px Arial";
     ctx.fillText(emoji, this.x, this.y);
 
-
       // Determine the position and size of the circle
   const x = this.x; // Use the x-coordinate of the house
   const y = this.y; // Use the y-coordinate of the house
@@ -59,15 +166,6 @@ class House {
   // Use the drawCircle function to draw the filled circle
   drawCircle(pathCtx, x, y, diameter, "rgba(208, 225, 208, 0.34)");
 
-    /* 
-    if (this.economicStatus === "Wealthy") {
-      emoji = "🏡"; // Emoji for wealthy house
-    } else if (this.economicStatus === "Poor") {
-      emoji = "🏚"; // Emoji for poor house
-    } else if (this.upgrades.length > 0) {
-      emoji = "🏢"; // Emoji for house with upgrades
-    }
- */
      //drawRectanglesBetweenHouses(houses, pathCtx);
      drawPaths(houses, pathCtx);
 
@@ -78,37 +176,7 @@ class House {
   }
 }
 
-// Helper function to find valid adjacent cells
-function findValidAdjacentCells(currentX, currentY, houses) {
-  const adjacentCells = [
-    { x: currentX - 2, y: currentY },
-    { x: currentX + 2, y: currentY },
-    { x: currentX, y: currentY - 2 },
-    { x: currentX, y: currentY + 2 },
-  ];
 
-  return adjacentCells.filter((cell) => isValidGroundCell(cell, houses));
-}
-
-// Helper function to check if a cell is a valid ground cell
-function isValidGroundCell(cell, houses) {
-
-  betterLandforHouses = groundCells.filter((cell) => {
-    const noiseValue = parseFloat(cell.noise);
-    return noiseValue >= 0.2;
-  });
-
-  return betterLandforHouses.some(
-    (groundCell) =>
-      groundCell.x === cell.x &&
-      groundCell.y === cell.y &&
-      !houses.some(
-        (existingHouse) =>
-          Math.floor(existingHouse.x / cellSize) === cell.x &&
-          Math.floor(existingHouse.y / cellSize) === cell.y
-      )
-  );
-}
 
 function drawPaths(houses, ctx) {
   const lineHeight = Math.floor(Math.random() * 7) + 1;

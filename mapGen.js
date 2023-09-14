@@ -65,10 +65,20 @@ function generateTerrainMap() {
   drawTerrainLayer(waterCtx, waterCells, cellSize);
   distributeOreDeposits(oreDepositsCtx);
 
+  availableHouseCells = groundCells.filter((cell) => {
+    const noiseValue = parseFloat(cell.noise);
+    return noiseValue >= 0.17;
+  });
+
+  console.log(`Available House Cells: `, availableHouseCells.length);
+
+
   flatLandCells = groundCells.filter((cell) => {
     const noiseValue = parseFloat(cell.noise);
     return noiseValue >= 0.2 && noiseValue <= 0.245;
   });
+
+ 
 
   console.log(`From ${groundCells.length} ground cells, down to ${flatLandCells.length} usable, flat lands cells`);
 

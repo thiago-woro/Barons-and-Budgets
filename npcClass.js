@@ -1,3 +1,14 @@
+
+//TODO 
+//add emotions, like happiness, sad, in love, depression, sick of wife or kids, etc
+//condition: starving, sick, drunk, anemic, etc
+//height, size and weight
+//inventory of held items 
+
+
+
+
+
 class NPC {
   constructor(x, y, myNumber, parents, age) {
     this.x = x * cellSize;

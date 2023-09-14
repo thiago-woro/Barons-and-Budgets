@@ -84,9 +84,9 @@ function toggleTab(tabId) {
 function hideTabs() {
   if (hideMenu === true) {
     gameTab.style.display = "block";
-    statsTab.style.display = "block";
-    chartTab.style.display = "block";
-    npcTab.style.display = "block";
+   // statsTab.style.display = "block";
+   // chartTab.style.display = "block";
+    //npcTab.style.display = "block";
     minimizeTabButton.textContent = "📂"; //open folder pasta
     hideMenu = false;
   } else {
