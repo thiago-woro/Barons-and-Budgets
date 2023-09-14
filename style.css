@@ -404,6 +404,10 @@ button:disabled {
     cursor: not-allowed;
 }
 
+#statsTab {
+    width: 500px;
+}
+
 
 
 #npcTab {

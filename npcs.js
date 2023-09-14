@@ -229,23 +229,19 @@ function coupleMaker(npcs) {
 }
 
 function createHouseForCouple(npc1, npc2) {
-  let newHouse;
+
+  newHouse = new House(npc1.x / cellSize, npc1.y / cellSize);
+  newHouse.addInhabitant(npc1);
+  newHouse.addInhabitant(npc2);
+  houses.push(newHouse);
+
   if (houses.length > 0) {
-  
-    newHouse = new House(npc1.x, npc1.y);
-    newHouse.addInhabitant(npc1);
-    newHouse.addInhabitant(npc2);
-    houses.push(newHouse);
     newHouse.validateCells();
-    //newHouse.draw(homesCtx);
-  } else {
-    // If validCells is empty, create a new house at npc1's position
-    newHouse = new House(npc1.x / cellSize, npc1.y / cellSize);
-    newHouse.addInhabitant(npc1);
-    newHouse.addInhabitant(npc2);
-    houses.push(newHouse);
     newHouse.draw(homesCtx);
+  } else {
+  newHouse.draw(homesCtx);
   }
+
   addNotification(
     "Economy",
     `🏡 New House built! `,
@@ -253,7 +249,7 @@ function createHouseForCouple(npc1, npc2) {
     npc1,
     "#4f753c"
   );
-  //console.log('last house coords:' , lastHouseCoords)
+  console.log('last house coords:' , lastHouseCoords)
 }
 
 function babyMaker(npcs) {

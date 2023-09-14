@@ -1,3 +1,20 @@
+////////////////////CAMERA FUNCTIONS
+let keys = {};
+let isDragging = false;
+let dragStartX = 0;
+let dragStartY = 0;
+let canvasX = 0;
+let canvasY = 0;
+let zoomLevel = 1; // Initial zoom level
+const zoomSpeed = 0.1; // Adjust this for zoom speed
+const minZoom = 0.1; // Minimum zoom level
+const maxZoom = 18; // Maximum zoom level
+const canvasSpeed = 25;
+
+
+
+
+
 function highlightHoveredCell(event) {
   // Get the computed style of the container
   const containerStyle = getComputedStyle(container);
@@ -48,18 +65,7 @@ container.addEventListener("mousemove", highlightHoveredCell);
 
 ///camera 
 
-////////////////////CAMERA FUNCTIONS
-let keys = {};
-let isDragging = false;
-let dragStartX = 0;
-let dragStartY = 0;
-let canvasX = 0;
-let canvasY = 0;
-let zoomLevel = 1; // Initial zoom level
-const zoomSpeed = 0.1; // Adjust this for zoom speed
-const minZoom = 0.5; // Minimum zoom level
-const maxZoom = 8; // Maximum zoom level
-const canvasSpeed = 5;
+
 
 function handleKeyDown(event) {
   keys[event.key] = true;

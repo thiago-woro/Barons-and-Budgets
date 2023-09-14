@@ -6,84 +6,95 @@ document.getElementById("gen2").addEventListener("click", function () {
 });
 
 
-
-//function generateTerrainMap(width, height, noiseScale) {
-
+//main terrain map generator function
 function generateTerrainMap() {
-  console.log("Running generateTerrainMap() in mapGen.js");
-
-  // Clear arrays and variables from previous run
-  waterCells = [];
-  groundCells = [];
-  trees = [];
- treePositions = []; 
-
-
-  // Initialize variables
   const perlinInstance = Object.create(perlin);
   noiseValues = new Array(gridSize);
-
-  // Reseed the Perlin noise generator
   perlin.seed();
+
+  const center = { x: rows / 2, y: rows / 2 };
 
   for (let y = 0; y < rows; y++) {
     terrainMap[y] = new Array(rows);
-   // noiseValues[y] = new Array(width); // Initialize noiseValues for this row
 
     for (let x = 0; x < rows; x++) {
       const noiseValue =
         perlinInstance.get(x * perlinNoiseScale, y * perlinNoiseScale) - 0.5 + offset;
 
-      // Determine terrain type based on noise value
-      let shadeIndex;
-      if (noiseValue < 0) {
-        shadeIndex = Math.floor(-noiseValue * WATER_SHADES.length);
-        terrainMap[y][x] = WATER_SHADES[shadeIndex];
-        waterCells.push({ x, y, color: WATER_SHADES[shadeIndex] }); // Store color here
+      // Calculate the distance from the center
+      const distanceToCenter = Math.sqrt(
+        Math.pow(x - center.x, 2) + Math.pow(y - center.y, 2)
+      );
+
+      // Define a multiplier based on distance (higher distance, stronger smoothing)
+      const distanceMultiplier = distanceToCenter / (rows / 2);
+
+      // Apply smoothing to both land and water cells
+      const smoothedNoiseValue = noiseValue - (distanceMultiplier * 0.8); // Adjust the 0.8 as needed
+
+      // Assign terrain type based on smoothed noise value
+      if (smoothedNoiseValue > 0) {
+        terrainMap[y][x] = LAND_SHADES[Math.floor(smoothedNoiseValue * LAND_SHADES.length)];
+        groundCells.push({ x, y, color: terrainMap[y][x], noise: smoothedNoiseValue.toFixed(5) });
       } else {
-        shadeIndex = Math.floor(noiseValue * LAND_SHADES.length);
-        terrainMap[y][x] = LAND_SHADES[shadeIndex];
-        if (noiseValue > 0) {
-          groundCells.push({ x, y, color: LAND_SHADES[shadeIndex], noise: noiseValue.toFixed(5) });
-        }
+        terrainMap[y][x] = WATER_SHADES[Math.floor(-smoothedNoiseValue * WATER_SHADES.length)];
+        waterCells.push({ x, y, color: terrainMap[y][x] });
       }
     }
   }
   console.log(
     `🟩 Ground cells: ${groundCells.length}, 🌊 water cells: ${waterCells.length}`
   );
-
-  // Calculate the total number of cells
-  const totalCells = groundCells.length + waterCells.length;
-  maxLandPopulation = groundCells.length * usableLand;
-  console.log(`Total cells generated: `, totalCells);
-  console.log(`Max pop.: `, maxLandPopulation.toFixed(0));
-
-  
-
-  drawTerrainLayer(groundCtx, groundCells, cellSize);
-  drawTerrainLayer(waterCtx, waterCells, cellSize);
-  distributeOreDeposits(oreDepositsCtx);
-
-  availableHouseCells = groundCells.filter((cell) => {
-    const noiseValue = parseFloat(cell.noise);
-    return noiseValue >= 0.17;
-  });
-
-  console.log(`Available House Cells: `, availableHouseCells.length);
-
-
-  flatLandCells = groundCells.filter((cell) => {
-    const noiseValue = parseFloat(cell.noise);
-    return noiseValue >= 0.2 && noiseValue <= 0.245;
-  });
-
- 
-
-  console.log(`From ${groundCells.length} ground cells, down to ${flatLandCells.length} usable, flat lands cells`);
-
-  //debugTerrain(npcCtx, gridSize, cellSize);
+  afterMapGen()
 }
+
+
+
+
+
+function afterMapGen() {
+ // Calculate the total number of cells
+ const totalCells = groundCells.length + waterCells.length;
+ maxLandPopulation = groundCells.length * usableLand;
+ console.log(`Total cells generated: `, totalCells);
+ console.log(`Max pop.: `, maxLandPopulation.toFixed(0));
+
+ drawTerrainLayer(groundCtx, groundCells, cellSize);
+ drawTerrainLayer(waterCtx, waterCells, cellSize);
+ distributeOreDeposits(oreDepositsCtx);
+
+ availableHouseCells = groundCells.filter((cell) => {
+   const noiseValue = parseFloat(cell.noise);
+   return noiseValue >= 0.17;
+ });
+
+ console.log(`Available House Cells: `, availableHouseCells.length);
+
+ flatLandCells = groundCells.filter((cell) => {
+   const noiseValue = parseFloat(cell.noise);
+   return noiseValue >= 0.2 && noiseValue <= 0.245;
+ });
+
+ console.log(`From ${groundCells.length} ground cells, down to ${flatLandCells.length} usable, flat lands cells`);
+ console.error(`DONE`);
+
+ //debugTerrain(npcCtx, gridSize, cellSize);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 function drawTerrainLayer(ctx, cellArray, cellSize) {
   // Clear the canvas
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
