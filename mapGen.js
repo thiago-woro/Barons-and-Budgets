@@ -114,7 +114,7 @@ function startTrees(ctx, cellSize) {
  // console.log( adjacentOreCells);
 
  // Filter out cells with ore deposits from groundCells
-groundCells = groundCells.filter((cell) => {
+groundCellswithoutOres = groundCells.filter((cell) => {
   // Check if the cell coordinates are occupied by an ore deposit
   return !adjacentOreCells.some(
     (coords) =>
@@ -126,7 +126,7 @@ groundCells = groundCells.filter((cell) => {
 
 
   // Assign tree emojis based on noise values
-  groundCells.forEach((cell) => {
+  groundCellswithoutOres.forEach((cell) => {
     let selectedEmoji
 
     if (cell.noise > 0.05) {
@@ -159,12 +159,11 @@ groundCells = groundCells.filter((cell) => {
     }
   }
 
-  occupiedCells = [];
-  drawTrees(treeCtx, cellSize, treePositions, occupiedCells);
+  drawTrees(treeCtx, treePositions);
   return treePositions;
 }
 
-function drawTrees(ctx, cellSize, treePositions, occupiedCells) {
+function drawTrees(ctx, treePositions) {
   clearCanvas(ctx);
 
   console.log('drawing trees 🌵🌵')
@@ -182,17 +181,6 @@ function drawTrees(ctx, cellSize, treePositions, occupiedCells) {
     const x = tree.x;
     const y = tree.y;
 
-    // Skip trees in occupied cells
-    if (
-      occupiedCells.some(
-        (cell) =>
-          cell.x === Math.floor(x / cellSize) &&
-          cell.y === Math.floor(y / cellSize)
-      )
-    ) {
-      return;
-    }
-
     // Draw shadow
     ctx.beginPath();
     ctx.arc(x, y + 5, 7, 0, Math.PI * 2);
@@ -205,33 +193,12 @@ function drawTrees(ctx, cellSize, treePositions, occupiedCells) {
     ctx.font = "bold 20px Arial";
     ctx.fillText(tree.emoji, x, y);
   });
-  drawGrass(treeCtx, cellSize, 0.02);
+  drawGrass(treeCtx, 0.05);
   console.log(	`draw grass 1`);
 
 }
 
-// Define the grass tile image
-const grassImage = new Image();
-grassImage.src = "/assets/tilesets/grassAndFlowersByStyloo/transparentBackground/grassandflowers10.png";
-grassImage.width = 16;
-grassImage.height = 16;
 
-
-
-// Function to draw grass tiles inside ground cells
-function drawGrass(ctx, cellSize, grassDensity) {
-  console.log(`draw grass 2`);
-
-  for (const cell of groundCells) {
-    // Randomly determine whether to draw grass based on grassDensity
-    if (Math.random() < grassDensity) {
-      const x = cell.x;
-      const y = cell.y;
-      ctx.drawImage(grassImage, x * cellSize, y * cellSize, cellSize, cellSize);
-      //console.log(	`draw grass 3`);
-    }
-  }
-}
 
 // Call drawGrass function with your desired parameters and groundCells
 
