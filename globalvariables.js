@@ -8,7 +8,7 @@ var gridSize = 20;
 
 let terrainGrid;
 let perlinNoiseScale = 0.03; //original number is 0.025
-rows = 260;
+rows = 160;
 
 
 let offset = 0.75; //og is 0.35

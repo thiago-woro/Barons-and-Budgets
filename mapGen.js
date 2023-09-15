@@ -76,23 +76,9 @@ function afterMapGen() {
  });
 
  console.log(`From ${groundCells.length} ground cells, down to ${flatLandCells.length} usable, flat lands cells`);
- console.error(`DONE`);
 
  //debugTerrain(npcCtx, gridSize, cellSize);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 function drawTerrainLayer(ctx, cellArray, cellSize) {
@@ -219,8 +205,36 @@ function drawTrees(ctx, cellSize, treePositions, occupiedCells) {
     ctx.font = "bold 20px Arial";
     ctx.fillText(tree.emoji, x, y);
   });
+  drawGrass(treeCtx, cellSize, 0.02);
+  console.log(	`draw grass 1`);
 
 }
+
+// Define the grass tile image
+const grassImage = new Image();
+grassImage.src = "/assets/tilesets/grassAndFlowersByStyloo/transparentBackground/grassandflowers10.png";
+grassImage.width = 16;
+grassImage.height = 16;
+
+
+
+// Function to draw grass tiles inside ground cells
+function drawGrass(ctx, cellSize, grassDensity) {
+  console.log(`draw grass 2`);
+
+  for (const cell of groundCells) {
+    // Randomly determine whether to draw grass based on grassDensity
+    if (Math.random() < grassDensity) {
+      const x = cell.x;
+      const y = cell.y;
+      ctx.drawImage(grassImage, x * cellSize, y * cellSize, cellSize, cellSize);
+      //console.log(	`draw grass 3`);
+    }
+  }
+}
+
+// Call drawGrass function with your desired parameters and groundCells
+
 
 
 

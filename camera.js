@@ -148,7 +148,6 @@ function updateCanvasPosition() {
     canvasX -= canvasSpeed;
   }
   if (keys["ArrowRight"] || keys["d"]) {
-    console.log(">");
     canvasX += canvasSpeed;
   }
   if (keys["ArrowUp"] || keys["w"]) {
