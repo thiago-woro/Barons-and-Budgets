@@ -11,7 +11,14 @@ function getRandomGrassImage() {
 function drawGrass(ctx, grassDensity) {
   console.log(`draw grass 2`);
 
-  for (const cell of groundCells) {
+
+
+  grasslands = emptyCells.filter((cell) => {
+    const noiseValue = parseFloat(cell.noise);
+    return noiseValue >= 0.2;
+  });
+
+  for (const cell of grasslands) {
     // Randomly determine whether to draw grass based on grassDensity
     if (Math.random() < grassDensity) {
       const x = cell.x;

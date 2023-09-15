@@ -113,20 +113,13 @@ function startTrees(ctx, cellSize) {
   //console.log("will draw " + treeCount.toFixed(0) + " trees");
  // console.log( adjacentOreCells);
 
- // Filter out cells with ore deposits from groundCells
-groundCellswithoutOres = groundCells.filter((cell) => {
-  // Check if the cell coordinates are occupied by an ore deposit
-  return !adjacentOreCells.some(
-    (coords) =>
-      coords.x === cell.x && coords.y === cell.y
-  );
-});
+
 
     treeCount = groundCells.length * treePercentageofLand;
 
 
   // Assign tree emojis based on noise values
-  groundCellswithoutOres.forEach((cell) => {
+  emptyCells.forEach((cell) => {
     let selectedEmoji
 
     if (cell.noise > 0.05) {
@@ -158,8 +151,18 @@ groundCellswithoutOres = groundCells.filter((cell) => {
       treePositions.push({ x, y, emoji: selectedEmoji });
     }
   }
+  console.error('empty cells: '  + emptyCells.length)
+   // Subtract treePositions from emptyCells and store the result in emptyCells2
+    emptyCells.filter((cell) => {
+    return !treePositions.some((tree) => tree.x === cell.x && tree.y === cell.y);
+  });
+  console.error('empty cells: '  + emptyCells.length)
+
+
 
   drawTrees(treeCtx, treePositions);
+  drawGrass(treeCtx, 0.05);  //draw grass first then trees on top
+
   return treePositions;
 }
 
@@ -193,8 +196,6 @@ function drawTrees(ctx, treePositions) {
     ctx.font = "bold 20px Arial";
     ctx.fillText(tree.emoji, x, y);
   });
-  drawGrass(treeCtx, 0.05);
-  console.log(	`draw grass 1`);
 
 }
 
@@ -253,6 +254,15 @@ function distributeOreDeposits(ctx) {
       drawOreDeposit(ctx, x, y);
     }
   }
+
+   // Filter out cells with ore deposits from groundCells
+emptyCells = groundCells.filter((cell) => {
+  // Check if the cell coordinates are occupied by an ore deposit
+  return !adjacentOreCells.some(
+    (coords) =>
+      coords.x === cell.x && coords.y === cell.y
+  );
+});
 
   startTrees(treeCtx, cellSize);
 
