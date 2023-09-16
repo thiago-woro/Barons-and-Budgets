@@ -7,11 +7,12 @@ function getRandomGrassImage() {
   return `/assets/tilesets/grassAndFlowersByStyloo/transparentBackground/grassandflowers${randomIndex}.png`;
 }
 
+let grasslands = []
+
 // Function to draw grass tiles inside ground cells
 function drawGrass(ctx, grassDensity) {
   console.log(`draw grass 2`);
-
-
+  
 
   grasslands = emptyCells.filter((cell) => {
     const noiseValue = parseFloat(cell.noise);

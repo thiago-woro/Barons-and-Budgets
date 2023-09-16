@@ -1,4 +1,18 @@
 
+const house1 = new Image();
+house1.src = '/assets/tilesets/houses/house1.png';
+
+
+const house2 = new Image();
+house2.src = '/assets/tilesets/houses/house2.png';
+
+
+const house3 = new Image();
+house3.src = '/assets/tilesets/houses/house3.png';
+
+
+
+
 
 class House {
   constructor(x, y) {
@@ -43,7 +57,7 @@ validateCells() {
     ];
 
     // Filter out cells that are not ground cells and not already occupied by a house
-    const validAdjacentCells = adjacentCells.filter((cell) =>
+    const validAdjacentCells = grasslands.filter((cell) =>
     availableHouseCells.some(
         (groundCell) =>
           groundCell.x === cell.x &&
@@ -113,61 +127,22 @@ validateCells() {
       return null; // No valid adjacent cell found
     }
   
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
 
   // Method to draw the house on the ground canvas
   draw(ctx) {
-    let emoji;
-    const randomValue = Math.random();
+    ctx.drawImage(house1, this.x , this.y, cellSize*1.2, cellSize*1.2);
 
-    if (randomValue < 0.33) {
-      emoji = "🏠"; // 33% chance
-    } else if (randomValue < 0.87) {
-      emoji = "🏡";
-    } else {
-      emoji = "🏚️";
-    }
-
-    ctx.font = "bold 20px Arial";
-    ctx.fillText(emoji, this.x, this.y);
-
-      // Determine the position and size of the circle
+      // Determine the position and shadow circle
   const x = this.x; // Use the x-coordinate of the house
   const y = this.y; // Use the y-coordinate of the house
   const diameter = 40; // Set the diameter of the circle
 
   // Use the drawCircle function to draw the filled circle
-  drawCircle(pathCtx, x, y, diameter, "rgba(208, 225, 208, 0.34)");
+  drawCircle(pathCtx, x, y, diameter, "rgba(227, 204, 162, 0.8)");
+
 
      //drawRectanglesBetweenHouses(houses, pathCtx);
-     drawPaths(houses, pathCtx);
+     //drawPaths(houses, pathCtx);
 
   }
 

@@ -5,7 +5,7 @@ let dragStartX = 0;
 let dragStartY = 0;
 let canvasX = 0;
 let canvasY = 0;
-let zoomLevel = 0.5; // Initial zoom level
+let zoomLevel = 0.1; // Initial zoom level
 const zoomSpeed = 0.1; // Adjust this for zoom speed
 const minZoom = 0.1; // Minimum zoom level
 const maxZoom = 18; // Maximum zoom level
@@ -328,7 +328,30 @@ document.addEventListener("keydown", (event) => {
   
   // Listen for click on the 'recenterCanvas' icon
   document.getElementById("recenterCanvas").addEventListener("click", () => {
-    resetCanvasPosition();
+   // resetCanvasPosition();
+    centerCanvasOnMap();
+
 console.log("map centered ok");
 
   });
+
+
+// Function to center the canvas on the map
+function centerCanvasOnMap() {
+  // Calculate the new canvasX and canvasY values to center the canvas
+  canvasX = (groundCanvas.width / 2) ;
+  canvasY = (groundCanvas.height / 2);
+
+  // Update the canvas position
+  updateCanvasPosition();
+}
+
+
+
+
+
+
+
+
+
+  
