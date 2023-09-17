@@ -1,18 +1,34 @@
 
-const house1 = new Image();
-house1.src = '/assets/tilesets/houses/house1.png';
 
 
-const house2 = new Image();
-house2.src = '/assets/tilesets/houses/house2.png';
+const houseSimple = new Image();
+houseSimple.src = '/assets/tilesets/houses/simple.png';
 
+const houseRed = new Image();
+houseRed.src = '/assets/tilesets/houses/mint.png';
 
-const house3 = new Image();
-house3.src = '/assets/tilesets/houses/house3.png';
+const housePurple = new Image();
+housePurple.src = '/assets/tilesets/houses/purple.png';
 
+const houseMint = new Image();
+houseMint.src = '/assets/tilesets/houses/mint.png';
 
+const houseBlack = new Image();
+houseBlack.src = '/assets/tilesets/houses/black.png';
 
+const stableHouse = new Image();
+stableHouse.src = '/assets/tilesets/houses/stable.png';
 
+// Create an array to hold the house images
+const houseImages = [];
+
+// Push all the house images into the array
+houseImages.push(houseSimple);
+houseImages.push(houseRed);
+houseImages.push(housePurple);
+houseImages.push(houseMint);
+houseImages.push(houseBlack);
+houseImages.push(stableHouse);
 
 class House {
   constructor(x, y) {
@@ -130,18 +146,17 @@ validateCells() {
 
   // Method to draw the house on the ground canvas
   draw(ctx) {
-    ctx.drawImage(house1, this.x , this.y, cellSize*1.2, cellSize*1.2);
+    // Randomly select an image from the houseImages array
+    const randomIndex = Math.floor(Math.random() * houseImages.length);
+    const selectedHouseImage = houseImages[randomIndex];
 
-      // Determine the position and shadow circle
-  const x = this.x; // Use the x-coordinate of the house
-  const y = this.y; // Use the y-coordinate of the house
-  const diameter = 40; // Set the diameter of the circle
+    //draw house
+    ctx.drawImage(selectedHouseImage, this.x, this.y, cellSize * 2, cellSize * 2);
 
-  // Use the drawCircle function to draw the filled circle
-  drawCircle(pathCtx, x, y, diameter, "rgba(227, 204, 162, 0.8)");
+    // draw house shadow
+    drawCircle(pathCtx,  this.x,  this.y, 40, "rgba(227, 204, 162, 0.8)");
 
-
-     //drawRectanglesBetweenHouses(houses, pathCtx);
+     drawRectanglesBetweenHouses(houses, pathCtx);
      //drawPaths(houses, pathCtx);
 
   }

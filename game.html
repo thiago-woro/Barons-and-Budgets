@@ -75,6 +75,7 @@
                 <span id="statsTabButton" class="tabSelector" onclick="toggleTab('statsTab')">Stats</span>
                 <span id="npcTabButton" class="tabSelector" onclick="toggleTab('npcTab')">NPCs</span>
                 <span id="chartTabButton" class="tabSelector" onclick="toggleTab('chartTab')">Chart</span>
+                <span id="controlsTabButton" class="tabSelector" onclick="toggleTab('controlsTab')">Controls</span>
 
             </div>
 		<div id="gameTab" style="display: none; margin-top: -24px; z-index: 2001 ;" class="card">
@@ -180,7 +181,18 @@
 			<canvas id="populationChart"></canvas>
 
             </div>
+            <div id="controlsTab" class="card" style="display: none;">
+            </br>
+                <span>ESC to re-center map</span>
+            </br>
+        </br>
 
+
+                <span>Use WASD keys to move map.</span>
+            </br>
+            </br>
+        </br>
+                </div>
 
 <div style="display: none;" id="npcTab" class="card col">
     <h1 id="npcTableHeader" >NPC Information</h1>
@@ -234,6 +246,7 @@
   <script src="./uitools.js"></script>
 		<script src="perlin.js"></script>
      <script src="./mapGen.js"></script>
+     <script src="./trees.js"></script>
      <script src="./grass.js"></script>
      <script src="./npcClass.js"></script>
      <script src="./npcs.js"></script>
