@@ -24,7 +24,7 @@ let usableLand = 0.045
 
 let flatLandCells = [];
 
-//let pathCells = [];
+let pathCells = [];
 
 
 //npcs

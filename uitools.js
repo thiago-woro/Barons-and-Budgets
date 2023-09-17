@@ -24,6 +24,7 @@ const canvasElements = [
   "npcCanvas",
   "groundCanvas",
   "waterCanvas",
+  "wavesCanvas",
   "treeCanvas",
   "boatCanvas",
   "minimap",
@@ -42,6 +43,7 @@ for (const canvasId of canvasElements) {
 const [npcCanvas, npcCtx] = ctxElements["npcCanvas"];
 const [groundCanvas, groundCtx] = ctxElements["groundCanvas"];
 const [waterCanvas, waterCtx] = ctxElements["waterCanvas"];
+const [wavesCanvas, wavesCtx] = ctxElements["wavesCanvas"];
 const [treeCanvas, treeCtx] = ctxElements["treeCanvas"];
 const [boatCanvas, boatCtx] = ctxElements["boatCanvas"];
 const [minimapCanvas, minimapCtx] = ctxElements["minimap"];

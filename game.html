@@ -43,7 +43,8 @@
 	<body>
         <div class="canvas-container" id="container" style="visibility: collapse;">
             <canvas id="groundCanvas"  style="z-index: 10;"></canvas>
-            <canvas id="waterCanvas"  style="z-index: 20;"></canvas>
+            <canvas id="waterCanvas"  style="z-index: 0;"></canvas>
+            <canvas id="wavesCanvas"  style="z-index: 1;"></canvas>
             <canvas id="path"  style="z-index: 15;"></canvas>
             <canvas id="oreDeposits"  style="z-index: 40;"></canvas>
             <canvas id="treeCanvas"  style="z-index: 41;"></canvas>
@@ -246,6 +247,7 @@
   <script src="./uitools.js"></script>
 		<script src="perlin.js"></script>
      <script src="./mapGen.js"></script>
+     <script src="./water.js"></script>
      <script src="./trees.js"></script>
      <script src="./grass.js"></script>
      <script src="./npcClass.js"></script>

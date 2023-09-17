@@ -73,7 +73,7 @@ validateCells() {
     ];
 
     // Filter out cells that are not ground cells and not already occupied by a house
-    const validAdjacentCells = grasslands.filter((cell) =>
+    const validAdjacentCells = pathCells.filter((cell) =>
     availableHouseCells.some(
         (groundCell) =>
           groundCell.x === cell.x &&
@@ -156,8 +156,8 @@ validateCells() {
     // draw house shadow
     drawCircle(pathCtx,  this.x,  this.y, 40, "rgba(227, 204, 162, 0.8)");
 
-     drawRectanglesBetweenHouses(houses, pathCtx);
-     //drawPaths(houses, pathCtx);
+     //drawRectanglesBetweenHouses(houses, pathCtx);
+     drawPaths(houses, pathCtx);
 
   }
 

@@ -78,7 +78,15 @@ function drawTerrainLayer(ctx, cellArray, cellSize) {
   }
 }
 
+
+
+
+
+
+
 function afterMapGen() {
+  generateWavyWaterCanvas(waterCtx, rows);
+
   // Calculate the total number of cells
   const totalCells = groundCells.length + waterCells.length;
   maxLandPopulation = groundCells.length * usableLand;
@@ -109,8 +117,6 @@ function afterMapGen() {
   //debugTerrain(npcCtx, gridSize, cellSize);
 }
 
-// Define a global variable array to store path cells
-let pathCells = [];
 
 function drawFlatLandCells(cellArray, numRowsToSkip, pathCurveAmount) {
   pathCtx.fillStyle = "rgba(197, 190, 172, 0.5)";
