@@ -272,17 +272,19 @@ function updatePopulationChart(year, population, medianAge) {
   populationChart.update();
 }
 
+
+//start npc colony
 function startNPCs(ctx, cellSize) {
   //more suitable for Houses
  
   // Calculate the maximum index based on the size of the groundCells array.
-  const maxIndex = Math.min(30, flatLandCells.length);
+  const maxIndex = Math.min(30, pathCells.length);
 
   for (let i = 0; i < startingPopulation && maxIndex > 0; i++) {
     // Only select from the first 'maxIndex' cells.
     const randomIndex = Math.floor(Math.random() * maxIndex);
 
-    const selectedCell = flatLandCells.splice(randomIndex, 1)[0];
+    const selectedCell = pathCells.splice(randomIndex, 1)[0];
     const npc = new NPC(selectedCell.x, selectedCell.y, cellSize, i + 1);
     npcs.push(npc);
   }

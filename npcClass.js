@@ -99,7 +99,41 @@ class NPC {
     }
 }
 
+// New moveOnPaths method
+moveOnPaths() {
+  if (pathCellIndex < pathCells.length) {
+    // Get the current path cell based on the pathCellIndex
+    const currentCell = pathCells[pathCellIndex];
 
+    // Move towards the current path cell
+    const dx = currentCell.x * cellSize - this.x;
+    const dy = currentCell.y * cellSize - this.y;
+
+    // Calculate the distance to the current path cell
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    // Define the speed at which NPCs move along the path
+    const speed = 2; // Adjust this as needed
+
+    // Check if the NPC has reached the current path cell
+    if (distance <= speed) {
+      // Update the NPC's position to the current path cell
+      this.x = currentCell.x * cellSize;
+      this.y = currentCell.y * cellSize;
+
+      // Increment the pathCellIndex to move to the next path cell
+      pathCellIndex++;
+    } else {
+      // Normalize the direction vector and move the NPC
+      const directionX = dx / distance;
+      const directionY = dy / distance;
+      this.x += directionX * speed;
+      this.y += directionY * speed;
+    }
+  } else {
+    console.log("NPC has reached the end of the path.");
+  }
+}
 
 
   ageAndDie() {
