@@ -41,70 +41,46 @@ class House {
     this.floors = 1;
   }
 
-// Main function to validate and update house cells
 
-    // Main function to validate and update house cells
-   // Main function to validate and update house cells
-validateCells() {
-  // Initialize a variable to track whether a valid cell has been found
-  let validCellFound = false;
-  let i = 1;
-
-  // Keep looping until a valid cell is found
-  while (i < 4) {        //while(!validCellFound)
-
-    console.log('trying to place house n #', houses.length)
-    console.log('trying #', i)
-
-
-    // Find the current cell coordinates of the house
-    const randomHouse = houses[Math.floor(Math.random() * houses.length)];
-
-    // Use the x and y coordinates of the random house
-    const currentX = Math.floor(randomHouse.x / cellSize);
-    const currentY = Math.floor(randomHouse.y / cellSize);
-
-    // Generate the coordinates for adjacent cells
+   validateCells() {
+    // Get the last placed house
+    const lastHouse = houses[houses.length - 1];
+  
+    // Find the current cell coordinates of the last house
+    const currentX = Math.floor(lastHouse.x );
+    const currentY = Math.floor(lastHouse.y );
+  
+    // Define possible adjacent cell positions
     const adjacentCells = [
-      { x: currentX - 2, y: currentY },
-      { x: currentX + 2, y: currentY },
-      { x: currentX, y: currentY - 2 },
-      { x: currentX, y: currentY + 2 },
+      { x: currentX - 1, y: currentY },
+      { x: currentX + 1, y: currentY },
+      { x: currentX, y: currentY - 1 },
+      { x: currentX, y: currentY + 1 },
     ];
-
-    // Filter out cells that are not ground cells and not already occupied by a house
-    const validAdjacentCells = pathCells.filter((cell) =>
-    availableHouseCells.some(
-        (groundCell) =>
-          groundCell.x === cell.x &&
-          groundCell.y === cell.y &&
-          !houses.some(
-            (existingHouse) =>
-              Math.floor(existingHouse.x / cellSize) === cell.x &&
-              Math.floor(existingHouse.y / cellSize) === cell.y
-          )
+  
+    // Filter out adjacent cells that are inside the pathCells array
+    const validAdjacentCells = adjacentCells.filter((cell) =>
+      pathCells.some((pathCell) =>
+        pathCell.x === cell.x && pathCell.y === cell.y
       )
     );
-
-    // If there are valid adjacent ground cells to move to
-    if (validAdjacentCells.length > 0) {
-      // Pick a random valid adjacent cell
-      const randomIndex = Math.floor(
-        Math.random() * validAdjacentCells.length
-      );
-      const selectedCell = validAdjacentCells[randomIndex];
-
-      // Update the house's position to the new cell
-      this.x = selectedCell.x * cellSize;
-      this.y = selectedCell.y * cellSize;
-
-      // Set the flag to true to exit the loop
-      validCellFound = true;
+  
+    if (validAdjacentCells.length === 0) {
+      console.log('Skipping house construction');
+      return;
     }
-    i++;
-
+  
+    // Pick a random adjacent cell
+    const randomIndex = Math.floor(Math.random() * validAdjacentCells.length);
+    const selectedCell = validAdjacentCells[randomIndex];
+  
+    // Update the current house's position to the new cell
+    this.x = selectedCell.x * cellSize;
+    this.y = selectedCell.y * cellSize;
+  
+    console.error('House constructed at (x:', this.x / cellSize, ', y:', this.y / cellSize, ')');
   }
-}
+  
   
     // Helper function to find a random adjacent cell
     findRandomAdjacentCell() {
@@ -146,6 +122,12 @@ validateCells() {
 
   // Method to draw the house on the ground canvas
   draw(ctx) {
+
+    if (Math.random() < 0.4) {
+      this.y -= 50;
+    }
+
+
     // Randomly select an image from the houseImages array
     const randomIndex = Math.floor(Math.random() * houseImages.length);
     const selectedHouseImage = houseImages[randomIndex];
@@ -154,7 +136,7 @@ validateCells() {
     ctx.drawImage(selectedHouseImage, this.x, this.y, cellSize * 2, cellSize * 2);
 
     // draw house shadow
-    drawCircle(pathCtx,  this.x,  this.y, 40, "rgba(227, 204, 162, 0.8)");
+    drawCircle(pathCtx,  this.x,  this.y, 20, "rgba(227, 204, 162, 0.3)");
 
      //drawRectanglesBetweenHouses(houses, pathCtx);
      drawPaths(houses, pathCtx);

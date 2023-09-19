@@ -113,13 +113,13 @@ function afterMapGen() {
     `From ${groundCells.length} ground cells, down to ${flatLandCells.length} usable, flat lands cells`
   );
 
-  drawFlatLandCells(flatLandCells, 8, 2);
+  drawHousePaths(flatLandCells, 7, 2);
   //debugTerrain(npcCtx, gridSize, cellSize);
 }
 
 
-function drawFlatLandCells(cellArray, numRowsToSkip, pathCurveAmount) {
-  pathCtx.fillStyle = "rgba(197, 190, 172, 0.5)";
+function drawHousePaths(cellArray, numRowsToSkip, pathCurveAmount) {
+  pathCtx.fillStyle = "rgba(197, 190, 172, 0.3)";
 
   for (const cell of cellArray) {
     const x = cell.x;
@@ -133,17 +133,40 @@ function drawFlatLandCells(cellArray, numRowsToSkip, pathCurveAmount) {
       const yOffset =
         Math.sin((x / cellSize) * pathCurveAmount) * cellSize * 0.1; // Adjust the 0.1 factor as needed for the curve intensity
 
+      // Create a new cell object with the adjusted y position
+      const cellWithOffset = {
+        x: x,
+        y: y + yOffset,
+        // You may want to copy other properties from the original cell if needed
+      };
+
       // Draw the path cell at the adjusted y position
       pathCtx.fillRect(
         x * cellSize,
         (y + yOffset) * cellSize,
         cellSize,
-        cellSize*0.4
+        cellSize * 0.4
       );
 
-      // Push the cell into the pathCells array
-      pathCells.push(cell);
+      // Push the cell with the offset into the pathCells array
+      pathCells.push(cellWithOffset);
     }
+  }
+
+  //drawCellsInArray(pathCells, 'rgba(128, 59, 190, 0.52)', pathCtx);
+}
+
+
+
+//DO NOT DELETE, just use this fn to check cellarrays for debugginh
+function drawCellsInArray(cellArray, color, context) {
+  context.fillStyle = color;
+
+  for (const cell of cellArray) {
+    const x = cell.x;
+    const y = cell.y;
+
+    context.fillRect(x * cellSize, y * cellSize, cellSize, cellSize*0.4);
   }
 }
 

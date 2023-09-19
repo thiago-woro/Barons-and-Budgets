@@ -30,7 +30,7 @@ let pathCells = [];
 //npcs
 let npcs = [];
 let year = 2700;
-const startingPopulation = 10;
+const startingPopulation = 25;
 const populationIncreaseSpeed = 0.15;
 let isPaused = false;
 var deathRate = 0.001;
@@ -99,7 +99,7 @@ var WATER_SHADES = [
   "#5690b7"
 ];
 var LAND_SHADES = [
-  "#fffdbd", 
+  "#dbd997", 
   "#9ac558", 
   "#88b14b", 
   "#759e42", 
@@ -112,3 +112,7 @@ var LAND_SHADES = [
 
 
 
+//#b3b18f
+
+
+  //og sand color very happy tone      "#fffdbd",

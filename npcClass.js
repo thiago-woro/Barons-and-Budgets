@@ -68,6 +68,37 @@ class NPC {
     }
 }
 
+  move() {
+    // Find the current cell coordinates of the NPC
+    const currentX = Math.floor(this.x / cellSize);
+    const currentY = Math.floor(this.y / cellSize);
+    // Generate the coordinates for adjacent cells
+    const adjacentCells = [
+        { x: currentX - 1, y: currentY },
+        { x: currentX + 1, y: currentY },
+        { x: currentX, y: currentY - 1 },
+        { x: currentX, y: currentY + 1 },
+    ];
+    // Filter out cells that are not ground cells
+    const validAdjacentCells = adjacentCells.filter((cell) =>
+        groundCells.some(
+            (groundCell) => groundCell.x === cell.x && groundCell.y === cell.y
+        )
+    );
+
+    if (this.age <= 60 || (Math.random() < 8 / (this.age - 59))) {
+        // If the NPC is below 60 or meets the chance-based condition
+        if (validAdjacentCells.length > 0) {
+            // Pick a random valid adjacent cell
+            const randomIndex = Math.floor(Math.random() * validAdjacentCells.length);
+            const selectedCell = validAdjacentCells[randomIndex];
+            // Update the NPC's position to the new cell
+            this.x = selectedCell.x * cellSize;
+            this.y = selectedCell.y * cellSize;
+        }
+    }
+}
+
 
 
 
