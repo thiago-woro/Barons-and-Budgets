@@ -113,12 +113,6 @@ function drawTerrainLayer(ctx, cellArray, cellSize) {
   }
 }
 
-
-
-
-
-
-
 function afterMapGen() {
   generateWavyWaterCanvas(waterCtx, rows);
 
@@ -131,6 +125,12 @@ function afterMapGen() {
   drawTerrainLayer(groundCtx, groundCells, cellSize);
   //drawTerrainLayer(waterCtx, waterCells, cellSize);
   distributeOreDeposits(oreDepositsCtx);
+  
+  // Draw sand texture after drawing the terrain layer
+  drawSandTexture(groundCtx);
+  
+  // Draw mountain texture for high elevation cells
+  drawMountainTexture(groundCtx);
 
   availableHouseCells = groundCells.filter((cell) => {
     const noiseValue = parseFloat(cell.noise);
@@ -152,13 +152,14 @@ function afterMapGen() {
   //debugTerrain(npcCtx, gridSize, cellSize);
 }
 
-
 function drawHousePaths(cellArray, numRowsToSkip, pathCurveAmount) {
-  pathCtx.fillStyle = "rgba(197, 190, 172, 0.3)";
+  // Base path color - now we'll adjust opacity dynamically
+  const basePathColor = "197, 190, 172"; // RGB values without the alpha
 
   for (const cell of cellArray) {
     const x = cell.x;
     const y = cell.y;
+    const noiseValue = parseFloat(cell.noise || 0);
 
     // Determine if this cell should be part of the path
     const isPathCell = y % numRowsToSkip === 0;
@@ -172,8 +173,19 @@ function drawHousePaths(cellArray, numRowsToSkip, pathCurveAmount) {
       const cellWithOffset = {
         x: x,
         y: y + yOffset,
-        // You may want to copy other properties from the original cell if needed
+        noise: cell.noise // Copy the noise value to use for houses later
       };
+
+      // Calculate opacity based on noise value
+      // Higher noise value = lower opacity (thinner path)
+      // Start with 0.4 opacity at noise=0, decrease to 0.05 at noise=0.4+
+      let opacity = 0.4 - (noiseValue * 0.9);
+      
+      // Ensure opacity doesn't go below 0.05 or above 0.4
+      opacity = Math.max(0.05, Math.min(0.4, opacity));
+      
+      // Set the fill style with dynamic opacity
+      pathCtx.fillStyle = `rgba(${basePathColor}, ${opacity})`;
 
       // Draw the path cell at the adjusted y position
       pathCtx.fillRect(
@@ -190,8 +202,6 @@ function drawHousePaths(cellArray, numRowsToSkip, pathCurveAmount) {
 
   //drawCellsInArray(pathCells, 'rgba(128, 59, 190, 0.52)', pathCtx);
 }
-
-
 
 //DO NOT DELETE, just use this fn to check cellarrays for debugginh
 function drawCellsInArray(cellArray, color, context) {
@@ -360,4 +370,106 @@ function clearNPC() {
   npcCtx.clearRect(0, 0, npcCanvas.width, npcCanvas.height);
   groundCtx.clearRect(0, 0, npcCanvas.width, npcCanvas.height);
   waterCtx.clearRect(0, 0, npcCanvas.width, npcCanvas.height);
+}
+
+// Function to draw sand texture on beach/sand tiles
+function drawSandTexture(ctx) {
+  // Get all sand cells (cells with noise below 0.06)
+  const sandCells = groundCells.filter(cell => {
+    return cell.noise && parseFloat(cell.noise) < 0.067;
+  });
+  
+  // Base sand color from LAND_SHADES (typically the first element)
+  const baseSandColor = "#dbd997"; // Light sand color
+  
+  // Create slightly darker and lighter variations for texture
+  const darkerSandColor = "#c5c386"; // Slightly darker
+  const lighterSandColor = "#e8e6b0"; // Slightly lighter
+  
+  // For each sand cell, add random texture pixels
+  for (const cell of sandCells) {
+    const x = cell.x * cellSize;
+    const y = cell.y * cellSize;
+    
+    // Add between 10-20 texture pixels per cell
+    const pixelCount = 0 + Math.floor(Math.random() * 10);
+    
+    for (let i = 0; i < pixelCount; i++) {
+      // Random position within the cell
+      const pixelX = x + Math.random() * cellSize;
+      const pixelY = y + Math.random() * cellSize;
+      
+      // Randomly choose between darker and lighter colors
+      const pixelColor = Math.random() > 0.5 ? darkerSandColor : lighterSandColor;
+      
+      // Draw a single pixel
+      ctx.fillStyle = pixelColor;
+      ctx.fillRect(pixelX, pixelY, 1, 1);
+    }
+  }
+}
+
+// Function to draw mountain texture on high elevation cells
+function drawMountainTexture(ctx) {
+  // Get all mountain/high elevation cells (cells with noise above 0.4)
+  const mountainCells = groundCells.filter(cell => {
+    return cell.noise && parseFloat(cell.noise) > 0.24;
+  });
+  
+  // Colors for mountain texture - changed to shades of green
+  const darkGreen = "#1a4d1a";  // Dark forest green
+  const mediumGreen = "#2e7d32"; // Medium forest green
+  const lightGreen = "#4caf50";  // Light forest green
+  const lightGrey = "#aaaaaa";   // Light grey for occasional rocks
+  
+  // For each mountain cell, add very sparse random texture pixels
+  for (const cell of mountainCells) {
+    const x = cell.x * cellSize;
+    const y = cell.y * cellSize;
+    
+    // Make it 10x more sparse - now only 0-1 pixels per several cells on average
+    // This means the vast majority of cells will have no pixels at all
+    if (Math.random() < 0.2) { // 20% chance to have any pixels at all
+      // Add at most 1 texture pixel per cell (much more sparse than before)
+      const pixelCount = Math.random() < 0.9 ? 1 : 2;
+      
+      for (let i = 0; i < pixelCount; i++) {
+        // Random position within the cell
+        const pixelX = x + Math.random() * cellSize;
+        const pixelY = y + Math.random() * cellSize;
+        
+        // Randomly choose between colors with weighted distribution
+        // 5% chance of light grey, rest are shades of green
+        const random = Math.random();
+        let pixelColor;
+        
+        if (random < 0.05) {
+          pixelColor = lightGrey; // 5% chance of light grey
+        } else if (random < 0.40) {
+          pixelColor = darkGreen; // 35% dark green
+        } else if (random < 0.75) {
+          pixelColor = mediumGreen; // 35% medium green
+        } else {
+          pixelColor = lightGreen; // 25% light green
+        }
+        
+        // Draw a pixel with more random variations in size
+        const randomValue = Math.random();
+        let pixelSize;
+        if (randomValue < 0.3) {
+          pixelSize = 0.5;  // 30% chance of 0.5px
+        } else if (randomValue < 0.6) {
+          pixelSize = 0.7;  // 30% chance of 1px
+        } else if (randomValue < 0.85) {
+          pixelSize = 1;  // 25% chance of 2px
+        } else if (randomValue < 0.95) {
+          pixelSize = 1.3;  // 10% chance of 3px
+        } else {
+          pixelSize = 2;  // 5% chance of 4px
+        }
+        ctx.fillStyle = pixelColor;
+        ctx.fillRect(pixelX, pixelY, pixelSize, pixelSize);
+      }
+    }
+  }
 }
