@@ -1,5 +1,4 @@
-
-
+const positive = new Audio('/assets/sounds/positive.mp3');
 
 // Function to add NPC information to the table
 function addNPCToTable(npc) {
@@ -153,7 +152,7 @@ pathCellIndex = pathCellIndex + randomIncrement;
       npc1,
       "#4f753c"
     );
-    console.log('last house coords:' , lastHouseCoords)
+  //  console.log('last house coords:' , lastHouseCoords)
 
 
 
@@ -209,6 +208,10 @@ function babyMaker(npcs) {
               "New Baby",
               `${newChild.name} has been born! - ${newChild.race}`
             );
+
+             //baby born sound;
+             positive.play();  // Play the positive sound
+
 
             /* 
           iziToast.success({
@@ -275,6 +278,8 @@ function updatePopulationChart(year, population, medianAge) {
 
 //start npc colony
 function startNPCs(ctx, cellSize) {
+
+
   //more suitable for Houses
  
   // Calculate the maximum index based on the size of the groundCells array.
@@ -285,7 +290,26 @@ function startNPCs(ctx, cellSize) {
     const randomIndex = Math.floor(Math.random() * maxIndex);
 
     const selectedCell = pathCells.splice(randomIndex, 1)[0];
-    const npc = new NPC(selectedCell.x, selectedCell.y, cellSize, i + 1);
+
+
+
+/* 
+    const npc = new NPC(selectedCell.x, selectedCell.y, i + 1, "", 0);
+    //console.log("npc placed at: ", npc.x, npc.y);
+    npc.pathCellIndex = randomIndex;  //for using with method moveOnPaths()
+    //this walks up and down paths, needs moveOnPaths() method on npc class
+
+ */
+
+    const npc = new NPC(selectedCell.x, selectedCell.y, cellSize, i + 1); //normal movement
+
+
+
+
+
+
+
+
     npcs.push(npc);
   }
 
@@ -324,9 +348,10 @@ function drawNPC(npc, ctx) {
   ctx.font = "bold 20px Arial"; // Increase font size for the emoji
   ctx.fillText(emoji, npc.x, npc.y);
   //draw names
-  const text = `${npc.name}, ${npc.age}`;
+ /*  const text = `${npc.name}, ${npc.age}`;
   npcInfoOverlayCtx.fillStyle = "black";
-  npcInfoOverlayCtx.font = "900 15px Arial"; // Use a bolder font weight
-  npcInfoOverlayCtx.fillText(text, npc.x, npc.y + 25); // Adjust Y-coordinate for the text
+  npcInfoOverlayCtx.font = "900 15px Arial"; 
+  npcInfoOverlayCtx.fillText(text, npc.x, npc.y + 25); 
+ */
 }
 
