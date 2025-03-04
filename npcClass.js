@@ -23,6 +23,14 @@ class NPC {
     this.children = []; // Array to store children
     this.myNumber = myNumber; // Sequential number for creation order
     this.parents = parents || null; // Set parents to null when not provided
+    this.currentPath = null;
+    this.pathIndex = 0;
+    this.isAtTree = false;
+    this.isAtHome = false;
+    this.waitTime = 0;
+    this.maxWaitTime = 7; // 7 seconds wait time
+    this.state = "idle"; // Initial state
+    this.stateData = {}; // For storing state-specific data
 
     if (age >= 20) {
       this.profession = this.generateProfession(this.age, this.race);
@@ -33,104 +41,69 @@ class NPC {
     }
   }
 
-  move() {
-    // Find the current cell coordinates of the NPC
-    const currentX = Math.floor(this.x / cellSize);
-    const currentY = Math.floor(this.y / cellSize);
-    // Generate the coordinates for adjacent cells
-    const adjacentCells = [
-        { x: currentX - 1, y: currentY },
-        { x: currentX + 1, y: currentY },
-        { x: currentX, y: currentY - 1 },
-        { x: currentX, y: currentY + 1 },
-    ];
-    // Filter out cells that are not ground cells
-    const validAdjacentCells = adjacentCells.filter((cell) =>
-        groundCells.some(
-            (groundCell) => groundCell.x === cell.x && groundCell.y === cell.y
-        )
-    );
-
-    if (this.age <= 60 || (Math.random() < 8 / (this.age - 59))) {
-        // If the NPC is below 60 or meets the chance-based condition
-        if (validAdjacentCells.length > 0) {
-            // Pick a random valid adjacent cell
-            const randomIndex = Math.floor(Math.random() * validAdjacentCells.length);
-            const selectedCell = validAdjacentCells[randomIndex];
-            // Update the NPC's position to the new cell
-            this.x = selectedCell.x * cellSize;
-            this.y = selectedCell.y * cellSize;
-        }
-    }
-}
-
-  move() {
-    // Find the current cell coordinates of the NPC
-    const currentX = Math.floor(this.x / cellSize);
-    const currentY = Math.floor(this.y / cellSize);
-    // Generate the coordinates for adjacent cells
-    const adjacentCells = [
-        { x: currentX - 1, y: currentY },
-        { x: currentX + 1, y: currentY },
-        { x: currentX, y: currentY - 1 },
-        { x: currentX, y: currentY + 1 },
-    ];
-    // Filter out cells that are not ground cells
-    const validAdjacentCells = adjacentCells.filter((cell) =>
-        groundCells.some(
-            (groundCell) => groundCell.x === cell.x && groundCell.y === cell.y
-        )
-    );
-
-    if (this.age <= 60 || (Math.random() < 8 / (this.age - 59))) {
-        // If the NPC is below 60 or meets the chance-based condition
-        if (validAdjacentCells.length > 0) {
-            // Pick a random valid adjacent cell
-            const randomIndex = Math.floor(Math.random() * validAdjacentCells.length);
-            const selectedCell = validAdjacentCells[randomIndex];
-            // Update the NPC's position to the new cell
-            this.x = selectedCell.x * cellSize;
-            this.y = selectedCell.y * cellSize;
-        }
-    }
-}
-
-// New moveOnPaths method
-moveOnPaths() {
-  if (pathCellIndex < pathCells.length) {
-    // Get the current path cell based on the pathCellIndex
-    const currentCell = pathCells[pathCellIndex];
-
-    // Move towards the current path cell
-    const dx = currentCell.x * cellSize - this.x;
-    const dy = currentCell.y * cellSize - this.y;
-
-    // Calculate the distance to the current path cell
-    const distance = Math.sqrt(dx * dx + dy * dy);
-
-    // Define the speed at which NPCs move along the path
-    const speed = 2; // Adjust this as needed
-
-    // Check if the NPC has reached the current path cell
-    if (distance <= speed) {
-      // Update the NPC's position to the current path cell
-      this.x = currentCell.x * cellSize;
-      this.y = currentCell.y * cellSize;
-
-      // Increment the pathCellIndex to move to the next path cell
-      pathCellIndex++;
+  // Main update method to be called each game loop
+  update() {
+    // Execute current state behavior based on profession
+    if (this.profession === "Woodcutter") {
+      // Use the woodcutter module
+      updateWoodcutter(this);
     } else {
-      // Normalize the direction vector and move the NPC
-      const directionX = dx / distance;
-      const directionY = dy / distance;
-      this.x += directionX * speed;
-      this.y += directionY * speed;
+      // Default movement for other professions
+      if (this.shouldMove()) {
+        this.move();
+      }
     }
-  } else {
-    console.log("NPC has reached the end of the path.");
   }
-}
 
+  // Determine if NPC should move based on race and loop counter
+  shouldMove() {
+    if (this.race === "Elf") {
+      return loopCounter === 1;
+    } else if (this.race === "Kurohi") {
+      return loopCounter === 2;
+    } else if (this.race === "Purries") {
+      return loopCounter === 0;
+    }
+    return false;
+  }
+
+  // Helper method to transition between states
+  transitionTo(newState) {
+    console.log(`${this.name} transitioning from ${this.state} to ${newState}`);
+    this.state = newState;
+  }
+
+  // Regular movement method for non-woodcutter NPCs
+  move() {
+    // Find the current cell coordinates of the NPC
+    const currentX = Math.floor(this.x / cellSize);
+    const currentY = Math.floor(this.y / cellSize);
+    // Generate the coordinates for adjacent cells
+    const adjacentCells = [
+        { x: currentX - 1, y: currentY },
+        { x: currentX + 1, y: currentY },
+        { x: currentX, y: currentY - 1 },
+        { x: currentX, y: currentY + 1 },
+    ];
+    // Filter out cells that are not ground cells
+    const validAdjacentCells = adjacentCells.filter((cell) =>
+        groundCells.some(
+            (groundCell) => groundCell.x === cell.x && groundCell.y === cell.y
+        )
+    );
+
+    if (this.age <= 60 || (Math.random() < 8 / (this.age - 59))) {
+        // If the NPC is below 60 or meets the chance-based condition
+        if (validAdjacentCells.length > 0) {
+            // Pick a random valid adjacent cell
+            const randomIndex = Math.floor(Math.random() * validAdjacentCells.length);
+            const selectedCell = validAdjacentCells[randomIndex];
+            // Update the NPC's position to the new cell
+            this.x = selectedCell.x * cellSize;
+            this.y = selectedCell.y * cellSize;
+        }
+    }
+  }
 
   ageAndDie() {
     this.age++; // Increment the age by 1 year
@@ -353,6 +326,14 @@ moveOnPaths() {
 
     return name;
   }
+
+  // Draw info based on state
+  drawNPCInfo(ctx) {
+    if (this.profession === 'Woodcutter') {
+      // Use the woodcutter module
+      drawWoodcutterInfo(this, ctx);
+    }
+  }
 }
 
 const raceProfessions = {
@@ -389,6 +370,7 @@ const raceProfessions = {
   ],
 
   Elf: [
+    { profession: "Woodcutter", probability: 0.85, salary: 3000 },
     { profession: "Alchemist", probability: 0.15, salary: 30000 },
     { profession: "Enchanter", probability: 0.15, salary: 28000 },
     { profession: "Mage", probability: 0.15, salary: 27000 },

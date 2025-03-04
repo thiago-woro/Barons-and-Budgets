@@ -68,44 +68,97 @@ class Camera {
 
   screenToWorld(screenX, screenY) {
       const rect = this.container.getBoundingClientRect();
-      const x = (screenX - rect.left) / this.zoom + this.position.x;
-      const y = (screenY - rect.top) / this.zoom + this.position.y;
-      return { x, y };
+      const mouseX = screenX - rect.left;
+      const mouseY = screenY - rect.top;
+      
+      // Convert to world coordinates
+      const worldX = mouseX / this.zoom + this.position.x;
+      const worldY = mouseY / this.zoom + this.position.y;
+      
+      return { x: worldX, y: worldY };
   }
 
   updateHoveredCell(event) {
-      const worldPos = this.screenToWorld(event.clientX, event.clientY);
-      const cellX = Math.floor(worldPos.x / cellSize);
-      const cellY = Math.floor(worldPos.y / cellSize);
+      // Use offsetX/offsetY for mouse coordinates relative to the container
+      const mouseX = event.offsetX;
+      const mouseY = event.offsetY;
+      console.log(`updateHoveredCell: mouseX: ${mouseX}, mouseY: ${mouseY}, zoom: ${this.zoom}, position: (${this.position.x}, ${this.position.y})`);
+
+      // Convert screen coordinates to world coordinates
+      const worldX = mouseX / this.zoom + this.position.x;
+      const worldY = mouseY / this.zoom + this.position.y;
+
+      // Calculate cell index based on world coordinates
+      const cellX = Math.floor(worldX / cellSize);
+      const cellY = Math.floor(worldY / cellSize);
+
+      // Calculate the screen position of the cell highlight
+      const cellScreenX = (cellX * cellSize - this.position.x) * this.zoom;
+      const cellScreenY = (cellY * cellSize - this.position.y) * this.zoom;
 
       // Clear previous highlight
-      boatCtx.clearRect(0, 0, groundCanvas.width, groundCanvas.height);
+      boatCtx.clearRect(0, 0, boatCanvas.width, boatCanvas.height);
 
-      // Draw new highlight
-      boatCtx.save();
+      // Draw the highlight
       boatCtx.fillStyle = 'rgba(128, 0, 128, 0.5)';
-      boatCtx.fillRect(
-          cellX * cellSize,
-          cellY * cellSize,
-          cellSize,
-          cellSize
-      );
-      boatCtx.restore();
+      boatCtx.fillRect(cellScreenX, cellScreenY, cellSize * this.zoom, cellSize * this.zoom);
+
+      // Update camera zoom info with additional cell info
+      const cameraZoomInfo = document.getElementById('cameraZoomInfo');
+      if (cameraZoomInfo) {
+          cameraZoomInfo.innerHTML = `updateHoveredCell: Zoom: ${this.zoom.toFixed(2)} | Position: (${this.position.x.toFixed(2)}, ${this.position.y.toFixed(2)}) | Cell: (${cellX}, ${cellY}) | Screen: (${cellScreenX.toFixed(2)}, ${cellScreenY.toFixed(2)})`;
+      }
+
+      // Update debug info
+      const debuggerOverlay = document.getElementById('debuggerOverlay');
+      if (debuggerOverlay) {
+          debuggerOverlay.innerHTML = `
+              updateHoveredCell: World: (${worldX.toFixed(2)}, ${worldY.toFixed(2)})<br>
+              Mouse: (${mouseX.toFixed(2)}, ${mouseY.toFixed(2)})<br>
+              Cell: (${cellX}, ${cellY})<br>
+              Screen Cell: (${cellScreenX.toFixed(2)}, ${cellScreenY.toFixed(2)})<br>
+              Zoom: ${this.zoom.toFixed(2)}<br>
+              Position: (${this.position.x.toFixed(2)}, ${this.position.y.toFixed(2)})
+          `;
+      }
   }
 
   updateTransform() {
+      // Apply transform to the container
       this.container.style.transform = `translate(${-this.position.x * this.zoom}px, ${-this.position.y * this.zoom}px) scale(${this.zoom})`;
+      
+      // Log for debugging
+      console.log(`updateTransform: pos(${this.position.x},${this.position.y}) zoom(${this.zoom})`);
+      
       this.updateDebugInfo();
+      this.updateCameraZoomInfo();
+      
+      // Update the highlighted cell if the mouse is over the container
+      const event = new MouseEvent('mousemove', {
+          clientX: this.lastMousePos.x,
+          clientY: this.lastMousePos.y
+      });
+      this.updateHoveredCell(event);
   }
 
   updateDebugInfo() {
       const debuggerOverlay = document.getElementById('debuggerOverlay');
       if (debuggerOverlay) {
           debuggerOverlay.innerHTML = `
-              Zoom: ${this.zoom.toFixed(2)}<br>
-              Position X: ${this.position.x.toFixed(2)}<br>
-              Position Y: ${this.position.y.toFixed(2)}
+              Camera:<br>
+              - Zoom: ${this.zoom.toFixed(2)}<br>
+              - Position X: ${this.position.x.toFixed(2)}<br>
+              - Position Y: ${this.position.y.toFixed(2)}<br>
+              - Container Width: ${this.container.clientWidth}<br>
+              - Container Height: ${this.container.clientHeight}
           `;
+      }
+  }
+
+  updateCameraZoomInfo() {
+      const cameraZoomInfo = document.getElementById('cameraZoomInfo');
+      if (cameraZoomInfo) {
+          cameraZoomInfo.innerHTML = `Camera: Zoom: ${this.zoom.toFixed(2)} | Position: (${this.position.x.toFixed(2)}, ${this.position.y.toFixed(2)}) | Mouse: (${this.lastMousePos?.x || 0}, ${this.lastMousePos?.y || 0})`;
       }
   }
 
@@ -230,10 +283,20 @@ console.log("map centered ok");
 
 // Function to center the canvas on the map
 function centerCanvasOnMap() {
-// Calculate the new canvasX and canvasY values to center the canvas
-canvasX = (groundCanvas.width / 2) ;
-canvasY = (groundCanvas.height / 2);
+  // Calculate the center of the landCells array
+  let totalX = 0;
+  let totalY = 0;
+  for (const cell of groundCells) {
+    totalX += cell.x;
+    totalY += cell.y;
+  }
+  const centerX = totalX / groundCells.length;
+  const centerY = totalY / groundCells.length;
 
-// Update the canvas position
-updateCanvasPosition();
+  // Calculate the new canvasX and canvasY values to center the canvas
+  canvasX = (groundCanvas.width / 2) - (centerX * cellSize * zoomLevel);
+  canvasY = (groundCanvas.height / 2) - (centerY * cellSize * zoomLevel);
+
+  // Update the canvas position
+  updateCanvasPosition();
 }

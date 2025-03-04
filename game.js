@@ -7,6 +7,7 @@ let gameLoopSpeed = 6000 / parseInt(gameSpeedSlider.value); //300 = super fast  
 
 let lastTimestamp = 0;
 const targetFrameRate = 1; // Adjust this value to your desired frame rate (e.g., 30 FPS)
+const cycleLength = 3; // Controls how many steps in the movement cycle (0 to cycleLength-1)
 
 // Initialize zoomLevel and other related variables
 let zoomLevel = 1.0;
@@ -60,8 +61,8 @@ function gameLoop(timestamp) {
   if (elapsed >= 1000) {
    lastTimestamp = timestamp; // Update the last timestamp
 
-   // Add loop counter (0-9)
-   loopCounter = (loopCounter + 1) % 10;
+   // Add loop counter (0 to cycleLength-1)
+   loopCounter = (loopCounter + 1) % cycleLength;
    console.log(`gameLoop: counter ${loopCounter}`);
 
    // Your game logic and rendering code goes here
@@ -123,29 +124,18 @@ function gameLoop(timestamp) {
   const onScreenNPCS = npcs.slice(0, onScreenNPCSlimit); // Get the first XX NPCs, global variable -> onScreenNPCSlimit
 
   onScreenNPCS.forEach((npc) => {
-    if (npc.race == 'Elf') {
-      if (loopCounter === 3 || loopCounter === 6) {
-        // Elves move only on counts 3 and 6
-        npc.move();
-      }
-    } else if (npc.race == 'Kurohi') {
-      if (loopCounter === 5) {
-        // Kurohi move only on count 5
-        npc.move();
-      }
-    } else {
-      if (loopCounter === 0) {
-        // Other races move on count 0
-        npc.move();
-      }
-    }
-    drawNPC(npc, npcCtx);
+    // Call the update method which handles all state transitions and movement
+    npc.update();
     
-/*     // Optionally draw the path for debugging
+    // Draw the NPC and its info
+    drawNPC(npc, npcCtx);
+    npc.drawNPCInfo(npcCtx);
+    
+    // Optionally draw the path for debugging
     if (npc.currentPath) {
        drawPath(npcCtx, npc.currentPath);
-    } */
-});
+    }
+  });
   
 
   //growthRate.textContent = populationIncreaseSpeed;
@@ -171,6 +161,11 @@ function gameLoop(timestamp) {
 
 function updateDebuggerOverlay() {
   const debuggerOverlay = document.getElementById("debuggerOverlay");
+  
+  // Get counts of trees and houses
+  const treeCount = treePositions ? treePositions.length : 0;
+  const houseCount = houses ? houses.length : 0;
+  
   debuggerOverlay.innerHTML = `
     Zoom Level: ${zoomLevel.toFixed(2)}<br>
     Canvas X: ${canvasX.toFixed(2)}<br>
@@ -178,7 +173,9 @@ function updateDebuggerOverlay() {
     Mouse X: ${mouseX.toFixed(2)}<br>
     Mouse Y: ${mouseY.toFixed(2)}<br>
     Camera X: ${cameraX.toFixed(2)}<br>
-    Camera Y: ${cameraY.toFixed(2)}
+    Camera Y: ${cameraY.toFixed(2)}<br>
+    Trees: ${treeCount}<br>
+    Houses: ${houseCount}
   `;
 }
 
@@ -221,4 +218,24 @@ function saveGame() {
   // Call the save and load functions as needed, for example on button clicks
   saveButton.addEventListener("click", saveGame);
   loadGameWelcomeScreen.addEventListener("click", loadGame);
+  
+// Function to draw the path for debugging
+function drawPath(ctx, path) {
+  ctx.strokeStyle = "rgba(255, 0, 0, 0.5)";
+  ctx.lineWidth = 2;
+  
+  ctx.beginPath();
+  
+  // Start from the first point
+  if (path.length > 0) {
+    ctx.moveTo(path[0].x * cellSize + cellSize/2, path[0].y * cellSize + cellSize/2);
+    
+    // Draw lines to each subsequent point
+    for (let i = 1; i < path.length; i++) {
+      ctx.lineTo(path[i].x * cellSize + cellSize/2, path[i].y * cellSize + cellSize/2);
+    }
+  }
+  
+  ctx.stroke();
+}
   

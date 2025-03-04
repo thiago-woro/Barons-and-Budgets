@@ -347,11 +347,13 @@ function drawNPC(npc, ctx) {
 
   ctx.font = "bold 20px Arial"; // Increase font size for the emoji
   ctx.fillText(emoji, npc.x, npc.y);
-  //draw names
- /*  const text = `${npc.name}, ${npc.age}`;
-  npcInfoOverlayCtx.fillStyle = "black";
-  npcInfoOverlayCtx.font = "900 15px Arial"; 
-  npcInfoOverlayCtx.fillText(text, npc.x, npc.y + 25); 
- */
+
 }
 
+function drawNPCInfo(npc, ctx) {
+  ctx.textAlign = "center";
+  const text = `${npc.name}, ${npc.age}`;
+  ctx.fillStyle = "black";
+  ctx.font = "900 15px Arial";
+  ctx.fillText(text, npc.x, npc.y + 25);
+}

@@ -67,14 +67,11 @@
   }
 
 
-@font-face {
+/* @font-face {
     font-family: 'Press Start 2P';
-  /*   src: url('./assets/fonts/PressStart2P-Regular.ttf') format('truetype'); */
-
     src: url('./assets/fonts/dragonhunter.otf') format('truetype');
-
   }
-
+ */
 body {
     background-color: rgb(0, 0, 0);
     gap: 10px;

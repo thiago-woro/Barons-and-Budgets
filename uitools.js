@@ -1,6 +1,3 @@
-
-
-
 //all this is just to make sure all canvas have the correct width and height, that is the gridsize * cellsize
 function setupCanvas(canvasId, width, height) {
   //console.log('setting ' + canvasId + "to "  + gridSize + " x " + rows +" rows")
@@ -150,6 +147,72 @@ newGameWelcomeScreen.addEventListener("click", function () {
   
   hideWelcomeScreen();
   generateTerrainMap(gridSize, gridSize, perlinNoiseScale);
+  
+  // Zoom out animation using the camera object
+  const zoomOutAnimation = () => {
+    console.log(`zoomOutAnimation: starting animation`);
+    const duration = 1000; // 2 seconds
+    const start = performance.now();
+    const initialZoom = camera.zoom; // Start from current camera zoom
+    const targetZoom = 0.3; // Use a more reasonable zoom level (not too extreme)
+
+    const animateZoom = (currentTime) => {
+      const elapsed = currentTime - start;
+      const progress = Math.min(elapsed / duration, 1); // Ensure progress doesn't exceed 1
+
+      // Use a smooth easing function (easeInOutQuad)
+      const easedProgress = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
+
+      // Calculate new zoom level and apply to camera
+      camera.zoom = initialZoom + (targetZoom - initialZoom) * easedProgress;
+      
+      // Update camera transform
+      camera.updateTransform();
+
+      if (progress < 1) {
+        requestAnimationFrame(animateZoom);
+      } else {
+        // Animation complete
+        camera.zoom = targetZoom; // Ensure final zoom level is exactly targetZoom
+        
+        // Center on the map based on ground cells
+        if (groundCells.length > 0) {
+          // Calculate the center of the ground cells
+          let totalX = 0;
+          let totalY = 0;
+          
+          for (const cell of groundCells) {
+            totalX += cell.x;
+            totalY += cell.y;
+          }
+          
+          const avgX = totalX / groundCells.length;
+          const avgY = totalY / groundCells.length;
+          
+          // Set camera position to center on these coordinates
+          camera.position.x = avgX * cellSize - (container.clientWidth / (2 * camera.zoom));
+          camera.position.y = avgY * cellSize - (container.clientHeight / (2 * camera.zoom));
+          
+          console.log(`Centering on ground cells: avgX=${avgX}, avgY=${avgY}`);
+        } else {
+          // Fallback to center of map if no ground cells
+          const mapCenter = rows / 2;
+          camera.position.x = mapCenter * cellSize - (container.clientWidth / (2 * camera.zoom));
+          camera.position.y = mapCenter * cellSize - (container.clientHeight / (2 * camera.zoom));
+          
+          console.log(`Centering on map center: ${mapCenter}`);
+        }
+        
+        camera.updateTransform();
+        console.log(`zoomOutAnimation: complete, final zoom=${camera.zoom.toFixed(2)}`);
+      }
+    };
+
+    requestAnimationFrame(animateZoom);
+  };
+
+  // Start the animation
+  zoomOutAnimation();
 });
 
 const raceCards = document.querySelectorAll(".race-card");
@@ -180,6 +243,72 @@ newGameCustomWelcomeScreen.addEventListener("click", function () {
 loadGameWelcomeScreen.addEventListener("click", function () {
   hideWelcomeScreen();
   generateTerrainMap(gridSize, gridSize, perlinNoiseScale);
+  
+  // Use the same zoom animation as newGameWelcomeScreen
+  const zoomOutAnimation = () => {
+    console.log(`zoomOutAnimation: starting animation`);
+    const duration = 2000; // 2 seconds
+    const start = performance.now();
+    const initialZoom = camera.zoom; // Start from current camera zoom
+    const targetZoom = 0.3; // Use a more reasonable zoom level (not too extreme)
+
+    const animateZoom = (currentTime) => {
+      const elapsed = currentTime - start;
+      const progress = Math.min(elapsed / duration, 1); // Ensure progress doesn't exceed 1
+
+      // Use a smooth easing function (easeInOutQuad)
+      const easedProgress = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
+
+      // Calculate new zoom level and apply to camera
+      camera.zoom = initialZoom + (targetZoom - initialZoom) * easedProgress;
+      
+      // Update camera transform
+      camera.updateTransform();
+
+      if (progress < 1) {
+        requestAnimationFrame(animateZoom);
+      } else {
+        // Animation complete
+        camera.zoom = targetZoom; // Ensure final zoom level is exactly targetZoom
+        
+        // Center on the map based on ground cells
+        if (groundCells.length > 0) {
+          // Calculate the center of the ground cells
+          let totalX = 0;
+          let totalY = 0;
+          
+          for (const cell of groundCells) {
+            totalX += cell.x;
+            totalY += cell.y;
+          }
+          
+          const avgX = totalX / groundCells.length;
+          const avgY = totalY / groundCells.length;
+          
+          // Set camera position to center on these coordinates
+          camera.position.x = avgX * cellSize - (container.clientWidth / (2 * camera.zoom));
+          camera.position.y = avgY * cellSize - (container.clientHeight / (2 * camera.zoom));
+          
+          console.log(`Centering on ground cells: avgX=${avgX}, avgY=${avgY}`);
+        } else {
+          // Fallback to center of map if no ground cells
+          const mapCenter = rows / 2;
+          camera.position.x = mapCenter * cellSize - (container.clientWidth / (2 * camera.zoom));
+          camera.position.y = mapCenter * cellSize - (container.clientHeight / (2 * camera.zoom));
+          
+          console.log(`Centering on map center: ${mapCenter}`);
+        }
+        
+        camera.updateTransform();
+        console.log(`zoomOutAnimation: complete, final zoom=${camera.zoom.toFixed(2)}`);
+      }
+    };
+
+    requestAnimationFrame(animateZoom);
+  };
+
+  // Start the animation
+  zoomOutAnimation();
 });
 
 function hideWelcomeScreen() {
