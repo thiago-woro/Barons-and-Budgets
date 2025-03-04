@@ -83,8 +83,9 @@ function coupleMaker(npcs) {
       return (
         candidate.sex !== npc.sex &&
         candidate.age >= 22 &&
-        candidate.age <= 40 &&
-        (candidate.spouse === "" || candidate.spouse === undefined)
+        candidate.age <= 54 &&
+        (candidate.spouse === "" || candidate.spouse === undefined) &&
+        candidate.race === npc.race // Added race constraint - must be same race
       );
     });
 
@@ -106,7 +107,7 @@ function coupleMaker(npcs) {
       addNotification(
         "Marriage",
         `${npc.name} married ${randomSpouse.name}`,
-        `👰🤵`,
+        `👰🤵 (${npc.race})`, // Added race to notification
         couple,
         "#c197cc"
       );
@@ -183,18 +184,59 @@ function babyMaker(npcs) {
 
           if (Math.random() < chanceOfChild) {
             let myParents = [parentNPC, spouse];
-
+            
+            // Determine which parent is the mother (female)
+            const mother = parentNPC.sex === "female" ? parentNPC : spouse;
+            
+            // Get the mother's current position
+            const motherX = Math.floor(mother.x / cellSize);
+            const motherY = Math.floor(mother.y / cellSize);
+            
+            // Calculate baby position (1 cell below the mother)
+            const babyY = motherY + 1;
+            
+            // Create the baby at the mother's position
             const newChild = new NPC(
-              parentNPC.x,
-              parentNPC.y,
+              motherX,
+              babyY,
               npcs.length + 1,
               myParents
             );
-
-            const randomIndex = Math.floor(Math.random() * groundCells.length);
-            const selectedCell = groundCells[randomIndex];
-            newChild.x = selectedCell.x * cellSize;
-            newChild.y = selectedCell.y * cellSize;
+            
+            // Verify the position is on land, otherwise find a nearby land cell
+            if (!isLandCell(motherX, babyY)) {
+              console.log(`Baby position not on land, finding nearby land cell`);
+              
+              // Try to find a nearby land cell
+              const nearbyLandCells = [];
+              
+              // Check cells in a small radius around the mother
+              for (let dx = -1; dx <= 1; dx++) {
+                for (let dy = -1; dy <= 1; dy++) {
+                  if (dx === 0 && dy === 0) continue; // Skip mother's position
+                  
+                  const checkX = motherX + dx;
+                  const checkY = motherY + dy;
+                  
+                  if (isLandCell(checkX, checkY)) {
+                    nearbyLandCells.push({ x: checkX, y: checkY });
+                  }
+                }
+              }
+              
+              // If nearby land cells found, place baby on one of them
+              if (nearbyLandCells.length > 0) {
+                const randomCell = nearbyLandCells[Math.floor(Math.random() * nearbyLandCells.length)];
+                newChild.x = randomCell.x * cellSize;
+                newChild.y = randomCell.y * cellSize;
+              } else {
+                // Fallback to a random ground cell if no nearby land cells
+                const randomIndex = Math.floor(Math.random() * groundCells.length);
+                const selectedCell = groundCells[randomIndex];
+                newChild.x = selectedCell.x * cellSize;
+                newChild.y = selectedCell.y * cellSize;
+              }
+            }
 
             parentNPC.addChild(newChild); // Add child to parent's children array
             spouse.addChild(newChild); // Add child to spouse's children array
@@ -278,50 +320,115 @@ function updatePopulationChart(year, population, medianAge) {
 
 //start npc colony
 function startNPCs(ctx, cellSize) {
-
-
-  //more suitable for Houses
- 
-  // Calculate the maximum index based on the size of the groundCells array.
-  const maxIndex = Math.min(30, pathCells.length);
-
-  for (let i = 0; i < startingPopulation && maxIndex > 0; i++) {
-    // Only select from the first 'maxIndex' cells.
-    const randomIndex = Math.floor(Math.random() * maxIndex);
-
-    const selectedCell = pathCells.splice(randomIndex, 1)[0];
-
-
-
-/* 
-    const npc = new NPC(selectedCell.x, selectedCell.y, i + 1, "", 0);
-    //console.log("npc placed at: ", npc.x, npc.y);
-    npc.pathCellIndex = randomIndex;  //for using with method moveOnPaths()
-    //this walks up and down paths, needs moveOnPaths() method on npc class
-
- */
-
-    const npc = new NPC(selectedCell.x, selectedCell.y, cellSize, i + 1); //normal movement
-
-
-
-
-
-
-
-
-    npcs.push(npc);
+  // Make a copy of groundCells to work with
+  const availableCells = [...groundCells];
+  
+  // Sort cells by position to identify different regions of the map
+  // This will help us place different races in different areas
+  const sortedByX = [...availableCells].sort((a, b) => a.x - b.x);
+  const sortedByY = [...availableCells].sort((a, b) => a.y - b.y);
+  
+  // Determine the boundaries of the map
+  const minX = sortedByX[0].x;
+  const maxX = sortedByX[sortedByX.length - 1].x;
+  const minY = sortedByY[0].y;
+  const maxY = sortedByY[sortedByY.length - 1].y;
+  
+  // Define three distinct regions for the three races
+  const regions = [
+    { name: "Elf", cells: [] },
+    { name: "Purries", cells: [] },
+    { name: "Kurohi", cells: [] }
+  ];
+  
+  // Assign cells to regions based on their position
+  // Elves in the northwest region
+  // Purries in the southeast region
+  // Kurohi in the southwest region
+  availableCells.forEach(cell => {
+    const normalizedX = (cell.x - minX) / (maxX - minX); // 0 to 1
+    const normalizedY = (cell.y - minY) / (maxY - minY); // 0 to 1
+    
+    // Check which region this cell belongs to
+    if (normalizedX < 0.4 && normalizedY < 0.4) {
+      // Northwest region - Elves
+      regions[0].cells.push(cell);
+    } else if (normalizedX > 0.6 && normalizedY > 0.6) {
+      // Southeast region - Purries
+      regions[1].cells.push(cell);
+    } else if (normalizedX < 0.4 && normalizedY > 0.6) {
+      // Southwest region - Kurohi
+      regions[2].cells.push(cell);
+    }
+  });
+  
+  // Calculate how many NPCs to create for each race
+  const npcsPerRace = Math.floor(startingPopulation / 3);
+  const remainder = startingPopulation % 3;
+  
+  // Create NPCs for each race in their respective regions
+  let npcCount = 0;
+  
+  for (let i = 0; i < regions.length; i++) {
+    const region = regions[i];
+    const raceName = region.name;
+    const raceCells = region.cells;
+    
+    // Skip if no cells available for this race
+    if (raceCells.length === 0) continue;
+    
+    // Determine how many NPCs to create for this race
+    const raceNPCCount = i < remainder ? npcsPerRace + 1 : npcsPerRace;
+    
+    for (let j = 0; j < raceNPCCount && j < raceCells.length; j++) {
+      // Select a random cell from this race's region
+      const randomIndex = Math.floor(Math.random() * raceCells.length);
+      const selectedCell = raceCells.splice(randomIndex, 1)[0];
+      
+      // Create a new NPC with the predetermined race
+      const npc = new NPC(selectedCell.x, selectedCell.y, cellSize, npcCount + 1);
+      npc.race = raceName; // Override the random race with the region's race
+      
+      npcs.push(npc);
+      npcCount++;
+    }
   }
-
+  
+  // If we couldn't create enough NPCs due to region constraints,
+  // create the remaining NPCs in any available ground cell
+  if (npcCount < startingPopulation) {
+    const remainingCount = startingPopulation - npcCount;
+    const allAvailableCells = availableCells.filter(cell => 
+      !regions.some(region => region.cells.includes(cell))
+    );
+    
+    for (let i = 0; i < remainingCount && allAvailableCells.length > 0; i++) {
+      const randomIndex = Math.floor(Math.random() * allAvailableCells.length);
+      const selectedCell = allAvailableCells.splice(randomIndex, 1)[0];
+      
+      // For these NPCs, we'll randomly assign a race
+      const races = ["Elf", "Purries", "Kurohi"];
+      const randomRace = races[Math.floor(Math.random() * races.length)];
+      
+      const npc = new NPC(selectedCell.x, selectedCell.y, cellSize, npcCount + 1);
+      npc.race = randomRace;
+      
+      npcs.push(npc);
+      npcCount++;
+    }
+  }
+  
+  // Set random ages for all NPCs
   npcs.forEach((npc) => {
     npc.age = Math.floor(Math.random() * 16) + 20;
   });
-
+  
+  // Draw NPCs and add them to the table
   npcs.forEach((npc) => {
     drawNPC(npc, ctx, cellSize);
     addNPCToTable(npc);
   });
-
+  
   npcTableHeader.textContent = `Total Population ${npcs.length}`;
 }
 

@@ -98,7 +98,6 @@ Camera.prototype.updateHoveredCell = function(event) {
     // Use offsetX/offsetY for mouse coordinates relative to the container
     var mouseX = event.offsetX;
     var mouseY = event.offsetY;
-    console.log(`updateHoveredCell: mouseX: ${mouseX}, mouseY: ${mouseY}, zoom: ${this.zoom}, position: (${this.position.x}, ${this.position.y})`);
     
     // Convert screen coordinates to world coordinates
     var worldX = mouseX / this.zoom + this.position.x;
@@ -142,7 +141,6 @@ Camera.prototype.updateHoveredCell = function(event) {
 Camera.prototype.updateTransform = function() {
     // Apply transform to the container
     this.container.style.transform = `translate(${-this.position.x * this.zoom}px, ${-this.position.y * this.zoom}px) scale(${this.zoom})`;
-    console.log(`updateTransform: pos(${this.position.x}, ${this.position.y}) zoom(${this.zoom})`);
     
     // Update debug info if needed
     this.updateDebugInfo();

@@ -55,109 +55,113 @@ startColony.addEventListener("click", function () {
 
 //f9
 function gameLoop(timestamp) {
+  // Request the next frame immediately to ensure continuous animation
+  gameLoopInterval = requestAnimationFrame(gameLoop);
+  
   // Calculate the time elapsed since the last frame
   const elapsed = timestamp - lastTimestamp;
 
   if (elapsed >= 1000) {
-   lastTimestamp = timestamp; // Update the last timestamp
+    lastTimestamp = timestamp; // Update the last timestamp
 
-   // Add loop counter (0 to cycleLength-1)
-   loopCounter = (loopCounter + 1) % cycleLength;
-   console.log(`gameLoop: counter ${loopCounter}`);
+    // Add loop counter (0 to cycleLength-1)
+    loopCounter = (loopCounter + 1) % cycleLength;
+    console.log(`gameLoop: counter ${loopCounter}`);
 
-   // Your game logic and rendering code goes here
-   if (isPaused) {
-     playStatusImg.style.display = "none";
-     return;
-   } else {
-     playStatusImg.style.display = "block";
-   }
-
-  let totalSalaries = 0; // Variable to store the sum of all salaries
-  let salaryCount = 0; // Variable to store the number of NPCs with salaries
-
-  year++;
-  updatePopulationChart(year, npcs.length);
-
-  npcTableHeader.textContent = `Total Population ${npcs.length}`;
-
-  deathsThisLoop = 0; // Reset the deaths count for this loop
-  npcs.forEach((npc) => {
-    npc.ageAndDie();
-
-    // Check if NPC is older than 20 and has an empty profession
-    if (!npc.profession || (npc.age >= 20 && npc.profession === "novice")) {
-      // Use the generateProfession method to assign a profession
-      npc.profession = npc.generateProfession(npc.age);
-      npc.salary = npc.calculateSalary();
-
-      addNotification(
-        "Economy",
-        `🔨 ${npc.name} is now a ${npc.profession}`,
-        `Salary: $${npc.salary}`,
-        npc,
-        "#4a7ba8"
-      );
+    // Your game logic and rendering code goes here
+    if (isPaused) {
+      playStatusImg.style.display = "none";
+      return;
+    } else {
+      playStatusImg.style.display = "block";
     }
 
-    if (npc.salary > 0) {
-      totalSalaries += npc.salary;
-      salaryCount++;
-    }
-  });
-
-  // Calculate the medium salary (average salary) if at least one NPC has a salary
-  let mediumSalary = salaryCount > 0 ? totalSalaries / salaryCount : 0;
-  //  console.error(`medium salary: ${mediumSalary} total salaries: ${totalSalaries}, salary count: ${salaryCount}`);
-  updateUIbottomToolbar(totalSalaries);
-
-  coupleMaker(npcs);
-  babyMaker(npcs);
-  //console.log("Total: " + babies.length + " born");
-
-  //sortNPCTable();
-
-  clearCanvas(npcCtx);
-  clearCanvas(npcInfoOverlayCtx);
-
-  // This will move and redraw each NPC, including new babies
-  const onScreenNPCS = npcs.slice(0, onScreenNPCSlimit); // Get the first XX NPCs, global variable -> onScreenNPCSlimit
-
-  onScreenNPCS.forEach((npc) => {
-    // Call the update method which handles all state transitions and movement
-    npc.update();
+    // Determine if this is a "major activities" loop
+    // Only run major activities (marriage, babies, etc.) every 5th loop
+    const isMajorActivitiesLoop = loopCounter % 5 === 0;
     
-    // Draw the NPC and its info
-    drawNPC(npc, npcCtx);
-    npc.drawNPCInfo(npcCtx);
-    
-    // Optionally draw the path for debugging
-    if (npc.currentPath) {
-       drawPath(npcCtx, npc.currentPath);
+    // Always update year counter but only on major activities loop
+    if (isMajorActivitiesLoop) {
+      year++;
+      updatePopulationChart(year, npcs.length);
+      npcTableHeader.textContent = `Total Population ${npcs.length}`;
     }
-  });
-  
 
-  //growthRate.textContent = populationIncreaseSpeed;
-  currentPopulation.textContent = npcs.length;
-  gameSpeed.textContent = "x " + gameLoopSpeed.toFixed(0);
-  //economicGDP.textContent = "$ " + economicGDP;
-  // console.log("End of year " + year + "🏁");
+    // Always clear canvases for redrawing
+    clearCanvas(npcCtx);
+    clearCanvas(npcInfoOverlayCtx);
 
-  // Game over condition
-  if (npcs.length < 2) {
-    console.log("Game over! Population reached below 2.");
-    isPaused = true;
-    playStatusImg.style.display = "none";
+    // This section runs on EVERY loop - movement happens 5x more often
+    const onScreenNPCS = npcs.slice(0, onScreenNPCSlimit);
+    onScreenNPCS.forEach((npc) => {
+      // Always move NPCs (5x more frequent than other activities)
+      if (npc.shouldMove()) {
+        npc.move();
+      }
+      
+      // Draw the NPC and its info
+      drawNPC(npc, npcCtx);
+      npc.drawNPCInfo(npcCtx);
+      
+      // Optionally draw the path for debugging
+      if (npc.currentPath) {
+         drawPath(npcCtx, npc.currentPath);
+      }
+    });
+
+    // Only run these activities on major activities loops (every 5th loop)
+    if (isMajorActivitiesLoop) {
+      let totalSalaries = 0;
+      let salaryCount = 0;
+      deathsThisLoop = 0; // Reset the deaths count for this loop
+      
+      npcs.forEach((npc) => {
+        npc.ageAndDie();
+
+        // Check if NPC is older than 20 and has an empty profession
+        if (!npc.profession || (npc.age >= 20 && npc.profession === "novice")) {
+          // Use the generateProfession method to assign a profession
+          npc.profession = npc.generateProfession(npc.age);
+          npc.salary = npc.calculateSalary();
+
+          addNotification(
+            "Economy",
+            `🔨 ${npc.name} is now a ${npc.profession}`,
+            `Salary: $${npc.salary}`,
+            npc,
+            "#4a7ba8"
+          );
+        }
+
+        if (npc.salary > 0) {
+          totalSalaries += npc.salary;
+          salaryCount++;
+        }
+      });
+
+      // Calculate the medium salary (average salary) if at least one NPC has a salary
+      let mediumSalary = salaryCount > 0 ? totalSalaries / salaryCount : 0;
+      updateUIbottomToolbar(totalSalaries);
+
+      // Run social activities only on major activities loops
+      coupleMaker(npcs);
+      babyMaker(npcs);
+      
+      // Update UI elements
+      currentPopulation.textContent = npcs.length;
+      gameSpeed.textContent = "x " + gameLoopSpeed.toFixed(0);
+
+      // Game over condition
+      if (npcs.length < 2) {
+        console.log("Game over! Population reached below 2.");
+        isPaused = true;
+      }
+    }
+    
+    // Update debug overlay
+    updateDebuggerOverlay();
   }
-  updateDebuggerOverlay();
-  requestAnimationFrame(gameLoop);
-} else {
-  // If less than one second has passed, request the next frame without executing the game logic
-  requestAnimationFrame(gameLoop);
-}}
-
-
+}
 
 function updateDebuggerOverlay() {
   const debuggerOverlay = document.getElementById("debuggerOverlay");
@@ -178,8 +182,6 @@ function updateDebuggerOverlay() {
     Houses: ${houseCount}
   `;
 }
-
-
 
 ///ground work for save/load game
 // Save game state

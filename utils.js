@@ -85,26 +85,146 @@ function findNearestHome(npc) {
 }
 
 /**
- * Creates a simple path from NPC to target
+ * Checks if a cell is a valid land cell
+ * @param {number} x - The x coordinate
+ * @param {number} y - The y coordinate
+ * @returns {boolean} - True if the cell is a valid land cell
+ */
+function isLandCell(x, y) {
+  return groundCells.some(cell => cell.x === x && cell.y === y);
+}
+
+/**
+ * Finds a path from NPC to target using A* pathfinding algorithm
+ * Only allows movement over land cells
  * @param {Object} npc - The NPC object
- * @param {Object} target - The target object with x and y coordinates
- * @returns {Array} - Array of path points
+ * @param {Object} target - The target coordinates {x, y}
+ * @returns {Array|null} - Array of path coordinates or null if no path found
  */
 function findPathTo(npc, target) {
-  // Simple pathfinding - just move horizontally then vertically
-  const path = [];
-  const currentX = Math.floor(npc.x / cellSize);
-  const currentY = Math.floor(npc.y / cellSize);
+  const startX = Math.floor(npc.x / cellSize);
+  const startY = Math.floor(npc.y / cellSize);
   
-  // Move horizontally first
-  for (let x = currentX; x !== target.x; x += (target.x > currentX ? 1 : -1)) {
-    path.push({x, y: currentY});
+  // Check if start or target is not on land
+  if (!isLandCell(startX, startY) || !isLandCell(target.x, target.y)) {
+    console.log(`utils: ${npc.name} cannot find path - start or target is not on land`);
+    return null;
   }
   
-  // Then move vertically
-  for (let y = currentY; y !== target.y; y += (target.y > currentY ? 1 : -1)) {
-    path.push({x: target.x, y});
+  // A* pathfinding implementation
+  const openSet = [];
+  const closedSet = new Set();
+  const cameFrom = new Map();
+  
+  // Cost from start to current node
+  const gScore = new Map();
+  // Estimated total cost from start to goal through current node
+  const fScore = new Map();
+  
+  const startKey = `${startX},${startY}`;
+  const targetKey = `${target.x},${target.y}`;
+  
+  gScore.set(startKey, 0);
+  fScore.set(startKey, heuristic(startX, startY, target.x, target.y));
+  
+  openSet.push({
+    x: startX,
+    y: startY,
+    key: startKey,
+    f: fScore.get(startKey)
+  });
+  
+  while (openSet.length > 0) {
+    // Sort by fScore and get the node with lowest fScore
+    openSet.sort((a, b) => a.f - b.f);
+    const current = openSet.shift();
+    
+    // If we reached the target
+    if (current.key === targetKey) {
+      return reconstructPath(cameFrom, current);
+    }
+    
+    closedSet.add(current.key);
+    
+    // Get neighbors (adjacent cells)
+    const neighbors = getNeighbors(current.x, current.y);
+    
+    for (const neighbor of neighbors) {
+      const neighborKey = `${neighbor.x},${neighbor.y}`;
+      
+      // Skip if already evaluated or not a land cell
+      if (closedSet.has(neighborKey) || !isLandCell(neighbor.x, neighbor.y)) {
+        continue;
+      }
+      
+      // Distance from start to neighbor through current
+      const tentativeGScore = gScore.get(current.key) + 1;
+      
+      // Add neighbor to open set if not there
+      const neighborInOpenSet = openSet.find(node => node.key === neighborKey);
+      if (!neighborInOpenSet) {
+        openSet.push({
+          x: neighbor.x,
+          y: neighbor.y,
+          key: neighborKey,
+          f: tentativeGScore + heuristic(neighbor.x, neighbor.y, target.x, target.y)
+        });
+      } else if (tentativeGScore >= gScore.get(neighborKey)) {
+        // Not a better path
+        continue;
+      }
+      
+      // This is the best path so far
+      cameFrom.set(neighborKey, current);
+      gScore.set(neighborKey, tentativeGScore);
+      fScore.set(neighborKey, tentativeGScore + heuristic(neighbor.x, neighbor.y, target.x, target.y));
+      
+      // Update f-score in openSet if neighbor is already there
+      if (neighborInOpenSet) {
+        neighborInOpenSet.f = fScore.get(neighborKey);
+      }
+    }
   }
+  
+  // No path found
+  console.log(`utils: ${npc.name} could not find a path to target`);
+  return null;
+}
+
+/**
+ * Heuristic function for A* (Manhattan distance)
+ */
+function heuristic(x1, y1, x2, y2) {
+  return Math.abs(x1 - x2) + Math.abs(y1 - y2);
+}
+
+/**
+ * Get valid neighboring cells (4-directional)
+ */
+function getNeighbors(x, y) {
+  return [
+    { x: x + 1, y },
+    { x: x - 1, y },
+    { x, y: y + 1 },
+    { x, y: y - 1 }
+  ];
+}
+
+/**
+ * Reconstruct path from A* result
+ */
+function reconstructPath(cameFrom, current) {
+  const path = [{ x: current.x, y: current.y }];
+  let currentKey = current.key;
+  
+  while (cameFrom.has(currentKey)) {
+    current = cameFrom.get(currentKey);
+    currentKey = current.key;
+    path.unshift({ x: current.x, y: current.y });
+  }
+  
+  // Remove the starting position from the path
+  path.shift();
   
   return path;
 }
@@ -115,8 +235,20 @@ function findPathTo(npc, target) {
  * @returns {boolean} - True if path is completed, false otherwise
  */
 function followPath(npc) {
-  if (npc.currentPath && npc.pathIndex < npc.currentPath.length) {
+  if (!npc.currentPath || npc.currentPath.length === 0) {
+    return true; // No path or empty path counts as completed
+  }
+  
+  if (npc.pathIndex < npc.currentPath.length) {
     const nextCell = npc.currentPath[npc.pathIndex];
+    
+    // Verify the next cell is still a valid land cell
+    if (!isLandCell(nextCell.x, nextCell.y)) {
+      console.log(`utils: ${npc.name} encountered invalid cell in path, recalculating`);
+      npc.currentPath = null;
+      return true; // Path is invalid, consider it completed
+    }
+    
     npc.x = nextCell.x * cellSize;
     npc.y = nextCell.y * cellSize;
     npc.pathIndex++;
@@ -129,5 +261,6 @@ function followPath(npc) {
     }
     return false;
   }
-  return true; // No path or empty path counts as completed
+  
+  return true; // Path completed
 } 

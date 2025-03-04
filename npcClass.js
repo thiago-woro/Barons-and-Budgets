@@ -47,24 +47,15 @@ class NPC {
     if (this.profession === "Woodcutter") {
       // Use the woodcutter module
       updateWoodcutter(this);
-    } else {
-      // Default movement for other professions
-      if (this.shouldMove()) {
-        this.move();
-      }
     }
+    // Movement is now handled directly in the game loop
+    // No need to call move() here anymore
   }
 
   // Determine if NPC should move based on race and loop counter
   shouldMove() {
-    if (this.race === "Elf") {
-      return loopCounter === 1;
-    } else if (this.race === "Kurohi") {
-      return loopCounter === 2;
-    } else if (this.race === "Purries") {
-      return loopCounter === 0;
-    }
-    return false;
+    // Always return true since the game loop now controls movement frequency
+    return true;
   }
 
   // Helper method to transition between states

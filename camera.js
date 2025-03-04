@@ -82,7 +82,6 @@ class Camera {
       // Use offsetX/offsetY for mouse coordinates relative to the container
       const mouseX = event.offsetX;
       const mouseY = event.offsetY;
-      console.log(`updateHoveredCell: mouseX: ${mouseX}, mouseY: ${mouseY}, zoom: ${this.zoom}, position: (${this.position.x}, ${this.position.y})`);
 
       // Convert screen coordinates to world coordinates
       const worldX = mouseX / this.zoom + this.position.x;
@@ -127,8 +126,6 @@ class Camera {
       // Apply transform to the container
       this.container.style.transform = `translate(${-this.position.x * this.zoom}px, ${-this.position.y * this.zoom}px) scale(${this.zoom})`;
       
-      // Log for debugging
-      console.log(`updateTransform: pos(${this.position.x},${this.position.y}) zoom(${this.zoom})`);
       
       this.updateDebugInfo();
       this.updateCameraZoomInfo();
