@@ -7,6 +7,28 @@ document.getElementById("gen2").addEventListener("click", function () {
 
 //main terrain map generator function
 function generateTerrainMap() {
+  // Clear all arrays before generating new terrain
+  terrainMap = [];
+  groundCells = [];
+  waterCells = [];
+  noiseValues = [];
+  availableHouseCells = [];
+  flatLandCells = [];
+  pathCells = [];
+  trees = [];
+  treePositions = [];
+  houses = [];
+  npcs = [];
+  emptyCells = [];
+  
+  // Clear all canvases
+  clearCanvas(groundCtx);
+  clearCanvas(waterCtx);
+  clearCanvas(pathCtx);
+  clearCanvas(treeCtx);
+  clearCanvas(npcCtx);
+  clearCanvas(oreDepositsCtx);
+  
   const perlinInstance = Object.create(perlin);
   noiseValues = new Array(gridSize);
   perlin.seed();

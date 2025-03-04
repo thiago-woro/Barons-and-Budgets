@@ -158,8 +158,7 @@ function gameLoop(timestamp) {
       }
     }
     
-    // Update debug overlay
-    updateDebuggerOverlay();
+
   }
 }
 
