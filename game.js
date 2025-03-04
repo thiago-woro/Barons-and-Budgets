@@ -5,6 +5,22 @@ const gameSpeedValue = document.getElementById("gameSpeedValue");
 let gameLoopInterval = null;
 let gameLoopSpeed = 6000 / parseInt(gameSpeedSlider.value); //300 = super fast  //30000 super slow
 
+let lastTimestamp = 0;
+const targetFrameRate = 1; // Adjust this value to your desired frame rate (e.g., 30 FPS)
+
+// Initialize zoomLevel and other related variables
+let zoomLevel = 1.0;
+let canvasX = 0;
+let canvasY = 0;
+let mouseX = 0;
+let mouseY = 0;
+let cameraX = 0;
+let cameraY = 0;
+
+// After generating the map, center the camera on the center of the map
+cameraX = (gridSize * cellSize) / 2;
+cameraY = (gridSize * cellSize) / 2;
+
 gameSpeedSlider.addEventListener("input", function () {
   const newGameSpeed = parseInt(this.value);
   gameLoopSpeed = 10000 / newGameSpeed;
@@ -13,10 +29,17 @@ gameSpeedSlider.addEventListener("input", function () {
 
 startButton.addEventListener("click", function () {
   if (gameLoopInterval === null) {
-    gameLoopInterval = setInterval(gameLoop, gameLoopSpeed);
+
+    if (npcs.length > 0) {
+      // Center the camera on the first NPC when starting the simulation
+      cameraX = npcs[0].x;
+      cameraY = npcs[0].y;
+    }
+
+    gameLoopInterval = requestAnimationFrame(gameLoop);
     startButton.textContent = "⏸ Pause Game";
   } else {
-    clearInterval(gameLoopInterval);
+    cancelAnimationFrame(gameLoopInterval);
     gameLoopInterval = null;
     startButton.textContent = "⏯ Play";
   }
@@ -28,13 +51,20 @@ startColony.addEventListener("click", function () {
 });
 
 //f9
-function gameLoop() {
-  if (isPaused) {
-    playStatusImg.style.display = "none";
-    return;
-  } else {
-    playStatusImg.style.display = "block";
-  }
+function gameLoop(timestamp) {
+  // Calculate the time elapsed since the last frame
+  const elapsed = timestamp - lastTimestamp;
+
+  if (elapsed >= 1000) {
+   lastTimestamp = timestamp; // Update the last timestamp
+
+   // Your game logic and rendering code goes here
+   if (isPaused) {
+     playStatusImg.style.display = "none";
+     return;
+   } else {
+     playStatusImg.style.display = "block";
+   }
 
   let totalSalaries = 0; // Variable to store the sum of all salaries
   let salaryCount = 0; // Variable to store the number of NPCs with salaries
@@ -87,9 +117,24 @@ function gameLoop() {
   const onScreenNPCS = npcs.slice(0, onScreenNPCSlimit); // Get the first XX NPCs, global variable -> onScreenNPCSlimit
 
   onScreenNPCS.forEach((npc) => {
-    npc.move();
+    if (npc.race == 'Elf' && npc.sex == 'male') {
+       // npc.moveUpPath();
+       npc.moveToTree();
+
+    } else if (npc.race == 'Kurohi') { // Assuming Kurohi is human race
+        npc.moveToTree();
+    } else {
+       // npc.move();
+        npc.moveToTree();
+
+    }
     drawNPC(npc, npcCtx);
-  });
+    
+    // Optionally draw the path for debugging
+    if (npc.currentPath) {
+        drawPath(npcCtx, npc.currentPath);
+    }
+});
   
 
   //growthRate.textContent = populationIncreaseSpeed;
@@ -104,6 +149,26 @@ function gameLoop() {
     isPaused = true;
     playStatusImg.style.display = "none";
   }
+  updateDebuggerOverlay();
+  requestAnimationFrame(gameLoop);
+} else {
+  // If less than one second has passed, request the next frame without executing the game logic
+  requestAnimationFrame(gameLoop);
+}}
+
+
+
+function updateDebuggerOverlay() {
+  const debuggerOverlay = document.getElementById("debuggerOverlay");
+  debuggerOverlay.innerHTML = `
+    Zoom Level: ${zoomLevel.toFixed(2)}<br>
+    Canvas X: ${canvasX.toFixed(2)}<br>
+    Canvas Y: ${canvasY.toFixed(2)}<br>
+    Mouse X: ${mouseX.toFixed(2)}<br>
+    Mouse Y: ${mouseY.toFixed(2)}<br>
+    Camera X: ${cameraX.toFixed(2)}<br>
+    Camera Y: ${cameraY.toFixed(2)}
+  `;
 }
 
 
