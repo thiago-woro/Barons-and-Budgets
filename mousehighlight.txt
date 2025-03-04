@@ -1,0 +1,14 @@
+/*
+Function: updateHoveredCell
+
+- Changed mouse coordinate calculations to use event.offsetX and event.offsetY instead of computing from getBoundingClientRect. This provided accurate relative mouse positions despite CSS transforms.
+
+- Converted the relative screen coordinates to world coordinates by dividing by zoom and adding the camera's position.
+
+- Calculated the cell index by applying Math.floor to the world coordinates divided by cellSize.
+
+- Computed the screen cell position using the cell index, camera position, and current zoom level to correctly draw the highlight.
+
+- Added console logs using template literals to log key values for debugging in the function.
+
+*/ 
