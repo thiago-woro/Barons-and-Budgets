@@ -3,6 +3,7 @@
     --metal: rgb(94, 55, 55);
     --gold: rgb(234, 190, 67);
     --bg: #595e4e ;
+    --fg: rgb(65,65,65);
     --green:  rgb(28, 116, 28);
     --blue:   rgb(18, 81, 130);
   }
@@ -16,7 +17,7 @@
     left: 50%;
     transform: translateX(-50%); /* Center horizontally */
     bottom: 0;
-    background-color: rgb(65, 65, 65);
+    background-color: var(--fg);
     text-align: center;
     padding: 15px;
     z-index: 1000;
@@ -28,20 +29,20 @@
     z-index: 3000;
   }
 
-  #barons {
+  #leftMenu {
     visibility: visible;
     display: flex;
-    gap: 50px;
+    flex-direction: column;
+    gap: 5px;
     position: fixed;
     left: 10%;
-    height: 90px;
-    width: 90px;
+    height: 190px;
+    width: 190px;
     bottom: 0;
-    background-color: rgb(65, 65, 65);
+    background-color: var(--fg);
     text-align: center;
     padding: 15px;
     z-index: 1000;
-    width: max-content;
     border-radius: 10px 10px 0px 0px;
     border-top: 1px solid var(--gold);
     color: var(--gold);

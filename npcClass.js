@@ -1,18 +1,15 @@
-
 //TODO 
 //add emotions, like happiness, sad, in love, depression, sick of wife or kids, etc
 //condition: starving, sick, drunk, anemic, etc
 //height, size and weight
 //inventory of held items 
 
+const treeFoundSound = new Audio('/assets/sounds/tree-down.mp3'); // Create this simple sound file
 
-
-
-
-class NPC {
+export class NPC {
   constructor(x, y, myNumber, parents, age) {
-    this.x = x * cellSize;
-    this.y = y * cellSize;
+    this.x = Math.floor(x) * cellSize;
+    this.y = Math.floor(y) * cellSize;
     this.race = this.chooseRace();
     this.age = 0;
     this.sex = Math.random() < 0.5 ? "male" : "female";
@@ -27,6 +24,10 @@ class NPC {
     this.children = []; // Array to store children
     this.myNumber = myNumber; // Sequential number for creation order
     this.parents = parents || null; // Set parents to null when not provided
+    this.pathCellIndex = 3;
+    this.currentPath = null;
+    this.pathIndex = 0;
+    this.targetTree = null;
 
     if (age >= 20) {
       this.profession = this.generateProfession(this.age, this.race);
@@ -68,71 +69,30 @@ class NPC {
     }
 }
 
-  move() {
-    // Find the current cell coordinates of the NPC
-    const currentX = Math.floor(this.x / cellSize);
-    const currentY = Math.floor(this.y / cellSize);
-    // Generate the coordinates for adjacent cells
-    const adjacentCells = [
-        { x: currentX - 1, y: currentY },
-        { x: currentX + 1, y: currentY },
-        { x: currentX, y: currentY - 1 },
-        { x: currentX, y: currentY + 1 },
-    ];
-    // Filter out cells that are not ground cells
-    const validAdjacentCells = adjacentCells.filter((cell) =>
-        groundCells.some(
-            (groundCell) => groundCell.x === cell.x && groundCell.y === cell.y
-        )
-    );
 
-    if (this.age <= 60 || (Math.random() < 8 / (this.age - 59))) {
-        // If the NPC is below 60 or meets the chance-based condition
-        if (validAdjacentCells.length > 0) {
-            // Pick a random valid adjacent cell
-            const randomIndex = Math.floor(Math.random() * validAdjacentCells.length);
-            const selectedCell = validAdjacentCells[randomIndex];
-            // Update the NPC's position to the new cell
-            this.x = selectedCell.x * cellSize;
-            this.y = selectedCell.y * cellSize;
-        }
-    }
+moveUpPath() {
+  // Increment the path cell index for the next move
+  this.pathCellIndex = (this.pathCellIndex + 1) % pathCells.length;
+
+  // Get the next path cell based on the updated pathCellIndex
+  const nextCell = pathCells[this.pathCellIndex];
+
+  // Update the NPC's position to the coordinates of the next path cell
+  this.x = nextCell.x * cellSize;
+  this.y = nextCell.y * cellSize;
 }
 
-// New moveOnPaths method
-moveOnPaths() {
-  if (pathCellIndex < pathCells.length) {
-    // Get the current path cell based on the pathCellIndex
-    const currentCell = pathCells[pathCellIndex];
 
-    // Move towards the current path cell
-    const dx = currentCell.x * cellSize - this.x;
-    const dy = currentCell.y * cellSize - this.y;
+moveDownPath() {
+  // Increment the path cell index for the next move
+  this.pathCellIndex = (this.pathCellIndex - 1) % pathCells.length;
 
-    // Calculate the distance to the current path cell
-    const distance = Math.sqrt(dx * dx + dy * dy);
+  // Get the next path cell based on the updated pathCellIndex
+  const nextCell = pathCells[this.pathCellIndex];
 
-    // Define the speed at which NPCs move along the path
-    const speed = 2; // Adjust this as needed
-
-    // Check if the NPC has reached the current path cell
-    if (distance <= speed) {
-      // Update the NPC's position to the current path cell
-      this.x = currentCell.x * cellSize;
-      this.y = currentCell.y * cellSize;
-
-      // Increment the pathCellIndex to move to the next path cell
-      pathCellIndex++;
-    } else {
-      // Normalize the direction vector and move the NPC
-      const directionX = dx / distance;
-      const directionY = dy / distance;
-      this.x += directionX * speed;
-      this.y += directionY * speed;
-    }
-  } else {
-    console.log("NPC has reached the end of the path.");
-  }
+  // Update the NPC's position to the coordinates of the next path cell
+  this.x = nextCell.x * cellSize;
+  this.y = nextCell.y * cellSize;
 }
 
 
@@ -357,7 +317,86 @@ moveOnPaths() {
 
     return name;
   }
+
+  moveToTree() {
+    // Only seek trees during certain conditions
+    if (!this.shouldSeekTree()) return;
+    
+    if (!this.currentPath) {
+        const pathData = createPathToTree(this.x, this.y);
+        if (pathData) {
+            this.currentPath = pathData.path;
+            this.pathIndex = 0;
+            this.targetTree = pathData.tree;
+            this.lastTreeVisit = Date.now(); // Track last tree visit
+        }
+        return;
+    }
+
+    // If we have a path, move along it
+    if (this.pathIndex < this.currentPath.length) {
+        const nextPoint = this.currentPath[this.pathIndex];
+        this.x = nextPoint.x;
+        this.y = nextPoint.y;
+        this.pathIndex++;
+    } else {
+        // Reached the tree, interact with it
+        this.interactWithTree();
+    }
+  }
+
+  interactWithTree() {
+    if (!this.targetTree) return;
+
+    // Play sound effect
+    if (!treeFoundSound.playing) {
+        treeFoundSound.currentTime = 0;
+        treeFoundSound.play().catch(e => console.log("Audio play failed:", e));
+    }
+
+    // Find the tree index in treePositions array
+    const treeIndex = treePositions.findIndex(
+        tree => tree.x === this.targetTree.x && tree.y === this.targetTree.y
+    );
+
+    if (treeIndex !== -1) {
+        // Add notification
+        addNotification(
+            "Resource",
+            `${this.name} found a tree!`,
+            `${this.profession} is harvesting resources`,
+            this,
+            "#2d5a27"
+        );
+
+        //drawNearCells(this.targetTree.x, this.targetTree.y, "🌲", "green");
+        drawNearCells(this.targetTree.x, this.targetTree.y, "🔥", "green");
+
+        // Trigger tree dying animation
+        dyingTreeAnimation(treeIndex);
+    }
+
+    // Reset path and target
+    this.currentPath = null;
+    this.targetTree = null;
 }
+
+  shouldSeekTree() {
+    // Only seek trees every 30 seconds
+    if (this.lastTreeVisit && Date.now() - this.lastTreeVisit < 300) {
+      console.log("Too soon to seek a tree");
+      return false;
+    }
+
+    // All professions can seek trees
+    // Check if there are trees to seek
+    if (treePositions.length === 0) {
+      console.log("No trees to seek");
+      return false;
+    }
+
+    return true;
+  }
 
 const raceProfessions = {
   Purries: [
@@ -464,4 +503,3 @@ const purryNPCConversations = {
   ],
   "novice": ["Im too young and catful for this."]
 };
-

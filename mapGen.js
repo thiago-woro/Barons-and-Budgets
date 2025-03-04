@@ -83,9 +83,8 @@ function drawTerrainLayer(ctx, cellArray, cellSize) {
 
 
 
-
 function afterMapGen() {
-  generateWavyWaterCanvas(waterCtx, rows);
+ generateWavyWaterCanvas(waterCtx, rows);
 
   // Calculate the total number of cells
   const totalCells = groundCells.length + waterCells.length;
@@ -136,7 +135,7 @@ function drawHousePaths(cellArray, numRowsToSkip, pathCurveAmount) {
       // Create a new cell object with the adjusted y position
       const cellWithOffset = {
         x: x,
-        y: y + yOffset,
+        y: Math.floor(y + yOffset),
         // You may want to copy other properties from the original cell if needed
       };
 

@@ -1,4 +1,7 @@
+// npcs.js
+import { NPC } from './npcClass.js';
 
+const positive = new Audio('/assets/sounds/positive.mp3'); // Create this simple sound file
 
 
 // Function to add NPC information to the table
@@ -153,9 +156,6 @@ pathCellIndex = pathCellIndex + randomIncrement;
       npc1,
       "#4f753c"
     );
-    console.log('last house coords:' , lastHouseCoords)
-
-
 
   } else {
     console.log('All path cells have houses.');
@@ -209,6 +209,9 @@ function babyMaker(npcs) {
               "New Baby",
               `${newChild.name} has been born! - ${newChild.race}`
             );
+
+            //baby born sound;
+            positive.play();  // Play the positive sound
 
             /* 
           iziToast.success({
@@ -274,8 +277,7 @@ function updatePopulationChart(year, population, medianAge) {
 
 
 //start npc colony
-function startNPCs(ctx, cellSize) {
-  //more suitable for Houses
+export function startNPCs(ctx, cellSize) {
  
   // Calculate the maximum index based on the size of the groundCells array.
   const maxIndex = Math.min(30, pathCells.length);
@@ -285,7 +287,12 @@ function startNPCs(ctx, cellSize) {
     const randomIndex = Math.floor(Math.random() * maxIndex);
 
     const selectedCell = pathCells.splice(randomIndex, 1)[0];
-    const npc = new NPC(selectedCell.x, selectedCell.y, cellSize, i + 1);
+//console.log("selected cell: ", selectedCell);
+    
+    const npc = new NPC(selectedCell.x, selectedCell.y, i + 1, "", 0);
+    //console.log("npc placed at: ", npc.x, npc.y);
+    npc.pathCellIndex = randomIndex;  //for using with method moveOnPaths()
+
     npcs.push(npc);
   }
 
@@ -294,9 +301,15 @@ function startNPCs(ctx, cellSize) {
   });
 
   npcs.forEach((npc) => {
-    drawNPC(npc, ctx, cellSize);
+    drawNPC(npc, ctx);
     addNPCToTable(npc);
   });
+
+  // Center the camera on the first NPC
+  if (npcs.length > 0) {
+    cameraX = npcs[0].x;
+    cameraY = npcs[0].y;
+  }
 
   npcTableHeader.textContent = `Total Population ${npcs.length}`;
 }
@@ -324,9 +337,12 @@ function drawNPC(npc, ctx) {
   ctx.font = "bold 20px Arial"; // Increase font size for the emoji
   ctx.fillText(emoji, npc.x, npc.y);
   //draw names
-  const text = `${npc.name}, ${npc.age}`;
+
+ /*  const text = `${npc.name}, ${npc.age}`;
   npcInfoOverlayCtx.fillStyle = "black";
-  npcInfoOverlayCtx.font = "900 15px Arial"; // Use a bolder font weight
-  npcInfoOverlayCtx.fillText(text, npc.x, npc.y + 25); // Adjust Y-coordinate for the text
+  npcInfoOverlayCtx.font = "900 15px Arial"; 
+  npcInfoOverlayCtx.fillText(text, npc.x, npc.y + 25); 
+ */
 }
 
+// ...rest of your existing code...

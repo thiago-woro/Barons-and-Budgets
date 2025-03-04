@@ -38,7 +38,7 @@ let npcSize = cellSize;
 let babies = [];
 let maxLandPopulation = 100 //varies/updates according to usable land
 let populationLimit = 700;  //hard limit to avoid game crashing
-let onScreenNPCSlimit = 50 //limits move(), draw() to only these,
+let onScreenNPCSlimit = 10 //limits move(), draw() to only these,
 // npcs on screen still rotate because babies and deaths are processed in other loop. 
 //this is done for performance mainly
 

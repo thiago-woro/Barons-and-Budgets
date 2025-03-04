@@ -11,7 +11,7 @@ let grasslands = []
 
 // Function to draw grass tiles inside ground cells
 function drawGrass(ctx, grassDensity) {
-  console.log(`draw grass 2`);
+  //console.log(`draw grass 2`);
   
 
   grasslands = emptyCells.filter((cell) => {

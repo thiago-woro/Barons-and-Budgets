@@ -1,6 +1,3 @@
-
-
-
 const houseSimple = new Image();
 houseSimple.src = '/assets/tilesets/houses/simple.png';
 
@@ -30,6 +27,9 @@ houseImages.push(houseMint);
 houseImages.push(houseBlack);
 houseImages.push(stableHouse);
 
+// Load the sound effect
+const buildSound = new Audio('/assets/sounds/building_completed.wav');
+
 class House {
   constructor(x, y) {
     this.x = x * cellSize;
@@ -39,8 +39,12 @@ class House {
     this.economicStatus = "Average"; // Economic status of the house
     this.homeValue = Math.floor(Math.random() * 100000) + 50000; // Random home value
     this.floors = 1;
+    this.playBuildSound();
   }
 
+  playBuildSound() {
+    buildSound.play();
+  }
 
    validateCells() {
     // Get the last placed house
