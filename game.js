@@ -17,6 +17,8 @@ let mouseY = 0;
 let cameraX = 0;
 let cameraY = 0;
 
+let loopCounter = 0; // Add at the top with other variables
+
 // After generating the map, center the camera on the center of the map
 cameraX = (gridSize * cellSize) / 2;
 cameraY = (gridSize * cellSize) / 2;
@@ -57,6 +59,10 @@ function gameLoop(timestamp) {
 
   if (elapsed >= 1000) {
    lastTimestamp = timestamp; // Update the last timestamp
+
+   // Add loop counter (0-9)
+   loopCounter = (loopCounter + 1) % 10;
+   console.log(`gameLoop: counter ${loopCounter}`);
 
    // Your game logic and rendering code goes here
    if (isPaused) {
@@ -117,23 +123,28 @@ function gameLoop(timestamp) {
   const onScreenNPCS = npcs.slice(0, onScreenNPCSlimit); // Get the first XX NPCs, global variable -> onScreenNPCSlimit
 
   onScreenNPCS.forEach((npc) => {
-    if (npc.race == 'Elf' && npc.sex == 'male') {
-       // npc.moveUpPath();
-       npc.moveToTree();
-
-    } else if (npc.race == 'Kurohi') { // Assuming Kurohi is human race
-        npc.moveToTree();
+    if (npc.race == 'Elf') {
+      if (loopCounter === 3 || loopCounter === 6) {
+        // Elves move only on counts 3 and 6
+        npc.move();
+      }
+    } else if (npc.race == 'Kurohi') {
+      if (loopCounter === 5) {
+        // Kurohi move only on count 5
+        npc.move();
+      }
     } else {
-       // npc.move();
-        npc.moveToTree();
-
+      if (loopCounter === 0) {
+        // Other races move on count 0
+        npc.move();
+      }
     }
     drawNPC(npc, npcCtx);
     
-    // Optionally draw the path for debugging
+/*     // Optionally draw the path for debugging
     if (npc.currentPath) {
-        drawPath(npcCtx, npc.currentPath);
-    }
+       drawPath(npcCtx, npc.currentPath);
+    } */
 });
   
 
