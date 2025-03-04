@@ -8,7 +8,7 @@
 		<title>Barons and Budgets</title>
         <link rel="icon" type="image/x-icon" href="./assets/Favicon/logo.png">
 
-	
+
         <link rel="stylesheet" href="style.css">
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css">
     <script src="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js"></script>
@@ -30,7 +30,7 @@
         <button id="newGameCustomWelcomeScreen">New Game Custom</button>
         <button disabled class="blueButton" id="loadGameWelcomeScreen">Load Game</button>
     </div>
-    
+
     <span id="mobileAlert" style="color: rgb(255, 190, 13);">Game not ready for mobile 🙇‍♂️</span>
 </div>
 
@@ -60,13 +60,20 @@
             <span id="GDPbottomToolBar" >GDP </span>
             <span id="crystalbottomToolBar">Crystallite </span>
         </div>
-        
-        <div id="barons" class="col" style="margin: 0px;">
+
+        <div id="leftMenu" class="" style="margin: 0px; height: fit-content; width: fit-content;">
+            <div class="row" style="margin: 0px; height: fit-content;">
 
             <span style="height: fit-content;">Barons </span>
-                <img style="height: auto; width: auto; max-width: 90px;" src="./assets/Races/elfs/female/5.png">
+            <span style="height: fit-content;">Buildings </span>
         </div>
-        
+        <div class="row" style="margin: 0px;">
+                <img style="height: 80px; width: auto; max-width: 90px;" src="./assets/Races/elfs/female/5.png">
+                <img style="height: 80px; width: auto; max-width: 90px;" src="https://cdn-icons-png.flaticon.com/512/602/602232.png">
+        </div>
+    </div>
+   
+
 
         <div id="tools" style="visibility: collapse;">
             <div id="toolTabs" class="row" style="display: flex;   z-index: 0; background-color: rgba(0, 0, 0, 0); margin-bottom: -10;"> 
@@ -143,14 +150,14 @@
             <span id="waterAmountDisplay">0.55</span>
 
             <br>
-        
+
             </div>
 
 			<canvas style="visibility: collapse;" id="minimap"></canvas>
 
 		</div>
 
-       
+
         <div class="card" id="statsTab" style="display: none;">
             <h3>Economic Simulation Statistics</h3>
 			<h1 id="currentYear">Year: </h1>
@@ -211,16 +218,16 @@
             <!-- Table rows will be added dynamically through JavaScript -->
         </tbody>
     </table></div>
-		
+
 
 </div>
 
 
 <div id="welcomeScreenRaceSelector" class="col" style="width: fit-content;">
-    
+
     <h1>Only one will prevail, to the perish of others... Choose:</h1>
     <div class="row" style="background-color: #423d3e;">
-    
+
     <div class="race-card" id="purriesWelcomeSelector">
         <img src="./assets/Races/purries/female/catgirl (4).png" alt="Purries Image" class="race-image">
         <h2 class="race-title">Purries</h2>
@@ -241,7 +248,7 @@
     </div>
     <div>
     </div>
-		
+
   <!--     <script src="./simulation.js"></script> -->
   <script src="globalvariables.js"></script>
   <script src="./uitools.js"></script>
@@ -251,8 +258,8 @@
      <script src="./trees.js"></script>
      <script src="./grass.js"></script>
      <script src="./game.js"></script>
-     <script src="./npcClass.js"></script>
-     <script src="./npcs.js"></script>
+     <script src="./npcClass.js"></script> <!-- Include npcClass.js here -->
+     <script src="./npcs.js"></script> <!-- Remove type="module" -->
      <script src="./homes.js"></script>
   <script src="./camera.js"></script> 
 	 <script>
@@ -260,6 +267,23 @@
     </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
+
+  <div id="debuggerOverlay" style="position: fixed; top: 10px; right: 10px; background: rgba(0, 0, 0, 0.7); color: white; padding: 10px; display: none;">
+    Zoom Level: 1<br>
+    Canvas X: 0<br>
+    Canvas Y: 0<br>
+    Mouse X: 0<br>
+    Mouse Y: 0<br>
+    Camera X: 0<br>
+    Camera Y: 0
+  </div>
+  <button id="toggleDebugger" style="position: fixed; top: 10px; right: 150px;">Toggle Debugger</button>
+  <script>
+    document.getElementById("toggleDebugger").addEventListener("click", function() {
+      const debuggerOverlay = document.getElementById("debuggerOverlay");
+      debuggerOverlay.style.display = debuggerOverlay.style.display === "none" ? "block" : "none";
+    });
+  </script>
 
 	</body>
 </html>
