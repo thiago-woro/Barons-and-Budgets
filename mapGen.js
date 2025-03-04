@@ -86,17 +86,30 @@ function drawTerrainLayer(ctx, cellArray, cellSize) {
     const x = cell.x;
     const y = cell.y;
     const color = cell.color;
-    //console.log(cell.x)
-
-    //console.log(`cell  X: ${cell.x}, Y: ${cell.y}, ${cell.color}`)
-    drawRoundedRect(
-      ctx,
-      x * cellSize,
-      y * cellSize,
-      cellSize * 1.2,
-      3.5,
-      color
-    );
+    const noiseValue = parseFloat(cell.noise || 0);
+    
+    // For beach/sand cells (noise < 0.05), use a more rounded border
+    if (cell.noise && noiseValue < 0.05) {
+      // Use a larger border radius for beach/sand cells to make them more rounded
+      drawRoundedRect(
+        ctx,
+        x * cellSize,
+        y * cellSize,
+        cellSize * 1.2,
+        6, // Increased border radius for beach/sand cells
+        color
+      );
+    } else {
+      // Use the standard border radius for other cells
+      drawRoundedRect(
+        ctx,
+        x * cellSize,
+        y * cellSize,
+        cellSize * 1.2,
+        3.5,
+        color
+      );
+    }
   }
 }
 
