@@ -430,6 +430,45 @@ function startNPCs(ctx, cellSize) {
   });
   
   npcTableHeader.textContent = `Total Population ${npcs.length}`;
+  
+  // Set zoom to 1.25 and center the camera on the first NPC
+  if (npcs.length > 0) {
+    // Set the zoom level to 1.25
+    camera.zoom = 1.25;
+    
+    // Get the first NPC's position
+    const firstNPC = npcs[0];
+    
+    // Use the NPC's position but ensure it's within the map boundaries
+    // Map boundaries from custom instructions:
+    // Min bounds: (-144.00, 316.00)
+    // Max bounds: (4520.00, 4100.00)
+    
+    // Calculate the position to center on the NPC
+    const containerWidth = camera.container.clientWidth;
+    const containerHeight = camera.container.clientHeight;
+    
+    // Calculate the target position (centered on the NPC)
+    let targetX = (firstNPC.x * cellSize) - (containerWidth / (2 * camera.zoom));
+    let targetY = (firstNPC.y * cellSize) - (containerHeight / (2 * camera.zoom));
+    
+    // Define the map boundaries
+    const minBoundX = -144;
+    const minBoundY = 316;
+    const maxBoundX = 4520;
+    const maxBoundY = 4100;
+    
+    // Calculate the maximum allowed camera position based on boundaries and zoom
+    const maxCameraX = maxBoundX - (containerWidth / camera.zoom);
+    const maxCameraY = maxBoundY - (containerHeight / camera.zoom);
+    
+    // Clamp the camera position to stay within boundaries
+    camera.position.x = Math.max(minBoundX, Math.min(targetX, maxCameraX));
+    camera.position.y = Math.max(minBoundY, Math.min(targetY, maxCameraY));
+    
+    // Update the camera transform to apply changes
+    camera.updateTransform();
+  }
 }
 
 function drawNPC(npc, ctx) {
