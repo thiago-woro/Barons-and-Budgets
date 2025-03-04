@@ -19,6 +19,10 @@ houseBlack.src = '/assets/tilesets/houses/black.png';
 const stableHouse = new Image();
 stableHouse.src = '/assets/tilesets/houses/stable.png';
 
+const buildSound = new Audio('/assets/sounds/building_completed.wav');
+
+
+
 // Create an array to hold the house images
 const houseImages = [];
 
@@ -39,8 +43,12 @@ class House {
     this.economicStatus = "Average"; // Economic status of the house
     this.homeValue = Math.floor(Math.random() * 100000) + 50000; // Random home value
     this.floors = 1;
+    this.playBuildSound();
   }
 
+  playBuildSound() {
+    buildSound.play();
+  }
 
    validateCells() {
     // Get the last placed house

@@ -4,6 +4,7 @@
 //condition: starving, sick, drunk, anemic, etc
 //height, size and weight
 //inventory of held items 
+const treeFoundSound = new Audio('/assets/sounds/tree-down.mp3'); // Create this simple sound file
 
 
 
