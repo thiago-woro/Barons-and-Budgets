@@ -530,13 +530,12 @@ function drawCircle(ctx, x, y, diameter, fillColor) {
 
 
 
-/* 
 const canvases = container.querySelectorAll("canvas");
         let translateX = 0;
         let translateY = 0;
 
         // Adjust the translation values based on your desired speed
-        const translateSpeed = 10;
+        const translateSpeed = 50;
 
         window.addEventListener("keydown", (event) => {
             const key = event.key.toLowerCase();
@@ -564,13 +563,16 @@ const canvases = container.querySelectorAll("canvas");
 
 
 
- */
+ 
 
 // Function to draw an X across the entire canvas when R key is pressed
 function drawXOnCanvas() {
   // Get the main canvas to draw on
   const canvas = npcInfoOverlayCanvas;
   const ctx = npcInfoOverlayCtx;
+  
+  // Make the canvas visible
+  canvas.style.visibility = 'visible';
   
   // Clear the canvas first
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -591,7 +593,7 @@ function drawXOnCanvas() {
   ctx.lineTo(canvas.width, canvas.height);
   ctx.stroke();
   
-  console.log("X drawn across canvas");
+  console.log("X print intersection 0,0 value: " + ctx.getImageData(0, 0, 1, 1).data[0]);
 }
 
 // Add event listener for the R key
@@ -599,4 +601,35 @@ window.addEventListener("keydown", (event) => {
   if (event.key.toLowerCase() === 'r') {
     drawXOnCanvas();
   }
+});
+
+// Function to handle zoom with Q and E keys
+function setupKeyboardZoom() {
+  const zoomSpeed = 0.05; // Adjust this value to control zoom speed
+  
+  document.addEventListener('keydown', (e) => {
+    // Check if Q or E keys are pressed
+    if (e.key.toLowerCase() === 'q') {
+      // Increase zoom (zoom in)
+      const newZoom = Math.min(camera.zoom + zoomSpeed, camera.maxZoom);
+      if (newZoom !== camera.zoom) {
+        camera.zoom = newZoom;
+        camera.updateTransform();
+      }
+    } else if (e.key.toLowerCase() === 'e') {
+      // Decrease zoom (zoom out)
+      const newZoom = Math.max(camera.zoom - zoomSpeed, camera.minZoom);
+      if (newZoom !== camera.zoom) {
+        camera.zoom = newZoom;
+        camera.updateTransform();
+      }
+    }
+  });
+  
+  console.log('Keyboard zoom controls initialized: Q to zoom in, E to zoom out');
+}
+
+// Initialize keyboard zoom controls when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+  setupKeyboardZoom();
 });

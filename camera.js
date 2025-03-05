@@ -42,6 +42,7 @@ class Camera {
       // Mouse drag for panning
       this.container.addEventListener('mousedown', (e) => {
           this.isDragging = true;
+          isDragging = true; // Update global variable
           this.lastMousePos = { x: e.clientX, y: e.clientY };
           this.container.style.cursor = 'grabbing';
       });
@@ -62,6 +63,7 @@ class Camera {
 
       window.addEventListener('mouseup', () => {
           this.isDragging = false;
+          isDragging = false; // Update global variable
           this.container.style.cursor = 'default';
       });
   }
@@ -206,10 +208,12 @@ return adjacentCells;
 }
 
 //mouse clicks canvas map
-function logCellOnClick(container, ctx, cellSize) {
+let isDragging = false; // Define a global isDragging variable
+
+function logCellOnClick(container, ctx, cellSize, npcCtx, treeCtx, pathCtx) {
 // console.log(`loading cell logger`);
 container.addEventListener("click", function(event) {
-  if (!isDragging) {
+  if (isDragging === false) {
     // Calculate the mouse position within the container.
     const rect = container.getBoundingClientRect();
     const x = event.clientX - rect.left;
@@ -219,12 +223,12 @@ container.addEventListener("click", function(event) {
     const cellRow = Math.floor(y / cellSize);
     const cellCol = Math.floor(x / cellSize);
 
-   // console.log(`Cell clicked: X = ${cellCol}, Y = ${cellRow}`);
+    console.log(`Cell clicked: X = ${cellCol}, Y = ${cellRow}`);
 
     ctx.fillStyle = 'purple'; 
     ctx.fillRect(cellCol * cellSize, cellRow * cellSize, cellSize, cellSize);
 
-    leftClick(cellCol, cellRow, npcCtx, cellSize);
+    leftClickAction(cellCol, cellRow, npcCtx, cellSize, treeCtx, pathCtx);
     //  const adjacentCells = getAdjacentCells(cellCol, cellRow, 3, 5, 5);  //didnt work use 
 
   }
@@ -232,18 +236,21 @@ container.addEventListener("click", function(event) {
 }
 
 // Example of how to use the function, assuming the container, npcCtx, and cellSize are already defined.
-//  logCellOnClick(container, boatCtx, cellSize); // OG FUNCTION - THIS WORKS OK
+logCellOnClick(container, boatCtx, cellSize, npcCtx, treeCtx, pathCtx);
 
-function leftClick(x, y, npcCtx, cellSize) {
+function leftClickAction(x, y, npcCtx, cellSize, treeCtx, pathCtx) {
 // Create a new house
-const newHouse = new House(x, y, cellSize);
+const newHouse = new House(x, y);
+
+//log x and y
+console.log(`House drawn at ${x}, ${y}`);
 
 // Add the new house to the global array of houses
-houses.push(newHouse);
+//houses.push(newHouse);
 
 // Draw the new house
-newHouse.draw(npcCtx, cellSize);
-drawRectanglesBetweenHouses(houses, treeCtx);
+newHouse.draw(npcCtx);
+//drawRectanglesBetweenHouses(houses, treeCtx);
 
 // Optionally alert the user
 //alert(`House drawn at ${x}, ${y}. Current home value: ${newHouse.homeValue}`);

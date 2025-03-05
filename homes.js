@@ -279,7 +279,7 @@ function drawRectanglesBetweenHouses(houses, ctx) {
     }
   }
 
-  console.error("busy cells: " + occupiedCells.length);
+ // console.error("busy cells: " + occupiedCells.length);
   // Remove trees that are in the same cells as the paths
   for (let i = trees.length - 1; i >= 0; i--) {
     const tree = trees[i];
@@ -351,9 +351,11 @@ class Building {
   }
 }
 
-function bfsFindPath(waterCells, startCell) {
+
   // Convert waterCells to a Set for faster lookup
   const waterSet = new Set(waterCells.map((cell) => `${cell.x},${cell.y}`));
+
+function bfsFindPath(waterCells, startCell) {
 
   let visited = new Set();
   let queue = [{ x: startCell.x, y: startCell.y, path: [] }];

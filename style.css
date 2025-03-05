@@ -290,6 +290,7 @@ user-select: none;
     }
 
 button {
+    margin: 7px;
     background-color: var(--green);
     border-radius: 8px;
     height: 50px;
