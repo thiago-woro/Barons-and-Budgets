@@ -565,3 +565,38 @@ const canvases = container.querySelectorAll("canvas");
 
 
  */
+
+// Function to draw an X across the entire canvas when R key is pressed
+function drawXOnCanvas() {
+  // Get the main canvas to draw on
+  const canvas = npcInfoOverlayCanvas;
+  const ctx = npcInfoOverlayCtx;
+  
+  // Clear the canvas first
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // Set line style
+  ctx.strokeStyle = 'magenta';
+  ctx.lineWidth = 3;
+  
+  // Draw first diagonal line (bottom-left to top-right)
+  ctx.beginPath();
+  ctx.moveTo(0, canvas.height);
+  ctx.lineTo(canvas.width, 0);
+  ctx.stroke();
+  
+  // Draw second diagonal line (top-left to bottom-right)
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(canvas.width, canvas.height);
+  ctx.stroke();
+  
+  console.log("X drawn across canvas");
+}
+
+// Add event listener for the R key
+window.addEventListener("keydown", (event) => {
+  if (event.key.toLowerCase() === 'r') {
+    drawXOnCanvas();
+  }
+});

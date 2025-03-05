@@ -629,3 +629,72 @@ font-size: 16px;
   .land-shade-7 { color: #7fbf6e; }
   .land-shade-8 { color: #6bb556; }
   .land-shade-9 { color: #5aa748; }
+
+
+
+                     
+.bottomTabs {
+    border: 3px solid #484f43;
+    background-color: #84bc3f;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 10px;
+}
+
+
+
+/* styles.css */
+body {
+    background-color: #4d80c3; /* Light blue sky background like in the image */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: 'Courier New', Courier, monospace; /* Pixel-like font */
+}
+
+.button-container {
+    display: flex;
+    gap: 5px; /* Spacing between buttons */
+    height: 90px;   
+}
+
+.bottomTabs {
+    padding: 5px;
+    align-items: center;
+    width: 60px;
+    max-width: 59px;
+    height: 40px;
+    max-height: 10px;
+    background-color: #666666;
+    border: none;
+    box-shadow: 0 -2px 0 2px #333333, 0 2px 0 2px #333333, 2px 0 0 2px #333333, -2px 0 0 2px #333333;
+    color: white;
+    font-size: 12px;
+    text-align: center;
+    cursor: pointer;
+    image-rendering: pixelated;
+    border-radius: 0;
+    transition: transform 0.1s;
+    text-align: center;
+}
+
+.bottomTabs:hover {
+    transform: scale(1.05);
+}
+
+.bottomTabs:active {
+    transform: scale(0.95);
+}
+
+
+
+
+
+:root {
+    --water-shade-1: #b9e0fa;
+    --water-shade-2: #9ecbf3;
+    --water-shade-3: #7ab3e9;
+    --water-shade-4: #5c91d1;
+  }

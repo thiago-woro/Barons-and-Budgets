@@ -6,7 +6,7 @@ function generateWavyWaterCanvas(waterCtx) {
   waterCtx.fillStyle = "#0c2957"; // Solid blue color
   waterCtx.fillRect(0, 0, waterCtx.canvas.width, waterCtx.canvas.height);
   // Start the animation
-  //drawWaterTexture();
+ // drawWaterTexture();
 
 }
 
@@ -24,8 +24,8 @@ waterTexture.src = '/assets/tilesets/water-texture.png';
 
 
 // Set the canvas size to match your desired dimensions
-const canvasWidth = wavesCtx.canvas.width;
-const canvasHeight = wavesCtx.canvas.height;
+const canvasWidth = 1000;
+const canvasHeight = 1000;
 
 // Calculate the initial positions for diagonal scrolling
 let textureX1 = canvasWidth;
@@ -42,7 +42,7 @@ wavesCtx.clearRect(0, 0, canvasWidth, canvasHeight);
 wavesCtx.drawImage(waterTexture, textureX1, textureY1, canvasWidth, canvasHeight);
 wavesCtx.drawImage(waterTexture, textureX2, textureY2, canvasWidth, canvasHeight);
 
-let speed = 20
+let speed = 5
 
 // Update the positions for the next frame to move diagonally
 textureX1 -= speed; // Adjust the speed as needed

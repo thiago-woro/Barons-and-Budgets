@@ -66,9 +66,25 @@ function generateTerrainMap() {
           noise: smoothedNoiseValue.toFixed(5),
         });
       } else {
-        terrainMap[y][x] =
-          WATER_SHADES[Math.floor(-smoothedNoiseValue * WATER_SHADES.length)];
-        waterCells.push({ x, y, color: terrainMap[y][x] });
+        // For water cells, use a non-linear mapping to create more variation in shallow water
+        // and less variation in deep water
+        const waterDepth = -smoothedNoiseValue; // Convert to positive value (0 = shore, higher = deeper)
+        
+        // Use a non-linear function to create more color variation in shallow water
+        // Square root function gives more weight to smaller values (shallow water)
+        const colorIndex = Math.min(
+          WATER_SHADES.length - 1,
+          Math.floor(Math.sqrt(waterDepth * 10) * (WATER_SHADES.length / Math.sqrt(5)))
+        );
+        
+        terrainMap[y][x] = WATER_SHADES[colorIndex];
+        waterCells.push({ 
+          x, 
+          y, 
+          color: terrainMap[y][x],
+          noise: smoothedNoiseValue.toFixed(5), // Store the noise value for water cells too
+          depth: waterDepth.toFixed(5) // Store the water depth for additional effects
+        });
       }
     }
   }
@@ -85,11 +101,78 @@ function drawTerrainLayer(ctx, cellArray, cellSize) {
   for (const cell of cellArray) {
     const x = cell.x;
     const y = cell.y;
-    const color = cell.color;
+    let color = cell.color;
     const noiseValue = parseFloat(cell.noise || 0);
     
+    // Special handling for water cells (negative noise values)
+    if (cell.noise && noiseValue < 0) {
+      // Get the base color from the cell
+      const baseColor = color;
+      
+      // Calculate how shallow the water is (0 = deepest, 1 = shallowest)
+      // We know water noise values are negative, so we'll map from -0.5 to 0
+      const shallowness = Math.min(1, Math.max(0, (noiseValue + 0.5) / 0.5));
+      const waterDepth = parseFloat(cell.depth || 0);
+      
+      // More variation for shallow water (shallowness closer to 1)
+      // Less variation for deep water (shallowness closer to 0)
+      if (shallowness > 0.5) {
+        // Very shallow water - add more color variation
+        // Randomly adjust the color slightly for more variation
+        const r = parseInt(baseColor.slice(1, 3), 16);
+        const g = parseInt(baseColor.slice(3, 5), 16);
+        const b = parseInt(baseColor.slice(5, 7), 16);
+        
+        // More variation for shallow water, scaled by shallowness
+        const variation = 20 * Math.pow(shallowness, 1.5);
+        const rNew = Math.min(255, Math.max(0, r + (Math.random() * variation * 2 - variation)));
+        const gNew = Math.min(255, Math.max(0, g + (Math.random() * variation * 2 - variation)));
+        const bNew = Math.min(255, Math.max(0, b + (Math.random() * variation * 2 - variation)));
+        
+        color = `#${Math.floor(rNew).toString(16).padStart(2, '0')}${Math.floor(gNew).toString(16).padStart(2, '0')}${Math.floor(bNew).toString(16).padStart(2, '0')}`;
+      }
+      
+      // Draw the water cell with a border radius based on depth
+      // Shallower water gets more rounded corners
+      const borderRadius = 3.5 + (shallowness * 3.5);
+      
+      drawRoundedRect(
+        ctx,
+        x * cellSize,
+        y * cellSize,
+        cellSize * 1.2,
+        borderRadius,
+        color
+      );
+      
+      // Add subtle texture to shallow water
+      if (shallowness > 0.6) {
+        // Add small ripple dots for shallow water
+        const rippleCount = Math.floor(shallowness * 5); // More ripples in shallower water
+        
+        for (let i = 0; i < rippleCount; i++) {
+          // Random position within the cell
+          const rippleX = x * cellSize + Math.random() * cellSize;
+          const rippleY = y * cellSize + Math.random() * cellSize;
+          
+          // Slightly lighter color for ripples
+          const r = parseInt(color.slice(1, 3), 16);
+          const g = parseInt(color.slice(3, 5), 16);
+          const b = parseInt(color.slice(5, 7), 16);
+          
+          // Make ripples slightly lighter
+          const rippleColor = `#${Math.min(255, r + 15).toString(16).padStart(2, '0')}${Math.min(255, g + 15).toString(16).padStart(2, '0')}${Math.min(255, b + 15).toString(16).padStart(2, '0')}`;
+          
+          // Draw small ripple
+          ctx.fillStyle = rippleColor;
+          ctx.beginPath();
+          ctx.arc(rippleX, rippleY, 1 + Math.random() * 1.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    } 
     // For beach/sand cells (noise < 0.05), use a more rounded border
-    if (cell.noise && noiseValue < 0.05) {
+    else if (cell.noise && noiseValue < 0.05) {
       // Use a larger border radius for beach/sand cells to make them more rounded
       drawRoundedRect(
         ctx,
@@ -123,7 +206,7 @@ function afterMapGen() {
   console.log(`Max pop.: `, maxLandPopulation.toFixed(0));
 
   drawTerrainLayer(groundCtx, groundCells, cellSize);
-  //drawTerrainLayer(waterCtx, waterCells, cellSize);
+  drawTerrainLayer(waterCtx, waterCells, cellSize); //water map
   distributeOreDeposits(oreDepositsCtx);
   
   // Draw sand texture after drawing the terrain layer
