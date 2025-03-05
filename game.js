@@ -94,8 +94,12 @@ function gameLoop(timestamp) {
     // This section runs on EVERY loop - movement happens 5x more often
     const onScreenNPCS = npcs.slice(0, onScreenNPCSlimit);
     onScreenNPCS.forEach((npc) => {
-      // Always move NPCs (5x more frequent than other activities)
-      if (npc.shouldMove()) {
+      // Update NPC state based on profession
+      npc.update();
+      
+      // Only move NPCs if they're not in a stationary state
+      const stationaryStates = ["cuttingTree", "restingAtHome"];
+      if (npc.shouldMove() && !stationaryStates.includes(npc.state)) {
         npc.move();
       }
       

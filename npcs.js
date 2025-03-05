@@ -473,26 +473,43 @@ function startNPCs(ctx, cellSize) {
 function drawNPC(npc, ctx) {
   ctx.textAlign = "center";
   let emoji;
-  if (npc.age < 11) {
-    emoji = "👶";
-  } else if (npc.age > 70) {
-    emoji = npc.sex === "male" ? "👴" : "👵";
-  } else {
-    emoji = npc.sex === "male" ? "👨" : "👩";
+  
+  // Handle animation states for woodcutters
+  if (npc.profession === "Woodcutter" && npc.animationState) {
+    if (npc.animationState === "chopping") {
+      emoji = "🪓"; // Axe emoji for chopping
+    } else if (npc.animationState === "sleeping") {
+      emoji = "💤"; // ZZZ emoji for sleeping
+    }
   }
+  
+  // If no special animation state, use the default emoji based on age/race
+  if (!emoji) {
+    if (npc.age < 11) {
+      emoji = "👶";
+    } else if (npc.age > 70) {
+      emoji = npc.sex === "male" ? "👴" : "👵";
+    } else {
+      emoji = npc.sex === "male" ? "👨" : "👩";
+    }
 
-  // Check if npc.race is equal to "Purries" and set emoji accordingly
-  if (npc.race === "Purries") {
-    emoji = "🐈";
-  }
+    // Check if npc.race is equal to "Purries" and set emoji accordingly
+    if (npc.race === "Purries") {
+      emoji = "🐈";
+    }
 
-  if (npc.race === "Kurohi") {
-    emoji = "🧛‍♂️";
+    if (npc.race === "Kurohi") {
+      emoji = "🧛‍♂️";
+    }
+    
+    // Special emoji for Elf woodcutters
+    if (npc.race === "Elf" && npc.profession === "Woodcutter") {
+      emoji = "🧝";
+    }
   }
 
   ctx.font = "bold 20px Arial"; // Increase font size for the emoji
   ctx.fillText(emoji, npc.x, npc.y);
-
 }
 
 function drawNPCInfo(npc, ctx) {

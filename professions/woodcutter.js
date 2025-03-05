@@ -30,13 +30,46 @@ function updateWoodcutter(npc) {
         // Path completed
         npc.transitionTo("cuttingTree");
         npc.waitTime = npc.maxWaitTime;
+        // Store the tree index for animation later
+        if (npc.stateData.targetTree && npc.stateData.targetTree.originalTree) {
+          const treeIndex = treePositions.indexOf(npc.stateData.targetTree.originalTree);
+          if (treeIndex !== -1) {
+            npc.stateData.targetTreeIndex = treeIndex;
+          }
+        }
       }
       break;
       
     case "cuttingTree":
       if (npc.waitTime > 0) {
         npc.waitTime--;
+        
+        // Add visual feedback for tree cutting (chopping animation)
+        if (npc.waitTime % 2 === 0) {
+          // Alternate between normal position and "chopping" position
+          npc.animationState = "chopping";
+        } else {
+          npc.animationState = "normal";
+        }
+        
+        // Start tree animation when we're about halfway through cutting
+        // This ensures the tree falls as the woodcutter is still chopping
+        if (npc.waitTime === Math.floor(npc.maxWaitTime / 2) && npc.stateData.targetTreeIndex !== undefined) {
+          dyingTreeAnimation(npc.stateData.targetTreeIndex, () => {
+            console.log(`woodcutter: ${npc.name} cut down a tree`);
+
+            //add wood to the wood count
+            elfWoodCount += 1;
+
+           //update the wood count display
+            document.getElementById("woodCount").textContent = elfWoodCount;
+ 
+        
+          });
+        }
       } else {
+        npc.animationState = "normal"; // Reset animation state
+        // Tree has already been removed by the animation
         npc.transitionTo("findingHome");
       }
       break;
@@ -66,7 +99,11 @@ function updateWoodcutter(npc) {
     case "restingAtHome":
       if (npc.waitTime > 0) {
         npc.waitTime--;
+        
+        // Add visual feedback for resting (sleeping animation)
+        npc.animationState = "sleeping";
       } else {
+        npc.animationState = "normal"; // Reset animation state
         npc.transitionTo("findingTree");
       }
       break;
@@ -85,20 +122,65 @@ function drawWoodcutterInfo(npc, ctx) {
   
   // Determine text based on current state
   let text = "";
+  let bgColor = "rgba(255, 255, 255, 0.7)"; // Default background
+  
   switch (npc.state) {
-    case "idle": text = "🔍 Idle"; break;
-    case "findingTree": text = "🔍 Finding tree"; break;
-    case "movingToTree": text = "🚶 To tree"; break;
-    case "cuttingTree": text = "🪓 Cutting"; break;
-    case "findingHome": text = "🔍 Finding home"; break;
-    case "movingToHome": text = "🚶 To home"; break;
-    case "restingAtHome": text = "🏠 Resting"; break;
-    default: text = npc.state;
+    case "idle": 
+      text = "🔍 Idle"; 
+      bgColor = "rgba(200, 200, 200, 0.7)"; // Gray
+      break;
+    case "findingTree": 
+      text = "🔍 Finding tree"; 
+      bgColor = "rgba(152, 251, 152, 0.7)"; // Pale green
+      break;
+    case "movingToTree": 
+      text = "🚶 To tree"; 
+      bgColor = "rgba(135, 206, 250, 0.7)"; // Light blue
+      break;
+    case "cuttingTree": 
+      text = "🪓 Cutting"; 
+      bgColor = "rgba(255, 165, 0, 0.7)"; // Orange
+      break;
+    case "findingHome": 
+      text = "🔍 Finding home"; 
+      bgColor = "rgba(152, 251, 152, 0.7)"; // Pale green
+      break;
+    case "movingToHome": 
+      text = "🚶 To home"; 
+      bgColor = "rgba(135, 206, 250, 0.7)"; // Light blue
+      break;
+    case "restingAtHome": 
+      text = "🏠 Resting"; 
+      bgColor = "rgba(221, 160, 221, 0.7)"; // Plum
+      break;
+    default: 
+      text = npc.state;
   }
+  
+  // Draw a background for the text
+  const textWidth = ctx.measureText(text).width;
+  const padding = 4;
+  ctx.fillStyle = bgColor;
+  ctx.fillRect(npc.x - textWidth/2 - padding, npc.y - 35, textWidth + padding*2, 16);
   
   // Draw a text shadow
   ctx.fillStyle = "white";
   ctx.fillText(text, npc.x, npc.y - 25);
   ctx.fillStyle = fillColor;
   ctx.fillText(text, npc.x, npc.y - 24);
+  
+  // If waiting, show a progress bar
+  if ((npc.state === "cuttingTree" || npc.state === "restingAtHome") && npc.waitTime > 0) {
+    const maxWidth = 20;
+    const progress = npc.waitTime / npc.maxWaitTime;
+    const barWidth = maxWidth * progress;
+    
+    // Draw background bar
+    ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
+    ctx.fillRect(npc.x - maxWidth/2, npc.y - 15, maxWidth, 3);
+    
+    // Draw progress
+    ctx.fillStyle = npc.state === "cuttingTree" ? "orange" : "purple";
+    ctx.fillRect(npc.x - maxWidth/2, npc.y - 15, barWidth, 3);
+  }
 } 

@@ -43,6 +43,19 @@ let onScreenNPCSlimit = 50 //limits move(), draw() to only these,
 //this is done for performance mainly
 
 
+//resources count
+let elfWoodCount = 0;
+let elfFoodCount = 0;
+let elfCrystalliteCount = 0;
+
+let purriesWoodCount = 0;
+let purriesFoodCount = 0;
+let purriesCrystalliteCount = 0;
+
+let kurohiWoodCount = 0;
+let kurohiFoodCount = 0;
+let kurohiCrystalliteCount = 0;
+
 
 
 //cache reusable elements

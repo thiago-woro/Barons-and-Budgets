@@ -25,7 +25,7 @@
 <div id="welcomePopup"">
     <h1 id="titleWelcomeScreen" style="margin-top: 50px;" >Barons & Budgets</h1>
     <img id="logoWelcomeScreen" src="./assets/Favicon/logo.png">
-    <div class="row col" style="margin-bottom: 50px;">
+    <div class="row col" style="margin-bottom: 50px; gap: 10px; padding: 10px; border-radius: 10px;">
         <button id="newGameWelcomeScreen">New Game Random</button>
         <button id="newGameCustomWelcomeScreen">New Game Custom</button>
         <button disabled class="blueButton" id="loadGameWelcomeScreen">Load Game</button>
@@ -54,46 +54,58 @@
             <canvas id="homes"  style="z-index: 98;"></canvas>
         </div>
 
-        <div id="bottomToolBar" style="height: 150px;">
-            <div class="col" style="margin: 0px;">
+
+
+        <!-- bottomToolBar -->
+        <div id="bottomToolBar" class="row" style="height: 110px;">
+                <!-- minimize icon -->
+                 <i class="fas fa-angle-double-up" style="color: #fff; font-size: 20px; margin-left: 10px;"></i>
+
+
+                <!-- left menu -->
+                <div class="col" style="margin: 4px;">
+                    <!-- left menu 2 -->
+                    <div id="leftMenu2" class="row" style="margin: 0px;">
+                        <div class="bottomTabs">
+                            <span id="terrainTab">Terrain</span>
+                        </div>
+                        <div class="bottomTabs">
+                            <span id="creaturesTab">Creatures</span>
+                        </div>
+                        <div class="bottomTabs">
+                            <span id="budgetsTab">Budgets</span>
+                        </div>
+                        <div class="bottomTabs">
+                            <span id="buildingsTab">Buildings</span>
+                        </div>
+                    </div>
+    
                 <div class="row" style="margin: 0px;">
-                    <div class="bottomTabs">
-                        <span id="terrainTab">Terrain</span>
-                    </div>
-                    <div class="bottomTabs">
-                        <span id="creaturesTab">Creatures</span>
-                    </div>
-                    <div class="bottomTabs">
-                        <span id="budgetsTab">Budgets</span>
-                    </div>
-                    <div class="bottomTabs">
-                        <span id="buildingsTab">Buildings</span>
-                    </div>
-                </div>
-
-
-            <div class="row" style="margin: 0px;">
-                <img style="height: 60px; width: auto; max-width: 90px;" src="./assets/Races/elfs/female/5.png">
-                <img style="height: 60px; width: auto; max-width: 90px;" src="https://cdn-icons-png.flaticon.com/512/602/602232.png">
-            </div>
-        </div>
-            <div style="flex-grow: 1;"></div>
-            <div class="col" style="margin: 10px;">
-                <span style="font-weight: bold;">Resources</span>
-                <div class="row" style="margin: 10px;">
-                <span class="land-shade-1" id="crystallite">Crystallite </span>
-                    <span class="land-shade-5" id="wood">Wood</span>
-                    <span class="land-shade-6" id="food">Food</span>
-                <span id="yearBottomToolBar">Year </span>
-                <span id="populationBottomToolBar" >Population </span>
-                <span id="GDPbottomToolBar" >GDP </span>
+                    <img style="height: 60px; width: auto; max-width: 90px;" src="./assets/Races/elfs/female/5.png">
+                    <img style="height: 60px; width: auto; max-width: 90px;" src="https://cdn-icons-png.flaticon.com/512/602/602232.png">
                 </div>
             </div>
-           
-        </div>
+                <div style="flex-grow: 1;"></div>
+                <div class="col" style="margin: 10px;">
+                    <span style="font-weight: bold;">Resources</span>
+                    <div class="row" style="margin: 10px; gap: 10px;">
+                    <span> Crystallite </span>
+                    <span class="land-shade-1 " id="crystalbottomToolBar">Crystallite </span>
+                    <span> Wood </span>
+                    <span class="land-shade-5 " id="woodCount">0</span>
+                    <span> Food </span>
+                    <span class="land-shade-6 " id="foodCount">0</span>
+                    <span id="yearBottomToolBar">Year </span>
+                    <span id="populationBottomToolBar" >Population </span>
+                    <span id="GDPbottomToolBar" >GDP </span>
+                    </div>
+                </div>
+               
+</div>
+
 
         <div id="tools" style="visibility: collapse;">
-            <div id="toolTabs" class="row" style="display: flex;   z-index: 0; background-color: rgba(0, 0, 0, 0); margin-bottom: -10;"> 
+            <div id="toolTabs" class="row" style="display: flex; gap:5px;  z-index: 0; background-color: rgba(0, 0, 0, 0); margin-bottom: -10;"> 
                 <span id="minimizeTabButton" class="tabSelector" onclick="hideTabs()">
                     <i style="height: 20px; width: 20px;" class="fas fa-angle-double-up"></i> hide</span>
                 <span id="gameTabButton" class="tabSelector active" onclick="toggleTab('gameTab')">Game</span>

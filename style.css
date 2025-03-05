@@ -28,6 +28,7 @@
     color: var(--gold);
     font-size: 11px;
     z-index: 3000;
+    margin-bottom: 0px;
   }
 
   #barons {
@@ -208,21 +209,18 @@ body {
 .row {
     display: flex;
     flex-direction: row;
-    gap: 20px;
     background-color: #454a3f;
-    padding: 10px;
-    border-radius: 10px;
 }
 
 .col {
     display: flex;
     flex-direction: column;
     background-color: #454a3f;
-    margin: 10px;
-    padding: 10px;
-    border-radius: 10px;
 }
 
+.pad {
+    padding: 6px;
+}
 
 #generateButton {
     margin: 10px;

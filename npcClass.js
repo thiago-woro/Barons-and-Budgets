@@ -31,6 +31,7 @@ class NPC {
     this.maxWaitTime = 7; // 7 seconds wait time
     this.state = "idle"; // Initial state
     this.stateData = {}; // For storing state-specific data
+    this.animationState = "normal"; // For visual feedback during activities
 
     if (age >= 20) {
       this.profession = this.generateProfession(this.age, this.race);
