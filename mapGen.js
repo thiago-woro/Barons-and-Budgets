@@ -57,8 +57,22 @@ function generateTerrainMap() {
 
       // Assign terrain type based on smoothed noise value
       if (smoothedNoiseValue > 0) {
-        terrainMap[y][x] =
-          LAND_SHADES[Math.floor(smoothedNoiseValue * LAND_SHADES.length)];
+        // Modified color selection to reduce sand tiles (first color in LAND_SHADES)
+        // Apply a bias to skip the first color (sand) more often
+        let colorIndex;
+        
+        if (smoothedNoiseValue < 0.08) {
+          // For very low noise values (near shore), still use sand color
+          colorIndex = 0; // Sand color (first in LAND_SHADES)
+        } else {
+          // For higher noise values, use green colors (skip the first sand color)
+          // Map the noise range 0.08-1.0 to the green colors (indices 1 to end of LAND_SHADES)
+          const adjustedNoise = (smoothedNoiseValue - 0.08) / (1.0 - 0.08);
+          colorIndex = 1 + Math.floor(adjustedNoise * (LAND_SHADES.length - 1));
+          colorIndex = Math.min(colorIndex, LAND_SHADES.length - 1); // Ensure we don't exceed array bounds
+        }
+        
+        terrainMap[y][x] = LAND_SHADES[colorIndex];
         groundCells.push({
           x,
           y,
@@ -173,8 +187,8 @@ function drawTerrainLayer(ctx, cellArray, cellSize) {
         }
       }
     } 
-    // For beach/sand cells (noise < 0.05), use a more rounded border
-    else if (cell.noise && noiseValue < 0.05) {
+    // For beach/sand cells (noise < 0.035), use a more rounded border
+    else if (cell.noise && noiseValue < 0.035) {
       // Use a larger border radius for beach/sand cells to make them more rounded
       drawRoundedRect(
         ctx,
@@ -459,9 +473,9 @@ function clearNPC() {
 
 // Function to draw sand texture on beach/sand tiles
 function drawSandTexture(ctx) {
-  // Get all sand cells (cells with noise below 0.06)
+  // Get all sand cells (cells with noise below 0.04)
   const sandCells = groundCells.filter(cell => {
-    return cell.noise && parseFloat(cell.noise) < 0.067;
+    return cell.noise && parseFloat(cell.noise) < 0.09;
   });
   
   // Base sand color from LAND_SHADES (typically the first element)
