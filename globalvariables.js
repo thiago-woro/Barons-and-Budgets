@@ -58,7 +58,6 @@ const container = document.getElementById("container");
 
 
 
-
 // Global array to store houses
 let houses = [];
 let building = []
@@ -87,15 +86,15 @@ let freeCells = []
 var SAND = "#b0ad58";
 
 var WATER_SHADES = [
-  "#c7e9fd", // Very light blue for the shallowest water
-  "#b9e0fa", 
-  "#a5d5f7", // Additional light blue shade
-  "#9ecbf3", 
-  "#8abfed", // Additional medium-light blue shade
-  "#7ab3e9", 
-  "#6ba2df", // Additional medium blue shade
-  "#5c91d1", 
-  "#4d80c3"  // Deeper blue for the deepest water
+  "#c2e5f9", // Very light blue for the shallowest water (toned down)
+  "#b4ddf7", 
+  "#a6d4f5", // Additional light blue shade (toned down)
+  "#98cbf2", 
+  "#8ac2ef", // Additional medium-light blue shade (toned down)
+  "#7cb9ec", 
+  "#6eafe9", // Additional medium blue shade (toned down)
+  "#60a6e6", 
+  "#529de3"  // Deeper blue for the deepest water (toned down)
 ];
 
 

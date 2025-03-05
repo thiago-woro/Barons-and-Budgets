@@ -71,10 +71,10 @@ function generateTerrainMap() {
         const waterDepth = -smoothedNoiseValue; // Convert to positive value (0 = shore, higher = deeper)
         
         // Use a non-linear function to create more color variation in shallow water
-        // Square root function gives more weight to smaller values (shallow water)
+        // Adjusted to create a more subtle gradient
         const colorIndex = Math.min(
           WATER_SHADES.length - 1,
-          Math.floor(Math.sqrt(waterDepth * 10) * (WATER_SHADES.length / Math.sqrt(5)))
+          Math.floor(Math.pow(waterDepth * 8, 0.8) * (WATER_SHADES.length / Math.pow(4, 0.8)))
         );
         
         terrainMap[y][x] = WATER_SHADES[colorIndex];
@@ -124,7 +124,8 @@ function drawTerrainLayer(ctx, cellArray, cellSize) {
         const b = parseInt(baseColor.slice(5, 7), 16);
         
         // More variation for shallow water, scaled by shallowness
-        const variation = 20 * Math.pow(shallowness, 1.5);
+        // Reduced variation by lowering the multiplier from 20 to 12
+        const variation = 12 * Math.pow(shallowness, 1.5);
         const rNew = Math.min(255, Math.max(0, r + (Math.random() * variation * 2 - variation)));
         const gNew = Math.min(255, Math.max(0, g + (Math.random() * variation * 2 - variation)));
         const bNew = Math.min(255, Math.max(0, b + (Math.random() * variation * 2 - variation)));
@@ -146,9 +147,10 @@ function drawTerrainLayer(ctx, cellArray, cellSize) {
       );
       
       // Add subtle texture to shallow water
-      if (shallowness > 0.6) {
+      if (shallowness > 0.7) { // Increased threshold from 0.6 to 0.7 to reduce ripples
         // Add small ripple dots for shallow water
-        const rippleCount = Math.floor(shallowness * 5); // More ripples in shallower water
+        // Reduced ripple count by lowering the multiplier from 5 to 3
+        const rippleCount = Math.floor(shallowness * 3); 
         
         for (let i = 0; i < rippleCount; i++) {
           // Random position within the cell
@@ -160,13 +162,13 @@ function drawTerrainLayer(ctx, cellArray, cellSize) {
           const g = parseInt(color.slice(3, 5), 16);
           const b = parseInt(color.slice(5, 7), 16);
           
-          // Make ripples slightly lighter
-          const rippleColor = `#${Math.min(255, r + 15).toString(16).padStart(2, '0')}${Math.min(255, g + 15).toString(16).padStart(2, '0')}${Math.min(255, b + 15).toString(16).padStart(2, '0')}`;
+          // Make ripples slightly lighter - reduced brightness from +15 to +8
+          const rippleColor = `#${Math.min(255, r + 8).toString(16).padStart(2, '0')}${Math.min(255, g + 8).toString(16).padStart(2, '0')}${Math.min(255, b + 8).toString(16).padStart(2, '0')}`;
           
-          // Draw small ripple
+          // Draw small ripple - reduced size from 1.5 to 1.2
           ctx.fillStyle = rippleColor;
           ctx.beginPath();
-          ctx.arc(rippleX, rippleY, 1 + Math.random() * 1.5, 0, Math.PI * 2);
+          ctx.arc(rippleX, rippleY, 0.8 + Math.random() * 1.2, 0, Math.PI * 2);
           ctx.fill();
         }
       }
