@@ -86,15 +86,15 @@ let freeCells = []
 var SAND = "#b0ad58";
 
 var WATER_SHADES = [
-  "#c2e5f9", // Very light blue for the shallowest water (toned down)
-  "#b4ddf7", 
-  "#a6d4f5", // Additional light blue shade (toned down)
-  "#98cbf2", 
-  "#8ac2ef", // Additional medium-light blue shade (toned down)
-  "#7cb9ec", 
-  "#6eafe9", // Additional medium blue shade (toned down)
-  "#60a6e6", 
-  "#529de3"  // Deeper blue for the deepest water (toned down)
+  "#c2e5f9", // Shallowest (keep original)
+  "#b4ddf7", // Very shallow (keep original)
+  "#a6d4f5", // Shallow (keep original)
+  "#98cbf2", // Medium-shallow (keep original)
+  "#7cb9ec", // Medium (keep original)
+  "#5ca5e8", // Medium-deep (transition)
+  "#4389e9", // Deep (as specified)
+  "#3a7ad2", // Very deep (transition)
+  "#3068bb"  // Deepest (as specified)
 ];
 
 

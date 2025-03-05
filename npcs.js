@@ -436,9 +436,8 @@ function startNPCs(ctx, cellSize) {
     // Set the zoom level to 1.25
     camera.zoom = 1.25;
     
-    // Get the first NPC's position
-    const firstNPC = npcs[0];
-    
+    // Get the first Elf NPC's position
+    const firstNPC = npcs.find(npc => npc.race === "Elf") || npcs[0];
     // Use the NPC's position but ensure it's within the map boundaries
     // Map boundaries from custom instructions:
     // Min bounds: (-144.00, 316.00)

@@ -61,7 +61,7 @@ function generateTerrainMap() {
         // Apply a bias to skip the first color (sand) more often
         let colorIndex;
         
-        if (smoothedNoiseValue < 0.08) {
+        if (smoothedNoiseValue < 0.05) {
           // For very low noise values (near shore), still use sand color
           colorIndex = 0; // Sand color (first in LAND_SHADES)
         } else {
@@ -96,8 +96,7 @@ function generateTerrainMap() {
           x, 
           y, 
           color: terrainMap[y][x],
-          noise: smoothedNoiseValue.toFixed(5), // Store the noise value for water cells too
-          depth: waterDepth.toFixed(5) // Store the water depth for additional effects
+          noise: smoothedNoiseValue.toFixed(5) // Store the noise value for water cells too
         });
       }
     }
@@ -126,7 +125,6 @@ function drawTerrainLayer(ctx, cellArray, cellSize) {
       // Calculate how shallow the water is (0 = deepest, 1 = shallowest)
       // We know water noise values are negative, so we'll map from -0.5 to 0
       const shallowness = Math.min(1, Math.max(0, (noiseValue + 0.5) / 0.5));
-      const waterDepth = parseFloat(cell.depth || 0);
       
       // More variation for shallow water (shallowness closer to 1)
       // Less variation for deep water (shallowness closer to 0)
