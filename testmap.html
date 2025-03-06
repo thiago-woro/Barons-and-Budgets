@@ -1,0 +1,174 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D Grid Game - WORKING MAP, COPY FROM THIS GAME</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="800"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const gridSize = 20;
+        const cellSize = 20;
+        let zoomFactor = 1;
+        let offsetX = 0;
+        let offsetY = 0;
+        const colors = {
+            blue: '#0000FF',
+            green: '#008000',
+            magenta: '#FF00FF',
+            grey: '#808080'
+        };
+        let highlightedCell = null;
+        let isDragging = false;
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+
+        const grid = [];
+        for (let y = 0; y < gridSize; y++) {
+            grid[y] = [];
+            for (let x = 0; x < gridSize; x++) {
+                grid[y][x] = Math.random() < 0.5 ? 'blue' : 'green';
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.translate(offsetX, offsetY);
+            ctx.scale(zoomFactor, zoomFactor);
+
+            for (let y = 0; y < gridSize; y++) {
+                for (let x = 0; x < gridSize; x++) {
+                    ctx.fillStyle = colors[grid[y][x]];
+                    ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+                }
+            }
+
+            if (highlightedCell) {
+                ctx.fillStyle = colors.magenta;
+                ctx.fillRect(highlightedCell.x * cellSize, highlightedCell.y * cellSize, cellSize, cellSize);
+            }
+
+            ctx.restore();
+        }
+
+        canvas.addEventListener('mousemove', function(event) {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = event.clientX - rect.left;
+            const mouseY = event.clientY - rect.top;
+            const transformedX = (mouseX - offsetX) / zoomFactor;
+            const transformedY = (mouseY - offsetY) / zoomFactor;
+            const cellX = Math.floor(transformedX / cellSize);
+            const cellY = Math.floor(transformedY / cellSize);
+
+            if (isDragging) {
+                offsetX += mouseX - lastMouseX;
+                offsetY += mouseY - lastMouseY;
+                lastMouseX = mouseX;
+                lastMouseY = mouseY;
+                draw();
+            } else {
+                if (cellX >= 0 && cellX < gridSize && cellY >= 0 && cellY < gridSize) {
+                    highlightedCell = { x: cellX, y: cellY };
+                } else {
+                    highlightedCell = null;
+                }
+                draw();
+            }
+        });
+
+        canvas.addEventListener('mouseout', function() {
+            highlightedCell = null;
+            draw();
+        });
+
+        canvas.addEventListener('mousedown', function(event) {
+            if (event.button === 0) { // Left click
+                const rect = canvas.getBoundingClientRect();
+                lastMouseX = event.clientX - rect.left;
+                lastMouseY = event.clientY - rect.top;
+                isDragging = true;
+            }
+        });
+
+        canvas.addEventListener('mouseup', function(event) {
+            if (event.button === 0) { // Left click release
+                if (!isDragging) {
+                    if (highlightedCell) {
+                        console.log(`Clicked on cell (${highlightedCell.x}, ${highlightedCell.y})`);
+                    }
+                }
+                isDragging = false;
+            }
+        });
+
+        canvas.addEventListener('contextmenu', function(event) {
+            event.preventDefault();
+            if (highlightedCell) {
+                grid[highlightedCell.y][highlightedCell.x] = 'grey';
+                draw();
+            }
+        });
+
+        canvas.addEventListener('wheel', function(event) {
+            event.preventDefault();
+            if (!highlightedCell) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = event.clientX - rect.left;
+            const mouseY = event.clientY - rect.top;
+
+            if (event.deltaY < 0) {
+                zoomFactor += 0.5;
+            } else {
+                zoomFactor -= 0.5;
+            }
+            if (zoomFactor < 0.5) zoomFactor = 0.5;
+            if (zoomFactor > 10) zoomFactor = 10;
+
+            const cellWorldX = highlightedCell.x * cellSize;
+            const cellWorldY = highlightedCell.y * cellSize;
+            offsetX = mouseX - (cellWorldX * zoomFactor);
+            offsetY = mouseY - (cellWorldY * zoomFactor);
+
+            draw();
+        });
+
+        document.addEventListener('keydown', function(event) {
+            const key = event.key.toLowerCase();
+            const panSpeed = 10;
+            if (key === 'w') {
+                offsetY += panSpeed;
+            } else if (key === 's') {
+                offsetY -= panSpeed;
+            } else if (key === 'a') {
+                offsetX += panSpeed;
+            } else if (key === 'd') {
+                offsetX -= panSpeed;
+            }
+            draw();
+        });
+
+        draw();
+    </script>
+</body>
+</html>
