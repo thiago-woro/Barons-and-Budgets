@@ -63,6 +63,9 @@ class NPC {
   transitionTo(newState) {
     console.log(`${this.name} transitioning from ${this.state} to ${newState}`);
     this.state = newState;
+    
+    // Update the state in the NPC table
+    updateNpcStateInList(this, newState);
   }
 
   // Regular movement method for non-woodcutter NPCs

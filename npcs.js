@@ -17,6 +17,31 @@ function addNPCToTable(npc) {
 
   const professionCell = newRow.insertCell();
   professionCell.textContent = npc.profession;
+  
+  const stateCell = newRow.insertCell();
+  const stateSpan = document.createElement('span');
+  stateSpan.id = `npcState-${npc.myNumber}`;
+  stateSpan.textContent = npc.state || 'idle';
+  
+  // Set color based on state
+  switch(npc.state) {
+    case 'idle':
+      stateSpan.style.color = 'lightgray';
+      break;
+    case 'moving':
+      stateSpan.style.color = 'lightblue';
+      break;
+    case 'working':
+      stateSpan.style.color = 'orange';
+      break;
+    case 'harvesting':
+      stateSpan.style.color = 'lightgreen';
+      break;
+    default:
+      stateSpan.style.color = 'white';
+  }
+  
+  stateCell.appendChild(stateSpan);
 
   const myNumber = newRow.insertCell();
   myNumber.textContent = npc.myNumber;
@@ -518,4 +543,38 @@ function drawNPCInfo(npc, ctx) {
   ctx.fillStyle = "black";
   ctx.font = "900 15px Arial";
   ctx.fillText(text, npc.x, npc.y + 25);
+}
+
+// Function to update NPC state in the table
+function updateNpcStateInList(npc, newState) {
+  // Find the specific row for this NPC using its myNumber
+  const npcRow = document.getElementById(`npcRow-${npc.myNumber}`);
+  
+  if (npcRow) {
+    // Get the state cell (5th column)
+    const stateCell = npcRow.querySelector('td:nth-child(5)');
+    
+    if (stateCell) {
+      // Update the text content
+      stateCell.textContent = newState;
+      
+      // Change color based on state
+      switch(newState) {
+        case 'idle':
+          stateCell.style.color = 'lightgray';
+          break;
+        case 'moving':
+          stateCell.style.color = 'lightblue';
+          break;
+        case 'working':
+          stateCell.style.color = 'orange';
+          break;
+        case 'harvesting':
+          stateCell.style.color = 'lightgreen';
+          break;
+        default:
+          stateCell.style.color = 'white';
+      }
+    }
+  }
 }
