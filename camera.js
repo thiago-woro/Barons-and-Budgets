@@ -1,271 +1,268 @@
-////////////////////CAMERA FUNCTIONS
 class Camera {
   constructor(container) {
-      this.container = container;
-      this.position = { x: 0, y: 0 };
-      this.zoom = 1.0;
-      this.isDragging = false;
-      this.lastMousePos = { x: 0, y: 0 };
-      this.minZoom = 0.1;
-      this.maxZoom = 5;
-      this.zoomSpeed = 0.1;
-      this.zoomFactor = 0.05; // New property for proportional zoom
-
-      this.setupEventListeners();
+    this.container = container;
+    this.position = { x: 0, y: 0 };
+    this.zoom = 1.0;
+    this.isDragging = false;
+    this.lastMousePos = { x: 0, y: 0 };
+    this.minZoom = 0.1;
+    this.maxZoom = 5;
+    this.zoomSpeed = 0.1;
+    this.zoomFactor = 0.05; // New property for proportional zoom
+    this.setupEventListeners();
   }
 
   setupEventListeners() {
-      // Mouse wheel for zooming
-      this.container.addEventListener('wheel', (e) => {
-          e.preventDefault();
-          const mousePosBeforeZoom = this.screenToWorld(e.clientX, e.clientY);
-          
-          // Calculate new zoom with proportional speed
-          const zoomDirection = -Math.sign(e.deltaY);
-          const zoomChange = this.zoom * this.zoomFactor * zoomDirection;
-          const newZoom = Math.min(Math.max(this.zoom + zoomChange, this.minZoom), this.maxZoom);
-          
-          if (newZoom !== this.zoom) {
-              // Apply zoom
-              const zoomFactor = newZoom / this.zoom;
-              this.zoom = newZoom;
-              
-              // Adjust position to keep mouse point fixed
-              const mousePosAfterZoom = this.screenToWorld(e.clientX, e.clientY);
-              this.position.x += mousePosAfterZoom.x - mousePosBeforeZoom.x;
-              this.position.y += mousePosAfterZoom.y - mousePosBeforeZoom.y;
-              
-              this.updateTransform();
-          }
-      });
+    // Mouse wheel for zooming
+    this.container.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const mousePosBeforeZoom = this.screenToWorld(e.clientX, e.clientY);
 
-      // Mouse drag for panning
-      this.container.addEventListener('mousedown', (e) => {
-          this.isDragging = true;
-          isDragging = true; // Update global variable
-          this.lastMousePos = { x: e.clientX, y: e.clientY };
-          this.container.style.cursor = 'grabbing';
-      });
+      // Calculate new zoom with proportional speed
+      const zoomDirection = -Math.sign(e.deltaY);
+      const zoomChange = this.zoom * this.zoomFactor * zoomDirection;
+      const newZoom = Math.min(Math.max(this.zoom + zoomChange, this.minZoom), this.maxZoom);
 
-      window.addEventListener('mousemove', (e) => {
-          if (this.isDragging) {
-              const deltaX = (e.clientX - this.lastMousePos.x) / this.zoom;
-              const deltaY = (e.clientY - this.lastMousePos.y) / this.zoom;
-              
-              this.position.x -= deltaX;
-              this.position.y -= deltaY;
-              
-              this.lastMousePos = { x: e.clientX, y: e.clientY };
-              this.updateTransform();
-          }
-          this.updateHoveredCell(e);
-      });
+      if (newZoom !== this.zoom) {
+        // Apply zoom
+        const zoomFactor = newZoom / this.zoom;
+        this.zoom = newZoom;
 
-      window.addEventListener('mouseup', () => {
-          this.isDragging = false;
-          isDragging = false; // Update global variable
-          this.container.style.cursor = 'default';
-      });
+        // Adjust position to keep mouse point fixed
+        const mousePosAfterZoom = this.screenToWorld(e.clientX, e.clientY);
+        this.position.x += mousePosAfterZoom.x - mousePosBeforeZoom.x;
+        this.position.y += mousePosAfterZoom.y - mousePosBeforeZoom.y;
+
+        this.updateTransform();
+      }
+    });
+
+    // Mouse drag for panning
+    this.container.addEventListener('mousedown', (e) => {
+      this.isDragging = true;
+      isDragging = true; // Update global variable
+      this.lastMousePos = { x: e.clientX, y: e.clientY };
+      this.container.style.cursor = 'grabbing';
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (this.isDragging) {
+        const deltaX = (e.clientX - this.lastMousePos.x) / this.zoom;
+        const deltaY = (e.clientY - this.lastMousePos.y) / this.zoom;
+
+        this.position.x -= deltaX;
+        this.position.y -= deltaY;
+
+        this.lastMousePos = { x: e.clientX, y: e.clientY };
+        this.updateTransform();
+      }
+      this.updateHoveredCell(e);
+    });
+
+    window.addEventListener('mouseup', () => {
+      this.isDragging = false;
+      isDragging = false; // Update global variable
+      this.container.style.cursor = 'default';
+    });
   }
 
   screenToWorld(screenX, screenY) {
-      const rect = this.container.getBoundingClientRect();
-      const mouseX = screenX - rect.left;
-      const mouseY = screenY - rect.top;
-      
-      // Convert to world coordinates
-      const worldX = mouseX / this.zoom + this.position.x;
-      const worldY = mouseY / this.zoom + this.position.y;
-      
-      return { x: worldX, y: worldY };
+    const rect = this.container.getBoundingClientRect();
+    const mouseX = screenX - rect.left;
+    const mouseY = screenY - rect.top;
+
+    // Convert to world coordinates
+    const worldX = mouseX / this.zoom + this.position.x;
+    const worldY = mouseY / this.zoom + this.position.y;
+
+    return { x: worldX, y: worldY };
   }
 
   updateHoveredCell(event) {
-      // Use offsetX/offsetY for mouse coordinates relative to the container
-      const mouseX = event.offsetX;
-      const mouseY = event.offsetY;
+    // Use offsetX/offsetY for mouse coordinates relative to the container
+    const mouseX = event.offsetX;
+    const mouseY = event.offsetY;
 
-      // Convert screen coordinates to world coordinates
-      const worldX = mouseX / this.zoom + this.position.x;
-      const worldY = mouseY / this.zoom + this.position.y;
+    // Convert screen coordinates to world coordinates
+    const worldX = mouseX / this.zoom + this.position.x;
+    const worldY = mouseY / this.zoom + this.position.y;
 
-      // Calculate cell index based on world coordinates
-      const cellX = Math.floor(worldX / cellSize);
-      const cellY = Math.floor(worldY / cellSize);
+    // Calculate cell index based on world coordinates
+    const cellX = Math.floor(worldX / cellSize);
+    const cellY = Math.floor(worldY / cellSize);
 
-      // Calculate the screen position of the cell highlight
-      const cellScreenX = (cellX * cellSize - this.position.x) * this.zoom;
-      const cellScreenY = (cellY * cellSize - this.position.y) * this.zoom;
+    // Calculate the screen position of the cell highlight
+    const cellScreenX = (cellX * cellSize - this.position.x) * this.zoom;
+    const cellScreenY = (cellY * cellSize - this.position.y) * this.zoom;
 
-      // Clear previous highlight
-      boatCtx.clearRect(0, 0, boatCanvas.width, boatCanvas.height);
+    // Clear previous highlight
+    boatCtx.clearRect(0, 0, boatCanvas.width, boatCanvas.height);
 
-      // Draw the highlight
-      boatCtx.fillStyle = 'rgba(128, 0, 128, 0.5)';
-      boatCtx.fillRect(cellScreenX, cellScreenY, cellSize * this.zoom, cellSize * this.zoom);
+    // Draw the highlight
+    boatCtx.fillStyle = 'rgba(128, 0, 128, 0.5)';
+    boatCtx.fillRect(cellScreenX, cellScreenY, cellSize * this.zoom, cellSize * this.zoom);
 
-      // Update camera zoom info with additional cell info
-      const cameraZoomInfo = document.getElementById('cameraZoomInfo');
-      if (cameraZoomInfo) {
-          cameraZoomInfo.innerHTML = `updateHoveredCell: Zoom: ${this.zoom.toFixed(2)} | Position: (${this.position.x.toFixed(2)}, ${this.position.y.toFixed(2)}) | Cell: (${cellX}, ${cellY}) | Screen: (${cellScreenX.toFixed(2)}, ${cellScreenY.toFixed(2)})`;
-      }
+    // Update camera zoom info with additional cell info
+    const cameraZoomInfo = document.getElementById('cameraZoomInfo');
+    if (cameraZoomInfo) {
+      cameraZoomInfo.innerHTML = `updateHoveredCell: Zoom: ${this.zoom.toFixed(2)} | Position: (${this.position.x.toFixed(2)}, ${this.position.y.toFixed(2)}) | Cell: (${cellX}, ${cellY}) | Screen: (${cellScreenX.toFixed(2)}, ${cellScreenY.toFixed(2)})`;
+    }
 
-      // Update debug info
-      const debuggerOverlay = document.getElementById('debuggerOverlay');
-      if (debuggerOverlay) {
-          debuggerOverlay.innerHTML = `
-              updateHoveredCell: World: (${worldX.toFixed(2)}, ${worldY.toFixed(2)})<br>
-              Mouse: (${mouseX.toFixed(2)}, ${mouseY.toFixed(2)})<br>
-              Cell: (${cellX}, ${cellY})<br>
-              Screen Cell: (${cellScreenX.toFixed(2)}, ${cellScreenY.toFixed(2)})<br>
-              Zoom: ${this.zoom.toFixed(2)}<br>
-              Position: (${this.position.x.toFixed(2)}, ${this.position.y.toFixed(2)})
-          `;
-      }
+    // Update debug info
+    const debuggerOverlay = document.getElementById('debuggerOverlay');
+    if (debuggerOverlay) {
+      debuggerOverlay.innerHTML = `
+        updateHoveredCell: World: (${worldX.toFixed(2)}, ${worldY.toFixed(2)})<br>
+        Mouse: (${mouseX.toFixed(2)}, ${mouseY.toFixed(2)})<br>
+        Cell: (${cellX}, ${cellY})<br>
+        Screen Cell: (${cellScreenX.toFixed(2)}, ${cellScreenY.toFixed(2)})<br>
+        Zoom: ${this.zoom.toFixed(2)}<br>
+        Position: (${this.position.x.toFixed(2)}, ${this.position.y.toFixed(2)})
+      `;
+    }
   }
 
   updateTransform() {
-      // Apply transform to the container
-      this.container.style.transform = `translate(${-this.position.x * this.zoom}px, ${-this.position.y * this.zoom}px) scale(${this.zoom})`;
-      
-      
-      this.updateDebugInfo();
-      this.updateCameraZoomInfo();
-      
-      // Update the highlighted cell if the mouse is over the container
-      const event = new MouseEvent('mousemove', {
-          clientX: this.lastMousePos.x,
-          clientY: this.lastMousePos.y
-      });
-      this.updateHoveredCell(event);
+    // Apply transform to the container
+    this.container.style.transform = `translate(${-this.position.x * this.zoom}px, ${-this.position.y * this.zoom}px) scale(${this.zoom})`;
+
+    this.updateDebugInfo();
+    this.updateCameraZoomInfo();
+
+    // Update the highlighted cell if the mouse is over the container
+    const event = new MouseEvent('mousemove', {
+      clientX: this.lastMousePos.x,
+      clientY: this.lastMousePos.y
+    });
+    this.updateHoveredCell(event);
   }
 
   updateDebugInfo() {
-      const debuggerOverlay = document.getElementById('debuggerOverlay');
-      if (debuggerOverlay) {
-          debuggerOverlay.innerHTML = `
-              Camera:<br>
-              - Zoom: ${this.zoom.toFixed(2)}<br>
-              - Position X: ${this.position.x.toFixed(2)}<br>
-              - Position Y: ${this.position.y.toFixed(2)}<br>
-              - Container Width: ${this.container.clientWidth}<br>
-              - Container Height: ${this.container.clientHeight}
-          `;
-      }
+    const debuggerOverlay = document.getElementById('debuggerOverlay');
+    if (debuggerOverlay) {
+      debuggerOverlay.innerHTML = `
+        Camera:<br>
+        - Zoom: ${this.zoom.toFixed(2)}<br>
+        - Position X: ${this.position.x.toFixed(2)}<br>
+        - Position Y: ${this.position.y.toFixed(2)}<br>
+        - Container Width: ${this.container.clientWidth}<br>
+        - Container Height: ${this.container.clientHeight}
+      `;
+    }
   }
 
   updateCameraZoomInfo() {
-      const cameraZoomInfo = document.getElementById('cameraZoomInfo');
-      if (cameraZoomInfo) {
-          cameraZoomInfo.innerHTML = `Camera: Zoom: ${this.zoom.toFixed(2)} | Position: (${this.position.x.toFixed(2)}, ${this.position.y.toFixed(2)}) | Mouse: (${this.lastMousePos?.x || 0}, ${this.lastMousePos?.y || 0})`;
-      }
+    const cameraZoomInfo = document.getElementById('cameraZoomInfo');
+    if (cameraZoomInfo) {
+      cameraZoomInfo.innerHTML = `Camera: Zoom: ${this.zoom.toFixed(2)} | Position: (${this.position.x.toFixed(2)}, ${this.position.y.toFixed(2)}) | Mouse: (${this.lastMousePos?.x || 0}, ${this.lastMousePos?.y || 0})`;
+    }
   }
 
   reset() {
-      this.position = { x: 0, y: 0 };
-      this.zoom = 1.0;
-      this.updateTransform();
+    this.position = { x: 0, y: 0 };
+    this.zoom = 1.0;
+    this.updateTransform();
   }
 }
 
 // Initialize camera
 const camera = new Camera(container);
 
+// Add event listener for the reset camera button
+document.getElementById("resetCameraButton").addEventListener("click", function() {
+  camera.reset();
+});
+
 // Optional: Add reset functionality
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
-      camera.reset();
+    camera.reset();
   }
 });
 
 ///this works - do not delete
 function getAdjacentCells(targetCell) {
-const { row: targetRow, col: targetCol } = targetCell;
-
-// Define the offsets for adjacent cells
-const offsets = [
-  { row: -1, col: -1 },
-  { row: -1, col: 0 },
-  { row: -1, col: 1 },
-  { row: 0, col: -1 },
-  { row: 0, col: 0 }, // Target cell
-  { row: 0, col: 1 },
-  { row: 1, col: -1 },
-  { row: 1, col: 0 },
-  { row: 1, col: 1 },
-];
-
-const adjacentCells = [];
-
-// Calculate and store the positions of adjacent cells relative to the target cell
-for (const offset of offsets) {
-  const adjacentRow = targetRow + offset.row;
-  const adjacentCol = targetCol + offset.col;
-  adjacentCells.push({ row: adjacentRow, col: adjacentCol });
+  const { row: targetRow, col: targetCol } = targetCell;
+  // Define the offsets for adjacent cells
+  const offsets = [
+    { row: -1, col: -1 },
+    { row: -1, col: 0 },
+    { row: -1, col: 1 },
+    { row: 0, col: -1 },
+    { row: 0, col: 0 }, // Target cell
+    { row: 0, col: 1 },
+    { row: 1, col: -1 },
+    { row: 1, col: 0 },
+    { row: 1, col: 1 },
+  ];
+  const adjacentCells = [];
+  // Calculate and store the positions of adjacent cells relative to the target cell
+  for (const offset of offsets) {
+    const adjacentRow = targetRow + offset.row;
+    const adjacentCol = targetCol + offset.col;
+    adjacentCells.push({ row: adjacentRow, col: adjacentCol });
+  }
+  return adjacentCells;
 }
 
-return adjacentCells;
-}
-
-//mouse clicks canvas map
+// Mouse clicks canvas map
 let isDragging = false; // Define a global isDragging variable
 
 function logCellOnClick(container, ctx, cellSize, npcCtx, treeCtx, pathCtx) {
-// console.log(`loading cell logger`);
-container.addEventListener("click", function(event) {
-  if (isDragging === false) {
-    // Calculate the mouse position within the container.
-    const rect = container.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+  container.addEventListener("click", function(event) {
+    if (isDragging === false) {
+      // Calculate the mouse position within the container.
+      const rect = container.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
 
-    // Calculate cell indices (row and column) based on mouse position.
-    const cellRow = Math.floor(y / cellSize);
-    const cellCol = Math.floor(x / cellSize);
+      // Convert screen coordinates to world coordinates
+      const { x: worldX, y: worldY } = camera.screenToWorld(x, y);
 
-    console.log(`Cell clicked: X = ${cellCol}, Y = ${cellRow}`);
+      // Calculate cell indices (row and column) based on world position.
+      const cellRow = Math.floor(worldY / cellSize);
+      const cellCol = Math.floor(worldX / cellSize);
 
-    ctx.fillStyle = 'purple'; 
-    ctx.fillRect(cellCol * cellSize, cellRow * cellSize, cellSize, cellSize);
+      console.log(`Cell clicked: X = ${cellCol}, Y = ${cellRow}`);
 
-    leftClickAction(cellCol, cellRow, npcCtx, cellSize, treeCtx, pathCtx);
-    //  const adjacentCells = getAdjacentCells(cellCol, cellRow, 3, 5, 5);  //didnt work use 
+      // Draw a purple rectangle at the clicked cell
+      ctx.fillStyle = 'purple'; 
+      ctx.fillRect(cellCol * cellSize, cellRow * cellSize, cellSize, cellSize);
 
-  }
-});
+      // Perform the left-click action
+      leftClickAction(cellCol, cellRow, npcCtx, cellSize, treeCtx, pathCtx);
+    }
+  });
 }
 
 // Example of how to use the function, assuming the container, npcCtx, and cellSize are already defined.
 logCellOnClick(container, boatCtx, cellSize, npcCtx, treeCtx, pathCtx);
 
 function leftClickAction(x, y, npcCtx, cellSize, treeCtx, pathCtx) {
-// Create a new house
-const newHouse = new House(x, y);
-
-//log x and y
-console.log(`House drawn at ${x}, ${y}`);
-
-// Add the new house to the global array of houses
-//houses.push(newHouse);
-
-// Draw the new house
-newHouse.draw(npcCtx);
-//drawRectanglesBetweenHouses(houses, treeCtx);
-
-// Optionally alert the user
-//alert(`House drawn at ${x}, ${y}. Current home value: ${newHouse.homeValue}`);
+  // Create a new house
+  const newHouse = new House(x, y);
+  // Log x and y
+  console.log(`House drawn at ${x}, ${y}`);
+  // Add the new house to the global array of houses
+  // houses.push(newHouse);
+  // Draw the new house
+  newHouse.draw(npcCtx);
+  // drawRectanglesBetweenHouses(houses, treeCtx);
+  // Optionally alert the user
+  // alert(`House drawn at ${x}, ${y}. Current home value: ${newHouse.homeValue}`);
 }
 
-//reset camera controls - DO NOT DELETE
+// Reset camera controls - DO NOT DELETE
 function resetCanvasPosition() {
   zoomLevel = 1; // Reset to initial zoom level
   canvasX = 0;  // Reset X translation
   canvasY = 0;  // Reset Y translation
   updateCanvasPosition();  // Update the canvas position
 }
+
 // Listen for 'Esc' key
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") {
+  if (e.key === "Escape") {
     hideMenu = true;
     gameTab.style.display = "none";
     statsTab.style.display = "none";
@@ -278,11 +275,9 @@ document.addEventListener("keydown", (event) => {
 
 // Listen for click on the 'recenterCanvas' icon
 document.getElementById("recenterCanvas").addEventListener("click", () => {
- // resetCanvasPosition();
+  resetCanvasPosition();
   centerCanvasOnMap();
-
-console.log("map centered ok");
-
+  console.log("map centered ok");
 });
 
 // Function to center the canvas on the map
