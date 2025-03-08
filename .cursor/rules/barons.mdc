@@ -1,0 +1,18 @@
+---
+description: gamedetails
+globs: 
+alwaysApply: false
+---
+keep in mind that this is a 2d game, stack is html, css and javascript only. it uses html canvas and a cell grid to create a game map. 
+
+let zoomLevel = 1.0;
+let canvasX = 0;
+let canvasY = 0;
+let mouseX = 0;
+let mouseY = 0;
+let cameraX = 0;
+let cameraY = 0;
+
+
+cameraX = (gridSize * cellSize) / 2;
+cameraY = (gridSize * cellSize) / 2;

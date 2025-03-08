@@ -27,11 +27,18 @@ class Camera {
         // Apply zoom
         const zoomFactor = newZoom / this.zoom;
         this.zoom = newZoom;
+        
+        // Update global zoomLevel to match
+        zoomLevel = this.zoom;
 
         // Adjust position to keep mouse point fixed
         const mousePosAfterZoom = this.screenToWorld(e.clientX, e.clientY);
         this.position.x += mousePosAfterZoom.x - mousePosBeforeZoom.x;
         this.position.y += mousePosAfterZoom.y - mousePosBeforeZoom.y;
+        
+        // Update global canvasX and canvasY
+        canvasX = -this.position.x * this.zoom;
+        canvasY = -this.position.y * this.zoom;
 
         this.updateTransform();
       }
@@ -49,10 +56,14 @@ class Camera {
       if (this.isDragging) {
         const deltaX = (e.clientX - this.lastMousePos.x) / this.zoom;
         const deltaY = (e.clientY - this.lastMousePos.y) / this.zoom;
-
+        
         this.position.x -= deltaX;
         this.position.y -= deltaY;
-
+        
+        // Update global canvasX and canvasY
+        canvasX = -this.position.x * this.zoom;
+        canvasY = -this.position.y * this.zoom;
+        
         this.lastMousePos = { x: e.clientX, y: e.clientY };
         this.updateTransform();
       }
@@ -66,17 +77,65 @@ class Camera {
     });
   }
 
-  screenToWorld(screenX, screenY) {
-    const rect = this.container.getBoundingClientRect();
-    const mouseX = screenX - rect.left;
-    const mouseY = screenY - rect.top;
+screenToWorld(screenX, screenY) {
+  const rect = this.container.getBoundingClientRect();
+  const mouseX = screenX - rect.left;
+  const mouseY = screenY - rect.top;
+  // Convert to world coordinates
+  const worldX = (mouseX - this.position.x * this.zoom) / this.zoom;
+  const worldY = (mouseY - this.position.y * this.zoom) / this.zoom;
+  return { x: worldX, y: worldY };
+}
 
-    // Convert to world coordinates
-    const worldX = mouseX / this.zoom + this.position.x;
-    const worldY = mouseY / this.zoom + this.position.y;
+/* 
+Understanding the screenToWorld Method
+The screenToWorld method is crucial for converting mouse coordinates (which are relative to the container) into world coordinates, which are the actual coordinates in the game map. This conversion is necessary because the container can be translated and scaled, affecting the relationship between screen and world coordinates.
 
-    return { x: worldX, y: worldY };
-  }
+Steps in the screenToWorld Method
+Get Container Bounding Rectangle :
+javascript
+Copy
+1
+const rect = this.container.getBoundingClientRect();
+This gets the size and position of the container relative to the viewport.
+Calculate Mouse Coordinates Relative to Container :
+javascript
+Copy
+1
+2
+const mouseX = screenX - rect.left;
+const mouseY = screenY - rect.top;
+These lines convert the screen coordinates (which are relative to the entire document) to coordinates relative to the container.
+Adjust for Translation :
+javascript
+Copy
+1
+2
+const worldX = (mouseX - this.position.x * this.zoom) / this.zoom;
+const worldY = (mouseY - this.position.y * this.zoom) / this.zoom;
+this.position.x * this.zoom and this.position.y * this.zoom account for the translation applied to the container.
+Subtracting these values from the mouse coordinates adjusts for the translation.
+Dividing by this.zoom accounts for the scaling, giving the correct world coordinates.
+How It Fits Into the Overall System
+Mouse Click Event :
+When a user clicks on a cell, the logCellOnClick function is triggered. This function calls camera.screenToWorld(x, y) to convert the click coordinates to world coordinates.
+Coordinate Conversion :
+The screenToWorld method ensures that the click coordinates are correctly transformed to account for the camera's translation and scaling.
+Cell Calculation :
+After converting the coordinates to world coordinates, the cell indices are calculated using:
+javascript
+Copy
+1
+2
+const cellRow = Math.floor(worldY / cellSize);
+const cellCol = Math.floor(worldX / cellSize);
+Logging and Drawing :
+The cell indices are then logged, and a purple rectangle is drawn at the clicked cell.
+Summary
+Translation Adjustment : Subtracting this.position.x * this.zoom and this.position.y * this.zoom from the mouse coordinates adjusts for the translation.
+Scaling Adjustment : Dividing by this.zoom ensures that the coordinates are correctly scaled to match the world coordinates.
+By following these steps, the screenToWorld method ensures that the click coordinates are accurately converted to world coordinates, even when the camera is zoomed or panned. This prevents issues like the ones you encountered, where the cell indices were incorrect due to the transformations.
+ */
 
   updateHoveredCell(event) {
     // Use offsetX/offsetY for mouse coordinates relative to the container
@@ -125,6 +184,13 @@ class Camera {
   updateTransform() {
     // Apply transform to the container
     this.container.style.transform = `translate(${-this.position.x * this.zoom}px, ${-this.position.y * this.zoom}px) scale(${this.zoom})`;
+    
+    // Update global values
+    canvasX = -this.position.x * this.zoom;
+    canvasY = -this.position.y * this.zoom;
+    zoomLevel = this.zoom;
+    
+    // Don't call updateCanvasPosition() since we're applying the transform directly
 
     this.updateDebugInfo();
     this.updateCameraZoomInfo();
@@ -161,6 +227,12 @@ class Camera {
   reset() {
     this.position = { x: 0, y: 0 };
     this.zoom = 1.0;
+    
+    // Update global variables
+    canvasX = 0;
+    canvasY = 0;
+    zoomLevel = 1.0;
+    
     this.updateTransform();
   }
 }
@@ -173,10 +245,17 @@ document.getElementById("resetCameraButton").addEventListener("click", function(
   camera.reset();
 });
 
-// Optional: Add reset functionality
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    camera.reset();
+// Listen for 'Esc' key
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    hideMenu = true;
+    gameTab.style.display = "none";
+    statsTab.style.display = "none";
+    chartTab.style.display = "none";
+    npcTab.style.display = "none";
+    minimizeTabButton.textContent = "Show";
+    resetCanvasPosition();
+    camera.reset(); // Reset the camera too
   }
 });
 
@@ -254,24 +333,9 @@ function leftClickAction(x, y, npcCtx, cellSize, treeCtx, pathCtx) {
 
 // Reset camera controls - DO NOT DELETE
 function resetCanvasPosition() {
-  zoomLevel = 1; // Reset to initial zoom level
-  canvasX = 0;  // Reset X translation
-  canvasY = 0;  // Reset Y translation
-  updateCanvasPosition();  // Update the canvas position
+  // Update Camera object instead of directly setting values
+  camera.reset();
 }
-
-// Listen for 'Esc' key
-document.addEventListener("keydown", (event) => {
-  if (e.key === "Escape") {
-    hideMenu = true;
-    gameTab.style.display = "none";
-    statsTab.style.display = "none";
-    chartTab.style.display = "none";
-    npcTab.style.display = "none";
-    minimizeTabButton.textContent = "Show";
-    resetCanvasPosition();
-  }
-});
 
 // Listen for click on the 'recenterCanvas' icon
 document.getElementById("recenterCanvas").addEventListener("click", () => {
@@ -292,10 +356,17 @@ function centerCanvasOnMap() {
   const centerX = totalX / groundCells.length;
   const centerY = totalY / groundCells.length;
 
-  // Calculate the new canvasX and canvasY values to center the canvas
-  canvasX = (groundCanvas.width / 2) - (centerX * cellSize * zoomLevel);
-  canvasY = (groundCanvas.height / 2) - (centerY * cellSize * zoomLevel);
-
-  // Update the canvas position
-  updateCanvasPosition();
+  // Calculate the center in world coordinates
+  const centerWorldX = centerX * cellSize;
+  const centerWorldY = centerY * cellSize;
+  
+  // Set camera position to center on this point
+  camera.position.x = centerWorldX - (groundCanvas.width / 2) / camera.zoom;
+  camera.position.y = centerWorldY - (groundCanvas.height / 2) / camera.zoom;
+  
+  // Update global variables
+  canvasX = -camera.position.x * camera.zoom;
+  canvasY = -camera.position.y * camera.zoom;
+  
+  camera.updateTransform();
 }
