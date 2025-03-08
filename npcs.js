@@ -578,3 +578,90 @@ function updateNpcStateInList(npc, newState) {
     }
   }
 }
+
+// Global variable to track selected race
+let selectedNpcTableRace = null;
+
+// Initialize race filtering functionality
+function initializeRaceFiltering() {
+  // Get all race selector spans
+  const raceSelectors = document.querySelectorAll('.selectable-span[id^="npc-table-"]');
+
+  // Add click event listeners to each race selector
+  raceSelectors.forEach(selector => {
+    selector.addEventListener('click', function() {
+      // Remove active class from all selectors
+      raceSelectors.forEach(s => s.classList.remove('active'));
+      
+      // Add active class to clicked selector
+      this.classList.add('active');
+      
+      // Set the selected race based on the id
+      const raceId = this.id.replace('npc-table-', '');
+      
+      // Convert to proper case format to match NPC race property
+      if (raceId === 'purries') {
+        selectedNpcTableRace = 'Purries';
+      } else if (raceId === 'kurohi') {
+        selectedNpcTableRace = 'Kurohi';
+      } else if (raceId === 'elves') {
+        selectedNpcTableRace = 'Elf';
+      } else {
+        selectedNpcTableRace = null;
+      }
+      
+      // Filter the NPC table
+      filterNpcTable();
+    });
+  });
+
+  // Add CSS for active class
+  const style = document.createElement('style');
+  style.textContent = `
+    .selectable-span.active {
+      background-color: #4389e9;
+      color: white;
+      font-weight: bold;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+// Function to filter the NPC table based on selected race
+function filterNpcTable() {
+  const tableBody = document.querySelector("#npcTable tbody");
+  const rows = Array.from(tableBody.getElementsByTagName("tr"));
+  
+  // Update table header with filtered count
+  
+  if (!selectedNpcTableRace) {
+    // If no race is selected, show all NPCs
+    rows.forEach(row => {
+      row.style.display = '';
+    });
+    npcTableHeader.textContent = `Total Population ${npcs.length}`;
+    return;
+  }
+  
+  // Count for filtered NPCs
+  let filteredCount = 0;
+  
+  // Filter rows based on selected race
+  rows.forEach(row => {
+    const npcId = row.id.replace('npcRow-', '');
+    const npc = npcs.find(n => n.myNumber == npcId);
+    
+    if (npc && npc.race === selectedNpcTableRace) {
+      row.style.display = '';
+      filteredCount++;
+    } else {
+      row.style.display = 'none';
+    }
+  });
+  
+  // Update header with filtered count
+  npcTableHeader.textContent = `${selectedNpcTableRace} Population: ${filteredCount}`;
+}
+
+// Call the initialization function when the document is loaded
+document.addEventListener('DOMContentLoaded', initializeRaceFiltering);

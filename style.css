@@ -280,6 +280,14 @@ user-select: none;
 
 }
 
+.selectable-span {
+    cursor: url(./assets/cursor/glove1.cur), auto;
+    user-select: none;
+    padding: 10px;
+    border-radius: 10px;
+    background-color: rgb(35, 45, 56);
+}
+
 .tabSelector:hover {
     background-color: var(--green);
     transition: background-color 0.3s ease;
