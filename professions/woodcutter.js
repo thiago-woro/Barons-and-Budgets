@@ -54,7 +54,7 @@ function updateWoodcutter(npc) {
         // This ensures the tree falls as the woodcutter is still chopping
         if (npc.waitTime === Math.floor(npc.maxWaitTime / 2) && npc.stateData.targetTreeIndex !== undefined) {
           dyingTreeAnimation(npc.stateData.targetTreeIndex, () => {
-            console.log(`woodcutter: ${npc.name} cut down a tree`);
+           // console.log(`woodcutter: ${npc.name} cut down a tree`);
 
             //add wood to the wood count
             elfWoodCount += 1;

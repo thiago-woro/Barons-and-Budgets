@@ -52,7 +52,6 @@ function gameLoop(timestamp) {
 
     // Add loop counter (0 to cycleLength-1)
     loopCounter = (loopCounter + 1) % cycleLength;
-    console.log(`gameLoop: counter ${loopCounter}`);
 
     // Your game logic and rendering code goes here
     if (isPaused) {

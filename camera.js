@@ -271,10 +271,7 @@ function leftClickAction(x, y, homesCtx, cellSize, treeCtx, pathCtx) {
   // Add the new house to the global array of houses
   // houses.push(newHouse);
   // Draw the new house
-  newHouse.draw(npcCtx);
-  // drawRectanglesBetweenHouses(houses, treeCtx);
-  // Optionally alert the user
-  // alert(`House drawn at ${x}, ${y}. Current home value: ${newHouse.homeValue}`);
+  newHouse.draw(homesCtx);
 }
 
 // Reset camera controls - DO NOT DELETE

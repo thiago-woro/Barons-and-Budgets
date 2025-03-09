@@ -11,7 +11,6 @@ function findNearestTree(npc) {
   
   // Check if treePositions exists and has elements
   if (typeof treePositions === 'undefined' || !treePositions || treePositions.length === 0) {
-    console.log(`utils: ${npc.name} couldn't find any trees - treePositions is empty or undefined`);
     return null;
   }
   
@@ -38,7 +37,6 @@ function findNearestTree(npc) {
     }
   });
   
-  console.log(`utils: ${npc.name} found nearest tree at distance ${minDistance.toFixed(2)}`);
   return nearestTree;
 }
 
@@ -53,7 +51,7 @@ function findNearestHome(npc) {
   
   // Check if houses exists and has elements
   if (typeof houses === 'undefined' || !houses || houses.length === 0) {
-    console.log(`utils: ${npc.name} couldn't find any homes - houses array is empty or undefined`);
+   // console.log(`utils: ${npc.name} couldn't find any homes - houses array is empty or undefined`);
     return null;
   }
   
@@ -80,7 +78,7 @@ function findNearestHome(npc) {
     }
   });
   
-  console.log(`utils: ${npc.name} found nearest home at distance ${minDistance.toFixed(2)}`);
+  //console.log(`utils: ${npc.name} found nearest home at distance ${minDistance.toFixed(2)}`);
   return nearestHome;
 }
 
@@ -107,7 +105,7 @@ function findPathTo(npc, target) {
   
   // Check if start or target is not on land
   if (!isLandCell(startX, startY) || !isLandCell(target.x, target.y)) {
-    console.log(`utils: ${npc.name} cannot find path - start or target is not on land`);
+   // console.log(`utils: ${npc.name} cannot find path - start or target is not on land`);
     return null;
   }
   
@@ -187,7 +185,7 @@ function findPathTo(npc, target) {
   }
   
   // No path found
-  console.log(`utils: ${npc.name} could not find a path to target`);
+  //console.log(`utils: ${npc.name} could not find a path to target`);
   return null;
 }
 
@@ -255,7 +253,6 @@ function followPath(npc) {
     
     // Check if path is completed
     if (npc.pathIndex >= npc.currentPath.length) {
-      console.log(`utils: ${npc.name} completed path`);
       npc.currentPath = null;
       return true;
     }

@@ -44,27 +44,83 @@ class NPC {
 
   // Main update method to be called each game loop
   update() {
-    // Execute current state behavior based on profession
     if (this.profession === "Woodcutter") {
-      // Use the woodcutter module
       updateWoodcutter(this);
+    } else {
+      switch (this.state) {
+        case "idle":
+          this.updateIdle();
+          break;
+        case "working":
+          this.updateWorking();
+          break;
+        // Add more states as needed
+        default:
+          this.updateIdle();
+      }
     }
-    // Movement is now handled directly in the game loop
-    // No need to call move() here anymore
+    this.updateInfoPanel(); // Update info panel with current position
+  }
+
+  // Helper method to transition between states
+  transitionTo(newState) {
+    // Exit actions for the current state
+    switch (this.state) {
+      case "idle":
+        this.exitIdle();
+        break;
+      case "working":
+        this.exitWorking();
+        break;
+      // Add more states as needed
+    }
+
+    this.state = newState;
+
+    // Entry actions for the new state
+    switch (newState) {
+      case "idle":
+        this.enterIdle();
+        break;
+      case "working":
+        this.enterWorking();
+        break;
+      // Add more states as needed
+    }
+
+    // Update the state in the NPC table
+    updateNpcStateInList(this, newState);
+  }
+
+  // State-specific methods
+  updateIdle() {
+    // Behavior for idle state
+  }
+
+  updateWorking() {
+    // Behavior for working state
+  }
+
+  enterIdle() {
+    // Actions to perform when entering idle state
+  }
+
+  exitIdle() {
+    // Actions to perform when exiting idle state
+  }
+
+  enterWorking() {
+    // Actions to perform when entering working state
+  }
+
+  exitWorking() {
+    // Actions to perform when exiting working state
   }
 
   // Determine if NPC should move based on race and loop counter
   shouldMove() {
     // Always return true since the game loop now controls movement frequency
     return true;
-  }
-
-  // Helper method to transition between states
-  transitionTo(newState) {
-    this.state = newState;
-    
-    // Update the state in the NPC table
-    updateNpcStateInList(this, newState);
   }
 
   // Regular movement method for non-woodcutter NPCs
@@ -97,6 +153,7 @@ class NPC {
             this.y = selectedCell.y * cellSize;
         }
     }
+    this.updateInfoPanel(); // Update info panel with new position
   }
 
   ageAndDie() {
@@ -326,6 +383,24 @@ class NPC {
     if (this.profession === 'Woodcutter') {
       // Use the woodcutter module
       drawWoodcutterInfo(this, ctx);
+    }
+  }
+
+  // Method to update the info panel with the NPC's current cell position
+  updateInfoPanel() {
+    const infoPanel = document.getElementById("infoPanel");
+    if (infoPanel) {
+      const currentX = Math.floor(this.x / cellSize);
+      const currentY = Math.floor(this.y / cellSize);
+      let positionDiv = document.getElementById("npcPosition");
+
+      if (!positionDiv) {
+        positionDiv = document.createElement("div");
+        positionDiv.id = "npcPosition";
+        infoPanel.appendChild(positionDiv);
+      }
+
+      positionDiv.textContent = `Position: (${currentX}, ${currentY})`;
     }
   }
 }

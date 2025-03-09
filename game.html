@@ -17,7 +17,7 @@
 
 </head>
 
-<div id="infoPanel" style="position: absolute; display: block;visibility: collapse; z-index: 2000; bottom: 0;">
+<div id="infoPanel" style="position: absolute; display: block;visibility: collapse; z-index: 2000; left: 0; top: 0;">
 <img src="./assets/Races/purries/female/catgirl (4).png" style="height: 200px; width: 200px;">
 </div>
 
@@ -28,7 +28,7 @@
     <div class="row col" style="margin-bottom: 50px; gap: 10px; padding: 10px; border-radius: 10px;">
         <button id="newGameWelcomeScreen">New Game Random</button>
         <button id="newGameCustomWelcomeScreen">New Game Custom</button>
-        <button disabled class="blueButton" id="loadGameWelcomeScreen">Load Game</button>
+        <button class="blueButton" id="loadGameWelcomeScreen">Load Game</button>
         <button id="uiTesterWelcomeScreen">UI tester</button>
 
     </div>
@@ -232,7 +232,7 @@
                 <span id="controlsTabButton" class="tabSelector" onclick="toggleTab('controlsTab')">Controls</span>
 
             </div>
-		<div id="gameTab" style="display: none; margin-top: -24px; z-index: 2001 ;" class="card">
+		<div id="gameTab" style="display: none; margin-top: 24px; z-index: 2001 ;" class="card">
             <div class="col" >
 			<div class="row">
 				<button id="gen2">Generate Map</button>
@@ -247,6 +247,8 @@
 
 				<button class="secondaryBtn" id="placeHomes">Place homes</button>
                   <button id="resetCameraButton" class="secondaryBtn" onclick="toggleTab('resetCameraButton')">Reset Camera</button>
+  <button class="secondaryBtn"  id="toggleDebugger" >Toggle Debugger</button>
+
             </div>         
         </div>
 
@@ -410,9 +412,17 @@
         <h2 class="race-title">Elves</h2>
         <p class="race-description">On the outside, the Elven civilization looks like the most technologically advanced. They have a strong <span style="color: rgb(87, 22, 87);">caste</span> system that favors the rich and makes sure the labor force stays poor. Besides that, they also created slave bots.</p>
     </div>
-    <div>
     </div>
-
+</div>
+  <div id="debuggerOverlay" style="position: fixed; top: 10px; left: 10px; background: rgba(0, 0, 0, 0.7); color: white; padding: 10px; display: none;">
+    Zoom Level: 1<br>
+    Canvas X: 0<br>
+    Canvas Y: 0<br>
+    Mouse X: 0<br>
+    Mouse Y: 0<br>
+    Camera X: 0<br>
+    Camera Y: 0
+  </div>
   <!--     <script src="./simulation.js"></script> -->
   <script src="globalvariables.js"></script>
   <script src="./uitools.js"></script>
@@ -434,16 +444,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
 
-  <div id="debuggerOverlay" style="position: fixed; top: 10px; right: 10px; background: rgba(0, 0, 0, 0.7); color: white; padding: 10px; display: none;">
-    Zoom Level: 1<br>
-    Canvas X: 0<br>
-    Canvas Y: 0<br>
-    Mouse X: 0<br>
-    Mouse Y: 0<br>
-    Camera X: 0<br>
-    Camera Y: 0
-  </div>
-  <button id="toggleDebugger" style="position: fixed; top: 10px; right: 150px;">Toggle Debugger</button>
+
   <script>
     document.getElementById("toggleDebugger").addEventListener("click", function() {
       const debuggerOverlay = document.getElementById("debuggerOverlay");

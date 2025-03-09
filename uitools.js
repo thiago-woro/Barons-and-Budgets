@@ -197,71 +197,6 @@ newGameWelcomeScreen.addEventListener("click", function () {
   
   hideWelcomeScreen();
   generateTerrainMap(gridSize, gridSize, perlinNoiseScale);
-  
-  // Zoom out animation using the camera object
-  const zoomOutAnimation = () => {
-    console.log(`zoomOutAnimation: starting animation`);
-    const duration = 1000; // 2 seconds
-    const start = performance.now();
-    const initialZoom = camera.zoom; // Start from current camera zoom
-    const targetZoom = 0.3; // Use a more reasonable zoom level (not too extreme)
-
-    const animateZoom = (currentTime) => {
-      const elapsed = currentTime - start;
-      const progress = Math.min(elapsed / duration, 1); // Ensure progress doesn't exceed 1
-
-      // Use a smooth easing function (easeInOutQuad)
-      const easedProgress = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
-
-      // Calculate new zoom level and apply to camera
-      camera.zoom = initialZoom + (targetZoom - initialZoom) * easedProgress;
-      
-      // Update camera transform
-      camera.updateTransform();
-
-      if (progress < 1) {
-        requestAnimationFrame(animateZoom);
-      } else {
-        // Animation complete
-        camera.zoom = targetZoom; // Ensure final zoom level is exactly targetZoom
-        
-        // Center on the map based on ground cells
-        if (groundCells.length > 0) {
-          // Calculate the center of the ground cells
-          let totalX = 0;
-          let totalY = 0;
-          
-          for (const cell of groundCells) {
-            totalX += cell.x;
-            totalY += cell.y;
-          }
-          
-          const avgX = totalX / groundCells.length;
-          const avgY = totalY / groundCells.length;
-          
-          // Set camera position to center on these coordinates
-          camera.position.x = avgX * cellSize - (container.clientWidth / (2 * camera.zoom));
-          camera.position.y = avgY * cellSize - (container.clientHeight / (2 * camera.zoom));
-          
-          console.log(`Centering on ground cells: avgX=${avgX}, avgY=${avgY}`);
-        } else {
-          // Fallback to center of map if no ground cells
-          const mapCenter = rows / 2;
-          camera.position.x = mapCenter * cellSize - (container.clientWidth / (2 * camera.zoom));
-          camera.position.y = mapCenter * cellSize - (container.clientHeight / (2 * camera.zoom));
-          
-          console.log(`Centering on map center: ${mapCenter}`);
-        }
-        
-        camera.updateTransform();
-        console.log(`zoomOutAnimation: complete, final zoom=${camera.zoom.toFixed(2)}`);
-      }
-    };
-
-    requestAnimationFrame(animateZoom);
-  };
-
-  // Start the animation
   zoomOutAnimation();
 });
 
@@ -293,72 +228,6 @@ newGameCustomWelcomeScreen.addEventListener("click", function () {
 loadGameWelcomeScreen.addEventListener("click", function () {
   hideWelcomeScreen();
   generateTerrainMap(gridSize, gridSize, perlinNoiseScale);
-  
-  // Use the same zoom animation as newGameWelcomeScreen
-  const zoomOutAnimation = () => {
-    console.log(`zoomOutAnimation: starting animation`);
-    const duration = 2000; // 2 seconds
-    const start = performance.now();
-    const initialZoom = camera.zoom; // Start from current camera zoom
-    const targetZoom = 0.3; // Use a more reasonable zoom level (not too extreme)
-
-    const animateZoom = (currentTime) => {
-      const elapsed = currentTime - start;
-      const progress = Math.min(elapsed / duration, 1); // Ensure progress doesn't exceed 1
-
-      // Use a smooth easing function (easeInOutQuad)
-      const easedProgress = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
-
-      // Calculate new zoom level and apply to camera
-      camera.zoom = initialZoom + (targetZoom - initialZoom) * easedProgress;
-      
-      // Update camera transform
-      camera.updateTransform();
-
-      if (progress < 1) {
-        requestAnimationFrame(animateZoom);
-      } else {
-        // Animation complete
-        camera.zoom = targetZoom; // Ensure final zoom level is exactly targetZoom
-        
-        // Center on the map based on ground cells
-        if (groundCells.length > 0) {
-          // Calculate the center of the ground cells
-          let totalX = 0;
-          let totalY = 0;
-          
-          for (const cell of groundCells) {
-            totalX += cell.x;
-            totalY += cell.y;
-          }
-          
-          const avgX = totalX / groundCells.length;
-          const avgY = totalY / groundCells.length;
-          
-          // Set camera position to center on these coordinates
-          camera.position.x = avgX * cellSize - (container.clientWidth / (2 * camera.zoom));
-          camera.position.y = avgY * cellSize - (container.clientHeight / (2 * camera.zoom));
-          
-          console.log(`Centering on ground cells: avgX=${avgX}, avgY=${avgY}`);
-        } else {
-          // Fallback to center of map if no ground cells
-          const mapCenter = rows / 2;
-          camera.position.x = mapCenter * cellSize - (container.clientWidth / (2 * camera.zoom));
-          camera.position.y = mapCenter * cellSize - (container.clientHeight / (2 * camera.zoom));
-          
-          console.log(`Centering on map center: ${mapCenter}`);
-        }
-        
-        camera.updateTransform();
-        console.log(`zoomOutAnimation: complete, final zoom=${camera.zoom.toFixed(2)}`);
-      }
-    };
-
-    requestAnimationFrame(animateZoom);
-  };
-
-  // Start the animation
-  zoomOutAnimation();
 });
 
 function hideWelcomeScreen() {
@@ -433,24 +302,21 @@ infoPanel.addEventListener('click', () => {
 
 let foundNPC = false;
 
-//this fn show the NPC details deets
-npcCanvas.addEventListener("mousemove", function (event) {
+// Add click event handler for NPCs
+npcCanvas.addEventListener("click", function(event) {
   // Only show NPC info if the active tab is "creatures"
   if (window.activeTabBottomLeft !== "creatures") return;
   
-  // Get mouse position relative to canvas
   const rect = npcCanvas.getBoundingClientRect();
   const x = event.clientX - rect.left;
   const y = event.clientY - rect.top;
   
-  // Debug
-  console.log(`Mouse at (${x}, ${y}), Active tab: ${window.activeTabBottomLeft}`);
+  console.log(`Click at (${x}, ${y}), Active tab: ${window.activeTabBottomLeft}`);
   
   for (const npc of npcs) {
     const distance = Math.sqrt((x - npc.x) ** 2 + (y - npc.y) ** 2);
-    // Make detection area larger to make it easier to hit NPCs
-    if (distance < 15) {
-      console.log(`Found NPC: ${npc.name} at distance ${distance}`);
+    if (distance < 20) { // Larger hit area for clicking
+      console.log(`Clicked NPC: ${npc.name}`);
       showNPCInfo(npc);
       foundNPC = true;
       infoPanel.style.visibility = 'visible';
@@ -459,35 +325,37 @@ npcCanvas.addEventListener("mousemove", function (event) {
   }
 });
 
-
+// Keep the existing mousemove handler with simplified functionality
+npcCanvas.addEventListener("mousemove", function (event) {
+  // Only show NPC info if the active tab is "creatures"
+  if (window.activeTabBottomLeft !== "creatures") return;
+  
+  const rect = npcCanvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  
+  for (const npc of npcs) {
+    const distance = Math.sqrt((x - npc.x) ** 2 + (y - npc.y) ** 2);
+    if (distance < 15) {
+      // Just highlight or change cursor here if needed
+      // No popup showing on mousemove
+      document.body.style.cursor = 'pointer';
+      return;
+    }
+  }
+  document.body.style.cursor = 'default';
+});
 
 //npc card details
 function showNPCInfo(npc) {
-  // Check if creatures tab is active
-  if (window.activeTabBottomLeft !== "creatures") return;
-  
-  let emoji;
-  if (npc.race === "Purries") {emoji = "🐈";}
-  if (npc.race === "Kurohi") {emoji = "🧛‍♂️";}
-  if (npc.race === "Elf") {emoji = "🧝‍♂️";}
-
-
-  // Get random conversation line based on npc's profession
-  const conversationLines = purryNPCConversations[npc.profession];
-  let randomLine = "";
-  
-  if (conversationLines && conversationLines.length > 0) {
-    const randomIndex = Math.floor(Math.random() * conversationLines.length);
-    randomLine = conversationLines[randomIndex];
-  }
-
+  const infoPanel = document.getElementById('infoPanel');
   let infoHtml = `
-  <strong style="font-size: 23px;">${npc.name} ${
-    npc.sex === "male" ? "♂" : "♀"
-  }</strong><br/>
-  Race: ${npc.race}  ${emoji}<br/>
-  Age: <strong>${npc.age}</strong><br/>
-  #${npc.myNumber}<br/><br/>`;
+    Name: <strong>${npc.name}</strong><br/>
+    Race: ${npc.race}<br/>
+    Age: <strong>${npc.age}</strong><br/>
+    #${npc.myNumber}<br/><br/>
+  `;
+
   // Check if parents exist before adding parent information
   if (npc.parents && npc.parents.length > 0) {
     infoHtml += `<br/>Parent: ${npc.parents[0].name}, ${npc.parents[0].race}`;
@@ -498,9 +366,10 @@ function showNPCInfo(npc) {
   infoHtml += `<br/>Profession:<br/>${npc.profession}       
   <span style="color: green;">$ ${npc.salary}</span><br/> `;
 
+  // Define randomLine before using it
+  const randomLine = "This is a random line"; // Replace with actual logic if needed
+
   infoHtml += `<br/><style="font-size: 13px;">${randomLine} meow.</style=>`;
-
-
 
   if (npc.children.length > 0) {
     infoHtml += `<br/><strong>${npc.children.length} kids:</strong><ul>`;
@@ -509,22 +378,22 @@ function showNPCInfo(npc) {
     });
     infoHtml += `</ul>`;
   }
-  
+
   // Create an img element
   const imgElement = document.createElement('img');
-  
-
-  // Set the image source, height, and width
-  imgElement.src = './assets/Races/purries/catgirl.png'
+  imgElement.src = './assets/Races/purries/catgirl.png';
   imgElement.height = 100; // Set the height (adjust to your desired height)
   imgElement.width = 100; // Set the width (adjust to your desired width)
-  
+
   // Append the img element to infoPanel
-  const infoPanel = document.getElementById('infoPanel');
   infoPanel.innerHTML = infoHtml; // Set the content 
   infoPanel.appendChild(imgElement); // Append the image 
 
+  // Ensure the position is updated
+  npc.updateInfoPanel();
 
+  // Make the info panel visible
+  infoPanel.style.visibility = 'visible';
 }
 
 
@@ -715,3 +584,65 @@ function setupKeyboardZoom() {
 document.addEventListener('DOMContentLoaded', () => {
   setupKeyboardZoom();
 });
+
+
+  // Use the same zoom animation as newGameWelcomeScreen
+  const zoomOutAnimation = () => {
+    const duration = 2000; // 2 seconds
+    const start = performance.now();
+    const initialZoom = camera.zoom; // Start from current camera zoom
+    const targetZoom = 0.3; // Use a more reasonable zoom level (not too extreme)
+
+    const animateZoom = (currentTime) => {
+      const elapsed = currentTime - start;
+      const progress = Math.min(elapsed / duration, 1); // Ensure progress doesn't exceed 1
+
+      // Use a smooth easing function (easeInOutQuad)
+      const easedProgress = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
+
+      // Calculate new zoom level and apply to camera
+      camera.zoom = initialZoom + (targetZoom - initialZoom) * easedProgress;
+      
+      // Update camera transform
+      camera.updateTransform();
+
+      if (progress < 1) {
+        requestAnimationFrame(animateZoom);
+      } else {
+        // Animation complete
+        camera.zoom = targetZoom; // Ensure final zoom level is exactly targetZoom
+        
+        // Center on the map based on ground cells
+        if (groundCells.length > 0) {
+          // Calculate the center of the ground cells
+          let totalX = 0;
+          let totalY = 0;
+          
+          for (const cell of groundCells) {
+            totalX += cell.x;
+            totalY += cell.y;
+          }
+          
+          const avgX = totalX / groundCells.length;
+          const avgY = totalY / groundCells.length;
+          
+          // Set camera position to center on these coordinates
+          camera.position.x = avgX * cellSize - (container.clientWidth / (2 * camera.zoom));
+          camera.position.y = avgY * cellSize - (container.clientHeight / (2 * camera.zoom));
+          
+          console.log(`Centering on ground cells: avgX=${avgX}, avgY=${avgY}`);
+        } else {
+          // Fallback to center of map if no ground cells
+          const mapCenter = rows / 2;
+          camera.position.x = mapCenter * cellSize - (container.clientWidth / (2 * camera.zoom));
+          camera.position.y = mapCenter * cellSize - (container.clientHeight / (2 * camera.zoom));
+          
+          console.log(`Centering on map center: ${mapCenter}`);
+        }
+        
+        camera.updateTransform();
+      }
+    };
+
+    requestAnimationFrame(animateZoom);
+  };
