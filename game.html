@@ -29,6 +29,8 @@
         <button id="newGameWelcomeScreen">New Game Random</button>
         <button id="newGameCustomWelcomeScreen">New Game Custom</button>
         <button disabled class="blueButton" id="loadGameWelcomeScreen">Load Game</button>
+        <button id="uiTesterWelcomeScreen">UI tester</button>
+
     </div>
 
     <span id="mobileAlert" style="color: rgb(255, 190, 13);">Game not ready for mobile 🙇‍♂️</span>
@@ -65,7 +67,7 @@
                 <!-- left menu -->
                 <div class="col" style="margin: 4px;">
                     <!-- left menu 2 -->
-                    <div id="leftMenu2" class="row" style="margin: 0px;">
+                    <div id="leftMenuHeaderTabs" class="row" style="margin: 0px;">
                         <div class="bottomTabs">
                             <span id="terrainTab">Terrain</span>
                         </div>
@@ -79,26 +81,141 @@
                             <span id="buildingsTab">Buildings</span>
                         </div>
                     </div>
-    
-                <div class="row" style="margin: 0px;">
 
+                <div class="row" id="terrainRow" style="margin: 0px;">
+                    <!-- horizontal row, with a list of TERRAIN cards. terrain cards are: "Select", "Delete", "Clear", "Place", "Water", "Ground" -->
+                    <div class="bottomCard" id="terrainCardSelect">
+                        <h3>Select</h3>
+                    </div>
+                    <div class="bottomCard" id="terrainCardDelete">
+                        <h3>Delete</h3>
+                    </div>
+                    <div class="bottomCard" id="terrainCardClear">
+                        <h3>Clear</h3>
+                    </div>
+                    <div class="bottomCard" id="terrainCardPlace">
+                        <h3>Place</h3>
+                    </div>
+                    <div class="bottomCard" id="terrainCardWater">
+                        <h3>Water</h3>
+                    </div>
+                    <div class="bottomCard" id="terrainCardGround">
+                        <h3>Ground</h3>
+                    </div>
+                </div>
+
+
+<!-- creatures row -->
+<div class="row" id="creaturesRow" style="margin: 0px;">
+    <!-- horizontal row, with a list of CREATURES cards. creatures cards are: "Elf", "Kurohi", "Purrie", "Sheep", "Cow", "Chicken", "Pig" -->
+    <div class="bottomCard" id="creaturesCardElf">
+        <h3>Elf</h3>
+    </div>
+    <div class="bottomCard" id="creaturesCardKurohi">
+        <h3>Kurohi</h3>
+    </div>
+    <div class="bottomCard" id="creaturesCardPurrie">
+            <h3>Purrie</h3>
+    </div>
+    <div class="bottomCard" id="creaturesCardSheep">
+        <h3>Sheep</h3>
+    </div>
+    <div class="bottomCard" id="creaturesCardCow">
+        <h3>Cow</h3>
+    </div>
+    <div class="bottomCard" id="creaturesCardChicken">
+        <h3>Chicken</h3>
+    </div>
+    <div class="bottomCard" id="creaturesCardPig">
+        <h3>Pig</h3>
+    </div>
+    </div>
+
+    <!-- budgets row -->
+    <div class="row" id="budgetsRow" style="margin: 0px;">
+        <!-- horizontal row, with a list of BUDGETS cards. budgets cards are: "Food", "Wood", "Crystallite", "Population" -->
+        <div class="bottomCard" id="budgetsCardEconomy">
+            <h3>Economy</h3>
+        </div>
+        <div class="bottomCard" id="budgetsCardPopulation">
+            <h3>Population</h3>
+        </div>
+        <div class="bottomCard" id="budgetsCardLand">
+            <h3>Land</h3>
+        </div>
+        <!-- education -->
+        <div class="bottomCard" id="budgetsCardEducation">
+            <h3>Education</h3>
+        </div>
+        <!-- health -->
+        <div class="bottomCard" id="budgetsCardHealth">
+            <h3>Health</h3>
+    </div>
+
+
+          
+            </div>
+              <!-- buildings row   -->
+            <div class="row" id="buildingsRow" style="margin: 0px;">
+                <!-- horizontal row, with a list of BUILDINGS cards. buildings cards are: "House", "Farm", "Mine", "Factory", "School", "Hospital", "Temple", "Castle" -->
+                <div class="bottomCard" id="buildingsCardHouse">
+                    <h3>House</h3>
+                </div>
+                <div class="bottomCard" id="buildingsCardFarm">
+                    <h3>Farm</h3>
+                </div>
+                <div class="bottomCard" id="buildingsCardMine">
+                    <h3>Mine</h3>
+                </div>
+                <div class="bottomCard" id="buildingsCardFactory">
+                    <h3>Factory</h3>
+                </div>
+                <div class="bottomCard" id="buildingsCardSchool">
+                    <h3>School</h3>
+                </div>
+                <div class="bottomCard" id="buildingsCardHospital">
+                    <h3>Hospital</h3>
+                </div>
+                <div class="bottomCard" id="buildingsCardTemple">
+                    <h3>Temple</h3>
+                </div>
+                <div class="bottomCard" id="buildingsCardCastle">
+                    <h3>Castle</h3>
                 </div>
             </div>
-                <div style="flex-grow: 1;"></div>
-                <div class="col" style="margin: 10px;">
-                    <div class="row" style="margin: 10px; gap: 10px;">
+            </div>
+          
+               
+  <!-- filler div -->
+                <div class="filler" class="resourcesBottomToolBar" style="flex-grow: 1;"></div>
+                <div class="col" style="margin: 10px;"> <!-- THIS IS NOT THE BUDGETS ROW -->
+                    <div class="row" id="rightResourcesBottomToolBar" style="margin: 10px; gap: 10px;">
+                    <div class="col bottomCard">
                     <span> Crystallite </span>
-                    <span class="land-shade-1 " id="crystalbottomToolBar">Crystallite </span>
+                    <span class=" " id="crystalbottomToolBar">0 </span>
+                    </div>
+                    <div class="col bottomCard">
                     <span> Wood </span>
-                    <span class="land-shade-5 " id="woodCount">0</span>
+                    <span class=" " id="woodCount">0</span>
+                    </div>
+                    <div class="col bottomCard">
                     <span> Food </span>
-                    <span class="land-shade-6 " id="foodCount">0</span>
+                    <span class="" id="foodCount">0</span>
+                    </div>
+                    <div class="col bottomCard">
+                    <span> Year </span>
                     <span id="yearBottomToolBar">Year </span>
+                    </div>
+                    <div class="col bottomCard">
+                    <span> Population </span>
                     <span id="populationBottomToolBar" >Population </span>
+                    </div>
+                    <div class="col bottomCard">
+                    <span> GDP </span>
                     <span id="GDPbottomToolBar" >GDP </span>
                     </div>
                 </div>
-               
+</div>
 </div>
 
 
@@ -107,7 +224,7 @@
                 <span id="minimizeTabButton" class="tabSelector" onclick="hideTabs()">
                     <i style="height: 20px; width: 20px;" class="fas fa-angle-double-up"></i> hide</span>
                 <span id="gameTabButton" class="tabSelector active" onclick="toggleTab('gameTab')">Game</span>
-    <span id="resetCameraButton" class="tabSelector" onclick="toggleTab('resetCameraButton')">Reset Camera</span>
+  
 
                 <span id="statsTabButton" class="tabSelector" onclick="toggleTab('statsTab')">Stats</span>
                 <span id="npcTabButton" class="tabSelector" onclick="toggleTab('npcTab')">NPCs</span>
@@ -129,6 +246,7 @@
 				<button class="secondaryBtn" onclick="clearNPC()" id="clearNPCS">Remove NPCS</button>
 
 				<button class="secondaryBtn" id="placeHomes">Place homes</button>
+                  <button id="resetCameraButton" class="secondaryBtn" onclick="toggleTab('resetCameraButton')">Reset Camera</button>
             </div>         
         </div>
 

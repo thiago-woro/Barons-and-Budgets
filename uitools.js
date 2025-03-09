@@ -78,6 +78,56 @@ function toggleTab(tabId) {
   tabButton.classList.add("active");
 }
 
+// Function to handle bottom tab clicks
+function handleBottomTabClick(tabId) {
+  // Remove active class from all bottom tabs
+  const bottomTabs = document.querySelectorAll('.bottomTabs span');
+  bottomTabs.forEach(tab => {
+    tab.parentElement.classList.remove('active');
+  });
+  
+  // Add active class to clicked tab
+  document.getElementById(tabId).parentElement.classList.add('active');
+  
+  // Set global variable to the name of the tab
+  window.activeTabBottomLeft = tabId.replace('Tab', '');
+  
+  // Hide all rows first
+  const rows = ['terrainRow', 'creaturesRow', 'buildingsRow', 'budgetsRow'];
+  rows.forEach(rowId => {
+    const row = document.getElementById(rowId);
+    if (row) {
+      row.style.display = 'none';
+    }
+  });
+  
+  // Show only the row corresponding to the clicked tab
+  const rowToShow = tabId.replace('Tab', 'Row');
+  const targetRow = document.getElementById(rowToShow);
+  if (targetRow) {
+    targetRow.style.display = 'flex';
+  }
+
+
+  console.log(`Active bottom tab: ${window.activeTabBottomLeft}`);
+}
+
+// Add event listeners to bottom tabs
+document.addEventListener('DOMContentLoaded', () => {
+  const bottomTabIds = ['terrainTab', 'creaturesTab', 'budgetsTab', 'buildingsTab'];
+  
+  bottomTabIds.forEach(tabId => {
+    const tabElement = document.getElementById(tabId);
+    if (tabElement) {
+      tabElement.addEventListener('click', () => handleBottomTabClick(tabId));
+    }
+  });
+  
+  // Set default active tab
+  if (document.getElementById('creaturesTab')) {
+    handleBottomTabClick('creaturesTab');
+  }
+});
 
 // Function to toggle the visibility of a tab and show the most recent clicked tab
 function hideTabs() {
@@ -356,6 +406,25 @@ gameNotificationsTableHeader.textContent = `${tableBody.children.length} Notific
 
 }
 
+// UI Tester button - shows UI without rendering game map
+document.getElementById("uiTesterWelcomeScreen").addEventListener("click", function() {
+  hideWelcomeScreen();
+  
+  // Make UI elements visible
+  container.style.visibility = "visible";
+  tools.style.visibility = "visible";
+  bottomToolBar.style.visibility = "visible";
+  
+  // Set default tab visibility
+  gameTab.style.display = "block";
+  
+  // Optionally update the UI with some dummy data
+  updateUIbottomToolbar(10000);
+  addNotification("UI Test", "UI Test Mode", "UI elements loaded without game map", [], "#4b81bf");
+  
+  console.log("UI Tester mode activated - showing UI without game map");
+});
+
 infoPanel.addEventListener('click', () => {
   // Toggle the visibility property
   infoPanel.style.visibility = 'collapse'
@@ -366,15 +435,25 @@ let foundNPC = false;
 
 //this fn show the NPC details deets
 npcCanvas.addEventListener("mousemove", function (event) {
+  // Only show NPC info if the active tab is "creatures"
+  if (window.activeTabBottomLeft !== "creatures") return;
+  
+  // Get mouse position relative to canvas
   const rect = npcCanvas.getBoundingClientRect();
   const x = event.clientX - rect.left;
   const y = event.clientY - rect.top;
+  
+  // Debug
+  console.log(`Mouse at (${x}, ${y}), Active tab: ${window.activeTabBottomLeft}`);
+  
   for (const npc of npcs) {
     const distance = Math.sqrt((x - npc.x) ** 2 + (y - npc.y) ** 2);
-    if (distance < 10) {
+    // Make detection area larger to make it easier to hit NPCs
+    if (distance < 15) {
+      console.log(`Found NPC: ${npc.name} at distance ${distance}`);
       showNPCInfo(npc);
       foundNPC = true;
-  infoPanel.style.visibility = 'visible'
+      infoPanel.style.visibility = 'visible';
       break;
     }
   }
@@ -384,6 +463,9 @@ npcCanvas.addEventListener("mousemove", function (event) {
 
 //npc card details
 function showNPCInfo(npc) {
+  // Check if creatures tab is active
+  if (window.activeTabBottomLeft !== "creatures") return;
+  
   let emoji;
   if (npc.race === "Purries") {emoji = "🐈";}
   if (npc.race === "Kurohi") {emoji = "🧛‍♂️";}
@@ -438,9 +520,9 @@ function showNPCInfo(npc) {
   imgElement.width = 100; // Set the width (adjust to your desired width)
   
   // Append the img element to infoPanel
-  const infoPanel = document.getElementById('infoPanel'); // Make sure to get the infoPanel element
-  infoPanel.innerHTML = infoHtml; // Set the content of infoPanel
-  infoPanel.appendChild(imgElement); // Append the image to infoPanel
+  const infoPanel = document.getElementById('infoPanel');
+  infoPanel.innerHTML = infoHtml; // Set the content 
+  infoPanel.appendChild(imgElement); // Append the image 
 
 
 }
@@ -467,11 +549,11 @@ function updateUIbottomToolbar(totalSalaries) {
     }
   }
 
-  yearBottomToolBar.textContent = "Year: " + year;
-  populationBottomToolBar.textContent = "Pop. " + npcs.length;
-  GDPbottomToolBar.textContent = "GDP: ¥ " + formatGDP(totalSalaries);
+  yearBottomToolBar.textContent =  year;
+  populationBottomToolBar.textContent = npcs.length;
+  GDPbottomToolBar.textContent =  formatGDP(totalSalaries);
 
-  crystalbottomToolBar.textContent = "Crystallite: " + (npcs.length * 0.7).toFixed(0) + " tons"
+  crystalbottomToolBar.textContent = (npcs.length * 0.7).toFixed(0) + " tons"
   statsUIhomes.textContent = houses.length;
 
   currentYear.textContent = "Year: " + year;

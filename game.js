@@ -9,20 +9,11 @@ let lastTimestamp = 0;
 const targetFrameRate = 1; // Adjust this value to your desired frame rate (e.g., 30 FPS)
 const cycleLength = 3; // Controls how many steps in the movement cycle (0 to cycleLength-1)
 
-// Initialize zoomLevel and other related variables
-let zoomLevel = 1.0;
-let canvasX = 0;
-let canvasY = 0;
-let mouseX = 0;
-let mouseY = 0;
-let cameraX = 0;
-let cameraY = 0;
+
 
 let loopCounter = 0; // Add at the top with other variables
 
-// After generating the map, center the camera on the center of the map
-cameraX = (gridSize * cellSize) / 2;
-cameraY = (gridSize * cellSize) / 2;
+
 
 gameSpeedSlider.addEventListener("input", function () {
   const newGameSpeed = parseInt(this.value);
@@ -33,12 +24,7 @@ gameSpeedSlider.addEventListener("input", function () {
 startButton.addEventListener("click", function () {
   if (gameLoopInterval === null) {
 
-    if (npcs.length > 0) {
-      // Center the camera on the first NPC when starting the simulation
-      cameraX = npcs[0].x;
-      cameraY = npcs[0].y;
-    }
-
+   
     gameLoopInterval = requestAnimationFrame(gameLoop);
     startButton.textContent = "⏸ Pause Game";
   } else {

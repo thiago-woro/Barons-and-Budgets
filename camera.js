@@ -1,3 +1,12 @@
+// Initialize zoomLevel and other related variables
+let zoomLevel = 1.0;
+let canvasX = 0;
+let canvasY = 0;
+let mouseX = 0;
+let mouseY = 0;
+let cameraX = 0;
+let cameraY = 0;
+
 class Camera {
   constructor(container) {
     this.container = container;
@@ -12,33 +21,34 @@ class Camera {
     this.setupEventListeners();
   }
 
+  /* html structure - dont delete
+  	<body>
+        <div class="canvas-container" id="container" style="visibility: collapse;">
+            <canvas id="groundCanvas"  style="z-index: 10;"></canvas>
+            <canvas id="waterCanvas"  style="z-index: 0;"></canvas>
+   */
+
   setupEventListeners() {
     // Mouse wheel for zooming
     this.container.addEventListener('wheel', (e) => {
       e.preventDefault();
-      const mousePosBeforeZoom = this.screenToWorld(e.clientX, e.clientY);
+      const rect = this.container.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      // Log mouse position before zoom
+      console.log(`Before Zoom: Mouse Position = (${mouseX}, ${mouseY})`);
 
       // Calculate new zoom with proportional speed
       const zoomDirection = -Math.sign(e.deltaY);
       const zoomChange = this.zoom * this.zoomFactor * zoomDirection;
       const newZoom = Math.min(Math.max(this.zoom + zoomChange, this.minZoom), this.maxZoom);
-
       if (newZoom !== this.zoom) {
-        // Apply zoom
-        const zoomFactor = newZoom / this.zoom;
+        // Apply zoom without translation effect
         this.zoom = newZoom;
-        
-        // Update global zoomLevel to match
-        zoomLevel = this.zoom;
 
-        // Adjust position to keep mouse point fixed
-        const mousePosAfterZoom = this.screenToWorld(e.clientX, e.clientY);
-        this.position.x += mousePosAfterZoom.x - mousePosBeforeZoom.x;
-        this.position.y += mousePosAfterZoom.y - mousePosBeforeZoom.y;
-        
-        // Update global canvasX and canvasY
-        canvasX = -this.position.x * this.zoom;
-        canvasY = -this.position.y * this.zoom;
+        // Log mouse position after zoom
+        console.log(`After Zoom: Mouse Position = (${mouseX}, ${mouseY})`);
 
         this.updateTransform();
       }
@@ -56,14 +66,14 @@ class Camera {
       if (this.isDragging) {
         const deltaX = (e.clientX - this.lastMousePos.x) / this.zoom;
         const deltaY = (e.clientY - this.lastMousePos.y) / this.zoom;
-        
+
         this.position.x -= deltaX;
         this.position.y -= deltaY;
-        
+
         // Update global canvasX and canvasY
         canvasX = -this.position.x * this.zoom;
         canvasY = -this.position.y * this.zoom;
-        
+
         this.lastMousePos = { x: e.clientX, y: e.clientY };
         this.updateTransform();
       }
@@ -77,96 +87,39 @@ class Camera {
     });
   }
 
-screenToWorld(screenX, screenY) {
-  const rect = this.container.getBoundingClientRect();
-  const mouseX = screenX - rect.left;
-  const mouseY = screenY - rect.top;
-  // Convert to world coordinates
-  const worldX = (mouseX - this.position.x * this.zoom) / this.zoom;
-  const worldY = (mouseY - this.position.y * this.zoom) / this.zoom;
-  return { x: worldX, y: worldY };
-}
-
-/* 
-Understanding the screenToWorld Method
-The screenToWorld method is crucial for converting mouse coordinates (which are relative to the container) into world coordinates, which are the actual coordinates in the game map. This conversion is necessary because the container can be translated and scaled, affecting the relationship between screen and world coordinates.
-
-Steps in the screenToWorld Method
-Get Container Bounding Rectangle :
-javascript
-Copy
-1
-const rect = this.container.getBoundingClientRect();
-This gets the size and position of the container relative to the viewport.
-Calculate Mouse Coordinates Relative to Container :
-javascript
-Copy
-1
-2
-const mouseX = screenX - rect.left;
-const mouseY = screenY - rect.top;
-These lines convert the screen coordinates (which are relative to the entire document) to coordinates relative to the container.
-Adjust for Translation :
-javascript
-Copy
-1
-2
-const worldX = (mouseX - this.position.x * this.zoom) / this.zoom;
-const worldY = (mouseY - this.position.y * this.zoom) / this.zoom;
-this.position.x * this.zoom and this.position.y * this.zoom account for the translation applied to the container.
-Subtracting these values from the mouse coordinates adjusts for the translation.
-Dividing by this.zoom accounts for the scaling, giving the correct world coordinates.
-How It Fits Into the Overall System
-Mouse Click Event :
-When a user clicks on a cell, the logCellOnClick function is triggered. This function calls camera.screenToWorld(x, y) to convert the click coordinates to world coordinates.
-Coordinate Conversion :
-The screenToWorld method ensures that the click coordinates are correctly transformed to account for the camera's translation and scaling.
-Cell Calculation :
-After converting the coordinates to world coordinates, the cell indices are calculated using:
-javascript
-Copy
-1
-2
-const cellRow = Math.floor(worldY / cellSize);
-const cellCol = Math.floor(worldX / cellSize);
-Logging and Drawing :
-The cell indices are then logged, and a purple rectangle is drawn at the clicked cell.
-Summary
-Translation Adjustment : Subtracting this.position.x * this.zoom and this.position.y * this.zoom from the mouse coordinates adjusts for the translation.
-Scaling Adjustment : Dividing by this.zoom ensures that the coordinates are correctly scaled to match the world coordinates.
-By following these steps, the screenToWorld method ensures that the click coordinates are accurately converted to world coordinates, even when the camera is zoomed or panned. This prevents issues like the ones you encountered, where the cell indices were incorrect due to the transformations.
- */
+  screenToWorld(screenX, screenY) {
+    const rect = this.container.getBoundingClientRect();
+    const mouseX = screenX - rect.left;
+    const mouseY = screenY - rect.top;
+    // Convert to world coordinates
+    const worldX = (mouseX - this.position.x * this.zoom) / this.zoom;
+    const worldY = (mouseY - this.position.y * this.zoom) / this.zoom;
+    return { x: worldX, y: worldY };
+  }
 
   updateHoveredCell(event) {
     // Use offsetX/offsetY for mouse coordinates relative to the container
     const mouseX = event.offsetX;
     const mouseY = event.offsetY;
-
     // Convert screen coordinates to world coordinates
     const worldX = mouseX / this.zoom + this.position.x;
     const worldY = mouseY / this.zoom + this.position.y;
-
     // Calculate cell index based on world coordinates
     const cellX = Math.floor(worldX / cellSize);
     const cellY = Math.floor(worldY / cellSize);
-
     // Calculate the screen position of the cell highlight
     const cellScreenX = (cellX * cellSize - this.position.x) * this.zoom;
     const cellScreenY = (cellY * cellSize - this.position.y) * this.zoom;
-
     // Clear previous highlight
     boatCtx.clearRect(0, 0, boatCanvas.width, boatCanvas.height);
-
     // Draw the highlight
     boatCtx.fillStyle = 'rgba(128, 0, 128, 0.5)';
     boatCtx.fillRect(cellScreenX, cellScreenY, cellSize * this.zoom, cellSize * this.zoom);
-
     // Update camera zoom info with additional cell info
     const cameraZoomInfo = document.getElementById('cameraZoomInfo');
     if (cameraZoomInfo) {
       cameraZoomInfo.innerHTML = `updateHoveredCell: Zoom: ${this.zoom.toFixed(2)} | Position: (${this.position.x.toFixed(2)}, ${this.position.y.toFixed(2)}) | Cell: (${cellX}, ${cellY}) | Screen: (${cellScreenX.toFixed(2)}, ${cellScreenY.toFixed(2)})`;
     }
-
     // Update debug info
     const debuggerOverlay = document.getElementById('debuggerOverlay');
     if (debuggerOverlay) {
@@ -184,14 +137,13 @@ By following these steps, the screenToWorld method ensures that the click coordi
   updateTransform() {
     // Apply transform to the container
     this.container.style.transform = `translate(${-this.position.x * this.zoom}px, ${-this.position.y * this.zoom}px) scale(${this.zoom})`;
-    
+
     // Update global values
     canvasX = -this.position.x * this.zoom;
     canvasY = -this.position.y * this.zoom;
     zoomLevel = this.zoom;
-    
-    // Don't call updateCanvasPosition() since we're applying the transform directly
 
+    // Don't call updateCanvasPosition() since we're applying the transform directly
     this.updateDebugInfo();
     this.updateCameraZoomInfo();
 
@@ -227,12 +179,12 @@ By following these steps, the screenToWorld method ensures that the click coordi
   reset() {
     this.position = { x: 0, y: 0 };
     this.zoom = 1.0;
-    
+
     // Update global variables
     canvasX = 0;
     canvasY = 0;
     zoomLevel = 1.0;
-    
+
     this.updateTransform();
   }
 }
@@ -286,7 +238,6 @@ function getAdjacentCells(targetCell) {
 
 // Mouse clicks canvas map
 let isDragging = false; // Define a global isDragging variable
-
 function logCellOnClick(container, ctx, cellSize, npcCtx, treeCtx, pathCtx) {
   container.addEventListener("click", function(event) {
     if (isDragging === false) {
@@ -294,20 +245,15 @@ function logCellOnClick(container, ctx, cellSize, npcCtx, treeCtx, pathCtx) {
       const rect = container.getBoundingClientRect();
       const x = event.clientX - rect.left;
       const y = event.clientY - rect.top;
-
       // Convert screen coordinates to world coordinates
       const { x: worldX, y: worldY } = camera.screenToWorld(x, y);
-
       // Calculate cell indices (row and column) based on world position.
       const cellRow = Math.floor(worldY / cellSize);
       const cellCol = Math.floor(worldX / cellSize);
-
       console.log(`Cell clicked: X = ${cellCol}, Y = ${cellRow}`);
-
       // Draw a purple rectangle at the clicked cell
-      ctx.fillStyle = 'purple'; 
+      ctx.fillStyle = 'purple';
       ctx.fillRect(cellCol * cellSize, cellRow * cellSize, cellSize, cellSize);
-
       // Perform the left-click action
       leftClickAction(cellCol, cellRow, npcCtx, cellSize, treeCtx, pathCtx);
     }
@@ -317,7 +263,7 @@ function logCellOnClick(container, ctx, cellSize, npcCtx, treeCtx, pathCtx) {
 // Example of how to use the function, assuming the container, npcCtx, and cellSize are already defined.
 logCellOnClick(container, boatCtx, cellSize, npcCtx, treeCtx, pathCtx);
 
-function leftClickAction(x, y, npcCtx, cellSize, treeCtx, pathCtx) {
+function leftClickAction(x, y, homesCtx, cellSize, treeCtx, pathCtx) {
   // Create a new house
   const newHouse = new House(x, y);
   // Log x and y
@@ -333,7 +279,7 @@ function leftClickAction(x, y, npcCtx, cellSize, treeCtx, pathCtx) {
 
 // Reset camera controls - DO NOT DELETE
 function resetCanvasPosition() {
-  // Update Camera object instead of directly setting values
+  // Update camera object instead of directly setting values
   camera.reset();
 }
 
@@ -356,17 +302,13 @@ function centerCanvasOnMap() {
   const centerX = totalX / groundCells.length;
   const centerY = totalY / groundCells.length;
 
-  // Calculate the center in world coordinates
-  const centerWorldX = centerX * cellSize;
-  const centerWorldY = centerY * cellSize;
-  
   // Set camera position to center on this point
-  camera.position.x = centerWorldX - (groundCanvas.width / 2) / camera.zoom;
-  camera.position.y = centerWorldY - (groundCanvas.height / 2) / camera.zoom;
-  
+  camera.position.x = centerX - (groundCanvas.width / 2) / camera.zoom;
+  camera.position.y = centerY - (groundCanvas.height / 2) / camera.zoom;
+
   // Update global variables
   canvasX = -camera.position.x * camera.zoom;
   canvasY = -camera.position.y * camera.zoom;
-  
+
   camera.updateTransform();
 }

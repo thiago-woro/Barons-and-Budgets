@@ -3,9 +3,7 @@
 
 // State machine for woodcutter behavior
 function updateWoodcutter(npc) {
-  // Log current state
-  console.log(`woodcutter: ${npc.name} - state=${npc.state}`);
-  
+ 
   switch (npc.state) {
     case "idle":
       npc.transitionTo("findingTree");
@@ -14,13 +12,13 @@ function updateWoodcutter(npc) {
     case "findingTree":
       const tree = findNearestTree(npc);
       if (tree) {
-        console.log(`woodcutter: ${npc.name} found tree at ${tree.x}, ${tree.y}`);
+       // console.log(`woodcutter: ${npc.name} found tree at ${tree.x}, ${tree.y}`);
         npc.currentPath = findPathTo(npc, tree);
         npc.pathIndex = 0;
         npc.stateData.targetTree = tree;
         npc.transitionTo("movingToTree");
       } else {
-        console.log(`woodcutter: ${npc.name} couldn't find any trees!`);
+       // console.log(`woodcutter: ${npc.name} couldn't find any trees!`);
         npc.transitionTo("idle");
       }
       break;
@@ -61,8 +59,11 @@ function updateWoodcutter(npc) {
             //add wood to the wood count
             elfWoodCount += 1;
 
+            //log total amount of trees on the map
+            console.log(`Total trees remaining on map: ${treePositions.length}`);
+
            //update the wood count display
-            document.getElementById("woodCount").textContent = elfWoodCount;
+            document.getElementById("woodCount").textContent = elfWoodCount + "/ " + treePositions.length;
  
         
           });
@@ -77,13 +78,13 @@ function updateWoodcutter(npc) {
     case "findingHome":
       const home = findNearestHome(npc);
       if (home) {
-        console.log(`woodcutter: ${npc.name} found home at ${home.x}, ${home.y}`);
+       // console.log(`woodcutter: ${npc.name} found home at ${home.x}, ${home.y}`);
         npc.currentPath = findPathTo(npc, home);
         npc.pathIndex = 0;
         npc.stateData.targetHome = home;
         npc.transitionTo("movingToHome");
       } else {
-        console.log(`woodcutter: ${npc.name} couldn't find any homes!`);
+      //  console.log(`woodcutter: ${npc.name} couldn't find any homes!`);
         npc.transitionTo("idle");
       }
       break;

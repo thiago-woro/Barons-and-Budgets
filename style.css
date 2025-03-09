@@ -2,23 +2,26 @@
 :root {
     --metal: rgb(94, 55, 55);
     --gold: rgb(234, 190, 67);
-    --bg: #595e4e ;
+    --bg: #3a3f31f8 ;
+    --bg2: #44483df7 ;
     --green:  rgb(28, 116, 28);
     --blue:   rgb(18, 81, 130);
+    --purple:   rgba(60, 28, 116, 0.664);
+    --purpler-hover:   rgba(60, 28, 116, 0.3);
     --red:    rgb(116, 28, 28);
-    --fg:     rgb(116, 116, 116);
+    --fg:    #5f6455f7;
   }
 
   #bottomToolBar {
     visibility: collapse;
     display: flex;
     flex-direction: row;
-    gap: 50px;
+    gap: 10px;
     position: fixed;
     left: 50%;
     transform: translateX(-50%); /* Center horizontally */
     bottom: 0;
-    background-color: var(--fg);
+    background-color: var(--bg);
     text-align: center;
     padding: 15px;
     z-index: 1000;
@@ -29,6 +32,8 @@
     font-size: 11px;
     z-index: 3000;
     margin-bottom: 0px;
+    padding-left: 40px;
+    padding-right: 40px;
   }
 
   #barons {
@@ -189,6 +194,9 @@ body {
     top: 10px;       /* Distance from the top */
     right: 10px;     /* Distance from the right */
     z-index: 1000;   /* Layering order (higher means closer to the viewer) */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
   }
 
   #toolTabs {
@@ -210,12 +218,14 @@ body {
     display: flex;
     flex-direction: row;
     background-color: #454a3f;
+    border-radius: 4px;
 }
 
 .col {
     display: flex;
     flex-direction: column;
     background-color: #454a3f;
+    border-radius: 4px;
 }
 
 .pad {
@@ -244,12 +254,35 @@ body {
 
 }
 
+.bottomCard {
+    background-color: var(--fg);
+    margin: 5px;
+    padding: 5px 9px;
+    border-radius: 6px;
+}
+
+.bottomCard:hover {
+    background-color: var(--purpler-hover);
+    box-shadow: 2px 3px 50px 3px rgba(4, 0, 255, 0.176);
+
+}
+
+.bottomCard:active {
+    background-color: var(--purple);
+}
+
+
+
 .secondaryBtn {
-    background-color: grey;
+    background-color: rgb(88, 88, 88);
     font-size: 14px;
     width: fit-content;
     font-size: 10px;
+    padding: 1px 6px;
+    height: 25px;
+    border: 0px;
 }
+
 
 
 
@@ -283,9 +316,14 @@ user-select: none;
 .selectable-span {
     cursor: url(./assets/cursor/glove1.cur), auto;
     user-select: none;
-    padding: 10px;
+    padding: 15px;
     border-radius: 10px;
     background-color: rgb(35, 45, 56);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    max-height: 20px;
 }
 
 .tabSelector:hover {
@@ -293,9 +331,7 @@ user-select: none;
     transition: background-color 0.3s ease;
     }
 
-    .active {
-    background-color: var(--blue)
-    }
+  
 
 button {
     margin: 7px;
@@ -641,10 +677,10 @@ font-size: 16px;
 
                      
 .bottomTabs {
-    border: 3px solid #484f43;
+    border: 0px solid #484f43;
     background-color: #84bc3f;
     border-radius: 10px;
-    padding: 10px;
+    padding: 10px 30px;
     margin: 10px;
 }
 
@@ -668,15 +704,14 @@ body {
 }
 
 .bottomTabs {
-    padding: 5px;
+    padding: 6px;
     align-items: center;
     width: 60px;
     max-width: 59px;
     height: 40px;
     max-height: 10px;
-    background-color: #666666;
+    background-color: var(--bg);
     border: none;
-    box-shadow: 0 -2px 0 2px #333333, 0 2px 0 2px #333333, 2px 0 0 2px #333333, -2px 0 0 2px #333333;
     color: white;
     font-size: 12px;
     text-align: center;
@@ -684,7 +719,9 @@ body {
     image-rendering: pixelated;
     border-radius: 0;
     transition: transform 0.1s;
-    text-align: center;
+    display: flex;
+    justify-content: center;
+    border-radius: 2px;
 }
 
 .bottomTabs:hover {
@@ -693,6 +730,7 @@ body {
 
 .bottomTabs:active {
     transform: scale(0.95);
+    background-color: var(--purple);
 }
 
 
@@ -705,3 +743,7 @@ body {
     --water-shade-3: #7ab3e9;
     --water-shade-4: #5c91d1;
   }
+
+    .active {
+    background-color: var(--purple)
+    }

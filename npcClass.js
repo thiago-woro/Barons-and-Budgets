@@ -61,7 +61,6 @@ class NPC {
 
   // Helper method to transition between states
   transitionTo(newState) {
-    console.log(`${this.name} transitioning from ${this.state} to ${newState}`);
     this.state = newState;
     
     // Update the state in the NPC table
