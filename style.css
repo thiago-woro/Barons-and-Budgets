@@ -210,7 +210,7 @@ body {
   h1 {
     line-height: 1.4;
     color: var(--gold);
-    text-shadow: 3px 5px var(--green);
+    text-shadow: 3px 3px var(--green);
   }
   
 
@@ -335,7 +335,7 @@ user-select: none;
 
 button {
     margin: 7px;
-    background-color: var(--green);
+    background-color: #547637;
     border-radius: 8px;
     height: 50px;
     width: 200px;
@@ -483,13 +483,15 @@ button:disabled {
 
 /* displays individual npc info */
 #infoPanel {
-    background-color: #454a3f;
+    font-size: 12px;
+    background-color: #454a3fe9;
     padding: 20px;
     margin: 5px;
-    border: 3px solid green;
-    border-radius: 20px;
+    border: 0px solid green;
+    border-radius: 8px;
     line-height: 1.5;
-    max-width: 500px;
+    min-width: 200px;
+    max-width: 250px;
     max-height: 500px;
 }
 
@@ -516,7 +518,21 @@ button:disabled {
     text-align: center;
   }
 
+/* images inside infoPanel */
+#infoPanel img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
 
+.npcRandomLine {
+    font-size: 13px;
+    color: var(--gold);
+    text-align: left;
+    padding: 5px;
+    border-radius: 8px 8px 8px 0px;
+    background-color: var(--bg);
+}
 
   .race-card {
     background-color: #cfbb97; /* Creamy background */

@@ -97,6 +97,15 @@ class Camera {
     return { x: worldX, y: worldY };
   }
 
+  // Convert world coordinates to screen coordinates
+  worldToScreen(worldX, worldY) {
+    const rect = this.container.getBoundingClientRect();
+    // Convert to screen coordinates
+    const screenX = worldX * this.zoom + this.position.x * this.zoom + rect.left;
+    const screenY = worldY * this.zoom + this.position.y * this.zoom + rect.top;
+    return { x: screenX, y: screenY };
+  }
+
   updateHoveredCell(event) {
     // Use offsetX/offsetY for mouse coordinates relative to the container
     const mouseX = event.offsetX;
@@ -120,18 +129,7 @@ class Camera {
     if (cameraZoomInfo) {
       cameraZoomInfo.innerHTML = `updateHoveredCell: Zoom: ${this.zoom.toFixed(2)} | Position: (${this.position.x.toFixed(2)}, ${this.position.y.toFixed(2)}) | Cell: (${cellX}, ${cellY}) | Screen: (${cellScreenX.toFixed(2)}, ${cellScreenY.toFixed(2)})`;
     }
-    // Update debug info
-    const debuggerOverlay = document.getElementById('debuggerOverlay');
-    if (debuggerOverlay) {
-      debuggerOverlay.innerHTML = `
-        updateHoveredCell: World: (${worldX.toFixed(2)}, ${worldY.toFixed(2)})<br>
-        Mouse: (${mouseX.toFixed(2)}, ${mouseY.toFixed(2)})<br>
-        Cell: (${cellX}, ${cellY})<br>
-        Screen Cell: (${cellScreenX.toFixed(2)}, ${cellScreenY.toFixed(2)})<br>
-        Zoom: ${this.zoom.toFixed(2)}<br>
-        Position: (${this.position.x.toFixed(2)}, ${this.position.y.toFixed(2)})
-      `;
-    }
+    
   }
 
   updateTransform() {
@@ -144,7 +142,6 @@ class Camera {
     zoomLevel = this.zoom;
 
     // Don't call updateCanvasPosition() since we're applying the transform directly
-    this.updateDebugInfo();
     this.updateCameraZoomInfo();
 
     // Update the highlighted cell if the mouse is over the container
@@ -155,24 +152,12 @@ class Camera {
     this.updateHoveredCell(event);
   }
 
-  updateDebugInfo() {
-    const debuggerOverlay = document.getElementById('debuggerOverlay');
-    if (debuggerOverlay) {
-      debuggerOverlay.innerHTML = `
-        Camera:<br>
-        - Zoom: ${this.zoom.toFixed(2)}<br>
-        - Position X: ${this.position.x.toFixed(2)}<br>
-        - Position Y: ${this.position.y.toFixed(2)}<br>
-        - Container Width: ${this.container.clientWidth}<br>
-        - Container Height: ${this.container.clientHeight}
-      `;
-    }
-  }
+ 
 
   updateCameraZoomInfo() {
-    const cameraZoomInfo = document.getElementById('cameraZoomInfo');
-    if (cameraZoomInfo) {
-      cameraZoomInfo.innerHTML = `Camera: Zoom: ${this.zoom.toFixed(2)} | Position: (${this.position.x.toFixed(2)}, ${this.position.y.toFixed(2)}) | Mouse: (${this.lastMousePos?.x || 0}, ${this.lastMousePos?.y || 0})`;
+    const cameraZoomInfoElement = document.getElementById('cameraZoomInfo');
+    if (cameraZoomInfoElement) {
+      cameraZoomInfoElement.innerHTML = `Camera: Zoom: ${this.zoom.toFixed(2)} | Position: (${this.position.x.toFixed(2)}, ${this.position.y.toFixed(2)})`;
     }
   }
 
@@ -252,27 +237,17 @@ function logCellOnClick(container, ctx, cellSize, npcCtx, treeCtx, pathCtx) {
       const cellCol = Math.floor(worldX / cellSize);
       console.log(`Cell clicked: X = ${cellCol}, Y = ${cellRow}`);
       // Draw a purple rectangle at the clicked cell
-      ctx.fillStyle = 'purple';
+      ctx.fillStyle = 'green';
       ctx.fillRect(cellCol * cellSize, cellRow * cellSize, cellSize, cellSize);
-      // Perform the left-click action
-      leftClickAction(cellCol, cellRow, npcCtx, cellSize, treeCtx, pathCtx);
+
+      //leftClickAction(cellCol, cellRow, npcCtx, cellSize, treeCtx, pathCtx);
     }
   });
 }
 
-// Example of how to use the function, assuming the container, npcCtx, and cellSize are already defined.
 logCellOnClick(container, boatCtx, cellSize, npcCtx, treeCtx, pathCtx);
 
-function leftClickAction(x, y, homesCtx, cellSize, treeCtx, pathCtx) {
-  // Create a new house
-  const newHouse = new House(x, y);
-  // Log x and y
-  console.log(`House drawn at ${x}, ${y}`);
-  // Add the new house to the global array of houses
-  // houses.push(newHouse);
-  // Draw the new house
-  newHouse.draw(homesCtx);
-}
+
 
 // Reset camera controls - DO NOT DELETE
 function resetCanvasPosition() {
@@ -284,7 +259,6 @@ function resetCanvasPosition() {
 document.getElementById("recenterCanvas").addEventListener("click", () => {
   resetCanvasPosition();
   centerCanvasOnMap();
-  console.log("map centered ok");
 });
 
 // Function to center the canvas on the map

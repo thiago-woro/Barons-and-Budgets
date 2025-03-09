@@ -366,10 +366,16 @@ function showNPCInfo(npc) {
   infoHtml += `<br/>Profession:<br/>${npc.profession}       
   <span style="color: green;">$ ${npc.salary}</span><br/> `;
 
-  // Define randomLine before using it
-  const randomLine = "This is a random line"; // Replace with actual logic if needed
+   // Get random conversation line based on npc's profession
+   const conversationLines = purryNPCConversations[npc.profession];
+   let randomLine = "";
+   
+   if (conversationLines && conversationLines.length > 0) {
+     const randomIndex = Math.floor(Math.random() * conversationLines.length);
+     randomLine = conversationLines[randomIndex];
+   }
 
-  infoHtml += `<br/><style="font-size: 13px;">${randomLine} meow.</style=>`;
+  infoHtml += `<br/><style="font-size: 13px;">${randomLine}</style=>`;
 
   if (npc.children.length > 0) {
     infoHtml += `<br/><strong>${npc.children.length} kids:</strong><ul>`;
@@ -381,7 +387,15 @@ function showNPCInfo(npc) {
 
   // Create an img element
   const imgElement = document.createElement('img');
-  imgElement.src = './assets/Races/purries/catgirl.png';
+
+  if (npc.gender === 'male') {
+    imgElement.src = `./assets/Races/${npc.race}/male/male.png`;
+  } else {
+    imgElement.src = `./assets/Races/${npc.race}/female/female (3).png`;
+  }
+
+
+
   imgElement.height = 100; // Set the height (adjust to your desired height)
   imgElement.width = 100; // Set the width (adjust to your desired width)
 
