@@ -29,6 +29,7 @@ let pathCells = [];
 
 //npcs
 let npcs = [];
+let animals = [];
 let year = 2700;
 const startingPopulation = 25;
 const populationIncreaseSpeed = 0.15;

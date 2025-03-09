@@ -106,6 +106,8 @@ class Camera {
     return { x: screenX, y: screenY };
   }
 
+  
+
   updateHoveredCell(event) {
     // Use offsetX/offsetY for mouse coordinates relative to the container
     const mouseX = event.offsetX;
@@ -176,6 +178,37 @@ class Camera {
 
 // Initialize camera
 const camera = new Camera(container);
+
+const canvases = container.querySelectorAll("canvas");
+        let translateX = 0;
+        let translateY = 0;
+
+        // Adjust the translation values based on your desired speed
+        const translateSpeed = 50;
+
+        window.addEventListener("keydown", (event) => {
+            const key = event.key.toLowerCase();
+
+            switch (key) {
+                case "a":
+                    translateX += translateSpeed;
+                    break;
+                case "d":
+                    translateX -= translateSpeed;
+                    break;
+                case "w":
+                    translateY += translateSpeed;
+                    break;
+                case "s":
+                    translateY -= translateSpeed;
+                    break;
+            }
+
+            // Apply the translation to all canvas elements
+            canvases.forEach((canvas) => {
+                canvas.style.transform = `translate(${translateX}px, ${translateY}px)`;
+            });
+        });
 
 // Add event listener for the reset camera button
 document.getElementById("resetCameraButton").addEventListener("click", function() {
@@ -273,6 +306,14 @@ function centerCanvasOnMap() {
   const centerX = totalX / groundCells.length;
   const centerY = totalY / groundCells.length;
 
+  /* paint the center cells in green */
+  // Draw a green rectangle at the center cell
+  const cellCol = Math.floor(centerX / cellSize);
+  const cellRow = Math.floor(centerY / cellSize);
+  boatCtx.fillStyle = 'purple'; // Set the fill color to bright purple
+  boatCtx.fillRect(cellCol * cellSize, cellRow * cellSize, cellSize, cellSize); // Draw a green rectangle at the center cell
+
+
   // Set camera position to center on this point
   camera.position.x = centerX - (groundCanvas.width / 2) / camera.zoom;
   camera.position.y = centerY - (groundCanvas.height / 2) / camera.zoom;
@@ -283,3 +324,12 @@ function centerCanvasOnMap() {
 
   camera.updateTransform();
 }
+
+
+
+document.addEventListener('keydown', (event) => {
+  if (event.key.toLowerCase() === 'c') {
+
+    centerCanvasOnMap();
+  }
+});

@@ -29,6 +29,7 @@ const canvasElements = [
   "npcInfoOverlay",
   "oreDeposits",
   "homes",
+  "animalCanvas"
 ];
 
 const ctxElements = {};
@@ -48,6 +49,7 @@ const [pathCanvas, pathCtx] = ctxElements["path"];
 const [npcInfoOverlayCanvas, npcInfoOverlayCtx] = ctxElements["npcInfoOverlay"];
 const [oreDepositsCanvas, oreDepositsCtx] = ctxElements["oreDeposits"];
 const [homesCanvas, homesCtx] = ctxElements["homes"];
+const [animalCanvas, animalCtx] = ctxElements["animalCanvas"];
 //finished canvases setup
 
 
@@ -93,7 +95,7 @@ function handleBottomTabClick(tabId) {
   window.activeTabBottomLeft = tabId.replace('Tab', '');
   
   // Hide all rows first
-  const rows = ['terrainRow', 'creaturesRow', 'buildingsRow', 'budgetsRow'];
+  const rows = ['terrainRow', 'creaturesRow', 'buildingsRow', 'budgetsRow', 'animalsRow'];
   rows.forEach(rowId => {
     const row = document.getElementById(rowId);
     if (row) {
@@ -114,7 +116,7 @@ function handleBottomTabClick(tabId) {
 
 // Add event listeners to bottom tabs
 document.addEventListener('DOMContentLoaded', () => {
-  const bottomTabIds = ['terrainTab', 'creaturesTab', 'budgetsTab', 'buildingsTab'];
+  const bottomTabIds = ['terrainTab', 'creaturesTab', 'budgetsTab', 'buildingsTab', 'animalsTab'];
   
   bottomTabIds.forEach(tabId => {
     const tabElement = document.getElementById(tabId);
@@ -495,36 +497,7 @@ function drawCircle(ctx, x, y, diameter, fillColor) {
 
 
 
-const canvases = container.querySelectorAll("canvas");
-        let translateX = 0;
-        let translateY = 0;
 
-        // Adjust the translation values based on your desired speed
-        const translateSpeed = 50;
-
-        window.addEventListener("keydown", (event) => {
-            const key = event.key.toLowerCase();
-
-            switch (key) {
-                case "a":
-                    translateX += translateSpeed;
-                    break;
-                case "d":
-                    translateX -= translateSpeed;
-                    break;
-                case "w":
-                    translateY += translateSpeed;
-                    break;
-                case "s":
-                    translateY -= translateSpeed;
-                    break;
-            }
-
-            // Apply the translation to all canvas elements
-            canvases.forEach((canvas) => {
-                canvas.style.transform = `translate(${translateX}px, ${translateY}px)`;
-            });
-        });
 
 
 
@@ -600,12 +573,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-  // Use the same zoom animation as newGameWelcomeScreen
   const zoomOutAnimation = () => {
-    const duration = 2000; // 2 seconds
+    const duration = 1000; 
     const start = performance.now();
     const initialZoom = camera.zoom; // Start from current camera zoom
-    const targetZoom = 0.3; // Use a more reasonable zoom level (not too extreme)
+    const targetZoom = 0.3; 
 
     const animateZoom = (currentTime) => {
       const elapsed = currentTime - start;
@@ -626,33 +598,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Animation complete
         camera.zoom = targetZoom; // Ensure final zoom level is exactly targetZoom
         
-        // Center on the map based on ground cells
-        if (groundCells.length > 0) {
-          // Calculate the center of the ground cells
-          let totalX = 0;
-          let totalY = 0;
-          
-          for (const cell of groundCells) {
-            totalX += cell.x;
-            totalY += cell.y;
-          }
-          
-          const avgX = totalX / groundCells.length;
-          const avgY = totalY / groundCells.length;
-          
-          // Set camera position to center on these coordinates
-          camera.position.x = avgX * cellSize - (container.clientWidth / (2 * camera.zoom));
-          camera.position.y = avgY * cellSize - (container.clientHeight / (2 * camera.zoom));
-          
-          console.log(`Centering on ground cells: avgX=${avgX}, avgY=${avgY}`);
-        } else {
-          // Fallback to center of map if no ground cells
-          const mapCenter = rows / 2;
-          camera.position.x = mapCenter * cellSize - (container.clientWidth / (2 * camera.zoom));
-          camera.position.y = mapCenter * cellSize - (container.clientHeight / (2 * camera.zoom));
-          
-          console.log(`Centering on map center: ${mapCenter}`);
-        }
         
         camera.updateTransform();
       }
@@ -660,3 +605,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     requestAnimationFrame(animateZoom);
   };
+
