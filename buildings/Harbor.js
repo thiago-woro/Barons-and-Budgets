@@ -11,15 +11,13 @@ class Harbor extends Building {
   }
 
   draw(ctx) {
+    //use assets/harbor.png
+    const harborImage = new Image();
+    harborImage.src = "assets/harbor.png";
+    ctx.drawImage(harborImage, this.x, this.y, this.size, this.size);
+
     const x = this.x / cellSize;
     const y = this.y / cellSize;
-    
-    // Draw harbor icon
-    ctx.font = "20px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillStyle = "blue";
-    ctx.fillText(this.emoji, (x + 0.5) * cellSize, (y + 0.5) * cellSize);
     
     // Draw harbor area outline (2x2 grid)
     ctx.strokeStyle = "rgba(0, 100, 255, 0.5)";

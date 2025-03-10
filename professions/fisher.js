@@ -109,35 +109,7 @@ function updateFisher(npc) {
         }
       } else {
         npc.animationState = "normal";
-        npc.transitionTo("findingHome");
-      }
-      break;
-      
-    case "findingHome":
-      const home = findNearestHome(npc);
-      if (home) {
-        npc.currentPath = findPathTo(npc, home);
-        npc.pathIndex = 0;
-        npc.stateData.targetHome = home;
-        npc.transitionTo("movingToHome");
-      } else {
-        npc.transitionTo("idle");
-      }
-      break;
-      
-    case "movingToHome":
-      if (followPath(npc)) {
-        npc.transitionTo("restingAtHome");
-        npc.waitTime = npc.maxWaitTime;
-      }
-      break;
-      
-    case "restingAtHome":
-      if (npc.waitTime > 0) {
-        npc.waitTime--;
-        npc.animationState = "sleeping";
-      } else {
-        npc.animationState = "normal";
+        // Instead of going home, find a new fishing spot
         npc.transitionTo("findingFishSpot");
       }
       break;
@@ -261,18 +233,6 @@ function drawFisherInfo(npc, ctx) {
       text = "🎣 Fishing"; 
       bgColor = "rgba(0, 191, 255, 0.7)";
       break;
-    case "findingHome": 
-      text = "🔍 Finding home"; 
-      bgColor = "rgba(152, 251, 152, 0.7)";
-      break;
-    case "movingToHome": 
-      text = "🚶 To home"; 
-      bgColor = "rgba(135, 206, 250, 0.7)";
-      break;
-    case "restingAtHome": 
-      text = "🏠 Resting"; 
-      bgColor = "rgba(221, 160, 221, 0.7)";
-      break;
     default: 
       text = npc.state;
   }
@@ -287,7 +247,7 @@ function drawFisherInfo(npc, ctx) {
   ctx.fillStyle = fillColor;
   ctx.fillText(text, npc.x, npc.y - 24);
   
-  if ((npc.state === "fishing" || npc.state === "constructingHarbor" || npc.state === "restingAtHome") && npc.waitTime > 0) {
+  if ((npc.state === "fishing" || npc.state === "constructingHarbor") && npc.waitTime > 0) {
     const maxWidth = 20;
     const progress = npc.waitTime / npc.maxWaitTime;
     const barWidth = maxWidth * progress;
@@ -295,7 +255,7 @@ function drawFisherInfo(npc, ctx) {
     ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
     ctx.fillRect(npc.x - maxWidth/2, npc.y - 15, maxWidth, 3);
     
-    ctx.fillStyle = npc.state === "fishing" ? "blue" : (npc.state === "constructingHarbor" ? "orange" : "purple");
+    ctx.fillStyle = npc.state === "fishing" ? "blue" : "orange";
     ctx.fillRect(npc.x - maxWidth/2, npc.y - 15, barWidth, 3);
   }
 } 
