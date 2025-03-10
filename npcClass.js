@@ -32,6 +32,7 @@ class NPC {
     this.state = "idle"; // Initial state
     this.stateData = {}; // For storing state-specific data
     this.animationState = "normal"; // For visual feedback during activities
+    this.inventory = []; // Array to store items
 
     if (age >= 20) {
       this.profession = this.generateProfession(this.age, this.race);
@@ -46,6 +47,14 @@ class NPC {
   update() {
     if (this.profession === "Woodcutter") {
       updateWoodcutter(this);
+    } else if (this.profession === "Hunter") {
+      updateHunter(this);
+    } else if (this.profession === "Fisher") {
+      updateFisher(this);
+    } else if (this.profession === "Miner") {
+      updateMiner(this);
+    } else if (this.profession === "Farmer") {
+      updateFarmer(this);
     } else {
       switch (this.state) {
         case "idle":
@@ -381,8 +390,15 @@ class NPC {
   // Draw info based on state
   drawNPCInfo(ctx) {
     if (this.profession === 'Woodcutter') {
-      // Use the woodcutter module
       drawWoodcutterInfo(this, ctx);
+    } else if (this.profession === 'Hunter') {
+      drawHunterInfo(this, ctx);
+    } else if (this.profession === 'Fisher') {
+      drawFisherInfo(this, ctx);
+    } else if (this.profession === 'Miner') {
+      drawMinerInfo(this, ctx);
+    } else if (this.profession === 'Farmer') {
+      drawFarmerInfo(this, ctx);
     }
   }
 
@@ -401,13 +417,62 @@ class NPC {
       }
 
       positionDiv.textContent = `Position: (${currentX}, ${currentY})`;
+
+      // Add inventory display
+      let inventoryDiv = document.getElementById("npcInventory");
+      if (!inventoryDiv) {
+        inventoryDiv = document.createElement("div");
+        inventoryDiv.id = "npcInventory";
+        infoPanel.appendChild(inventoryDiv);
+      }
+
+      if (this.inventory.length > 0) {
+        inventoryDiv.innerHTML = "<br>Inventory:<br>" + 
+          this.inventory.map(item => 
+            `${item.emoji} ${item.type}: ${item.amount}`
+          ).join("<br>");
+      } else {
+        inventoryDiv.innerHTML = "<br>Inventory: Empty";
+      }
     }
+  }
+
+  // Add new inventory methods
+  addToInventory(itemType, amount = 1) {
+    const existingItem = this.inventory.find(item => item.type === itemType);
+    if (existingItem) {
+      existingItem.add(amount);
+    } else {
+      this.inventory.push(new Item(itemType, amount));
+    }
+  }
+
+  removeFromInventory(itemType, amount = 1) {
+    const itemIndex = this.inventory.findIndex(item => item.type === itemType);
+    if (itemIndex !== -1) {
+      const item = this.inventory[itemIndex];
+      if (item.remove(amount)) {
+        if (item.amount === 0) {
+          this.inventory.splice(itemIndex, 1);
+        }
+        return true;
+      }
+    }
+    return false;
+  }
+
+  getInventoryCount(itemType) {
+    const item = this.inventory.find(item => item.type === itemType);
+    return item ? item.amount : 0;
   }
 }
 
 const raceProfessions = {
   Purries: [
-    { profession: "Jester", probability: 0.05, salary: 1000 }, // Low probability
+    { profession: "Miner", probability: 0.3, salary: 300 },
+    { profession: "Hunter", probability: 0.4, salary: 1400 },
+    { profession: "Fisher", probability: 0.3, salary: 1500 },
+/*     { profession: "Jester", probability: 0.05, salary: 1000 }, // Low probability
     { profession: "Innkeeper", probability: 0.1, salary: 1200 }, // Medium probability
     { profession: "Tailor", probability: 0.15, salary: 1300 },
     { profession: "Knight", probability: 0.05, salary: 6400 },
@@ -420,27 +485,30 @@ const raceProfessions = {
     { profession: "Researcher", probability: 0.1, salary: 1900 },
     { profession: "Poet", probability: 0.1, salary: 2000 },
     { profession: "Scientist", probability: 0.1, salary: 5200 },
-    { profession: "Tinkerer", probability: 0.1, salary: 2400 },
-    { profession: "Miner", probability: 0.45, salary: 300 },
+    { profession: "Tinkerer", probability: 0.1, salary: 2400 }, */
   ],
 
   Kurohi: [
-    { profession: "Doctor", probability: 0.1, salary: 30000 },
+  /*   { profession: "Doctor", probability: 0.1, salary: 30000 },
     { profession: "Teacher", probability: 0.15, salary: 1200 },
     { profession: "Engineer", probability: 0.15, salary: 15000 },
     { profession: "Builder", probability: 0.1, salary: 1200 },
-    { profession: "Sailor", probability: 0.05, salary: 7000 },
     { profession: "Bartender", probability: 0.05, salary: 1000 },
     { profession: "Healer", probability: 0.1, salary: 1300 },
     { profession: "Mechanic", probability: 0.1, salary: 1500 },
     { profession: "Blacksmith", probability: 0.1, salary: 3200 },
+    { profession: "Fisher", probability: 0.05, salary: 7000 }, */
     { profession: "Farmer", probability: 0.05, salary: 1100 },
     { profession: "Miner", probability: 0.45, salary: 300 },
+    { profession: "Hunter", probability: 0.05, salary: 1400 },
   ],
 
   Elf: [
     { profession: "Woodcutter", probability: 0.85, salary: 3000 },
-    { profession: "Alchemist", probability: 0.15, salary: 30000 },
+    { profession: "Farmer", probability: 0.05, salary: 1100 },
+    { profession: "Miner", probability: 0.45, salary: 300 },
+    { profession: "Hunter", probability: 0.05, salary: 1400 },
+    /* { profession: "Alchemist", probability: 0.15, salary: 30000 },
     { profession: "Enchanter", probability: 0.15, salary: 28000 },
     { profession: "Mage", probability: 0.15, salary: 27000 },
     { profession: "Bard", probability: 0.1, salary: 2000 },
@@ -456,7 +524,7 @@ const raceProfessions = {
     { profession: "Librarian", probability: 0.1, salary: 1300 },
     { profession: "Scholar", probability: 0.1, salary: 1700 },
     { profession: "Apothecary", probability: 0.1, salary: 19000 },
-    { profession: "Astrologer", probability: 0.1, salary: 2100 },
+    { profession: "Astrologer", probability: 0.1, salary: 2100 }, */
   ],
 };
 

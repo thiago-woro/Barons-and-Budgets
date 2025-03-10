@@ -132,8 +132,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Animation loop for animals
-  function updateAnimals(currentTime) {
+  function updateAnimals() {
+    if (!window.animalCtx) {
+      console.warn('Animal context not initialized');
+      return;
+    }
     // Calculate time passed since last frame
+    const currentTime = performance.now();
     const deltaTime = currentTime - lastTime;
     lastTime = currentTime;
     
@@ -189,6 +194,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Start the animation loop
-  requestAnimationFrame(updateAnimals);
+  // Initialize animation loop only if contexts are available
+  if (window.animalCtx) {
+    requestAnimationFrame(function animate() {
+      updateAnimals();
+      requestAnimationFrame(animate);
+    });
+  }
 }); 

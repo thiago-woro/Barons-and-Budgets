@@ -34,22 +34,192 @@ const canvasElements = [
 
 const ctxElements = {};
 
-for (const canvasId of canvasElements) {
-  ctxElements[canvasId] = setupCanvas(canvasId);
-}
+document.addEventListener('DOMContentLoaded', function() {
+  // Canvas initialization
+  for (const canvasId of canvasElements) {
+    ctxElements[canvasId] = setupCanvas(canvasId);
+  }
 
-const [npcCanvas, npcCtx] = ctxElements["npcCanvas"];
-const [groundCanvas, groundCtx] = ctxElements["groundCanvas"];
-const [waterCanvas, waterCtx] = ctxElements["waterCanvas"];
-const [wavesCanvas, wavesCtx] = ctxElements["wavesCanvas"];
-const [treeCanvas, treeCtx] = ctxElements["treeCanvas"];
-const [boatCanvas, boatCtx] = ctxElements["boatCanvas"];
-const [minimapCanvas, minimapCtx] = ctxElements["minimap"];
-const [pathCanvas, pathCtx] = ctxElements["path"];
-const [npcInfoOverlayCanvas, npcInfoOverlayCtx] = ctxElements["npcInfoOverlay"];
-const [oreDepositsCanvas, oreDepositsCtx] = ctxElements["oreDeposits"];
-const [homesCanvas, homesCtx] = ctxElements["homes"];
-const [animalCanvas, animalCtx] = ctxElements["animalCanvas"];
+  const [npcCanvas, npcCtx] = ctxElements["npcCanvas"];
+  const [groundCanvas, groundCtx] = ctxElements["groundCanvas"];
+  const [waterCanvas, waterCtx] = ctxElements["waterCanvas"];
+  const [wavesCanvas, wavesCtx] = ctxElements["wavesCanvas"];
+  const [treeCanvas, treeCtx] = ctxElements["treeCanvas"];
+  const [boatCanvas, boatCtx] = ctxElements["boatCanvas"];
+  const [minimapCanvas, minimapCtx] = ctxElements["minimap"];
+  const [pathCanvas, pathCtx] = ctxElements["path"];
+  const [npcInfoOverlayCanvas, npcInfoOverlayCtx] = ctxElements["npcInfoOverlay"];
+  const [oreDepositsCanvas, oreDepositsCtx] = ctxElements["oreDeposits"];
+  const [homesCanvas, homesCtx] = ctxElements["homes"];
+  const [animalCanvas, animalCtx] = ctxElements["animalCanvas"];
+
+  // UI Elements initialization
+  const gridSizeSlider = document.getElementById("gridSizeSlider");
+  const perlinNoiseScaleSlider = document.getElementById("perlinNoiseScaleSlider");
+  const newGameWelcomeScreen = document.getElementById("newGameWelcomeScreen");
+  const newGameCustomWelcomeScreen = document.getElementById("newGameCustomWelcomeScreen");
+  const loadGameWelcomeScreen = document.getElementById("loadGameWelcomeScreen");
+  const uiTesterWelcomeScreen = document.getElementById("uiTesterWelcomeScreen");
+  const infoPanel = document.getElementById("infoPanel");
+  const welcomePopup = document.getElementById("welcomePopup");
+  const welcomeScreen = document.getElementById("welcomeScreen");
+  const welcomeScreenRaceSelector = document.getElementById("welcomeScreenRaceSelector");
+  const elfCounselor1 = document.getElementById("elfCounselor1");
+  const container = document.getElementById("container");
+  const tools = document.getElementById("tools");
+  const bottomToolBar = document.getElementById("bottomToolBar");
+  const gameTab = document.getElementById("gameTab");
+  const statsTab = document.getElementById("statsTab");
+  const chartTab = document.getElementById("chartTab");
+  const npcTab = document.getElementById("npcTab");
+
+  // Event listeners for sliders
+  if (gridSizeSlider) {
+    gridSizeSlider.addEventListener("input", function() {
+      gridSize = parseFloat(this.value);
+      updateVariables();
+    });
+  }
+
+  if (perlinNoiseScaleSlider) {
+    perlinNoiseScaleSlider.addEventListener("input", function() {
+      perlinNoiseScale = parseFloat(this.value);
+      updateVariables();
+    });
+  }
+
+  // Welcome screen buttons
+  if (newGameWelcomeScreen) {
+    newGameWelcomeScreen.addEventListener("click", function() {
+      hideWelcomeScreen();
+      generateTerrainMap(gridSize, gridSize, perlinNoiseScale);
+      zoomOutAnimation();
+    });
+  }
+
+  // Race cards
+  const raceCards = document.querySelectorAll(".race-card");
+  raceCards.forEach((raceCard) => {
+    raceCard.addEventListener("click", function() {
+      if (welcomePopup) welcomePopup.style.display = "none";
+      if (welcomeScreenRaceSelector) welcomeScreenRaceSelector.style.visibility = 'collapse';
+      if (elfCounselor1) elfCounselor1.style.visibility = "collapse";
+      if (treeCtx) startTrees(treeCtx, cellSize);
+      hideWelcomeScreen();
+      generateTerrainMap(gridSize, gridSize, perlinNoiseScale);
+      console.log("Race card clicked!");
+    });
+  });
+
+  if (newGameCustomWelcomeScreen) {
+    newGameCustomWelcomeScreen.addEventListener("click", function() {
+      if (welcomePopup) {
+        welcomePopup.style.visibility = "collapse";
+        welcomePopup.style.display = "none";
+      }
+      if (welcomeScreenRaceSelector) welcomeScreenRaceSelector.style.visibility = 'visible';
+      if (elfCounselor1) elfCounselor1.style.visibility = "collapse";
+    });
+  }
+
+  if (loadGameWelcomeScreen) {
+    loadGameWelcomeScreen.addEventListener("click", function() {
+      hideWelcomeScreen();
+      generateTerrainMap(gridSize, gridSize, perlinNoiseScale);
+    });
+  }
+
+  // UI Tester
+  if (uiTesterWelcomeScreen) {
+    uiTesterWelcomeScreen.addEventListener("click", function() {
+      hideWelcomeScreen();
+      
+      // Make UI elements visible
+      if (container) container.style.visibility = "visible";
+      if (tools) tools.style.visibility = "visible";
+      if (bottomToolBar) bottomToolBar.style.visibility = "visible";
+      
+      // Set default tab visibility
+      if (gameTab) gameTab.style.display = "block";
+      
+      // Optionally update the UI with some dummy data
+      updateUIbottomToolbar(10000);
+      addNotification("UI Test", "UI Test Mode", "UI elements loaded without game map", [], "#4b81bf");
+      
+      console.log("UI Tester mode activated - showing UI without game map");
+    });
+  }
+
+  // Info panel
+  if (infoPanel) {
+    infoPanel.addEventListener('click', () => {
+      infoPanel.style.visibility = 'collapse'
+      foundNPC = false;
+    });
+  }
+
+  // NPC Canvas click handler
+  if (npcCanvas) {
+    npcCanvas.addEventListener("click", function(event) {
+      if (window.activeTabBottomLeft !== "creatures") return;
+      const rect = npcCanvas.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      console.log(`Click at (${x}, ${y}), Active tab: ${window.activeTabBottomLeft}`);
+      for (const npc of npcs) {
+        const distance = Math.sqrt((x - npc.x) ** 2 + (y - npc.y) ** 2);
+        if (distance < 20) {
+          console.log(`Clicked NPC: ${npc.name}`);
+          showNPCInfo(npc);
+          foundNPC = true;
+          if (infoPanel) infoPanel.style.visibility = 'visible';
+          break;
+        }
+      }
+    });
+
+    // NPC Canvas mousemove handler
+    npcCanvas.addEventListener("mousemove", function(event) {
+      if (window.activeTabBottomLeft !== "creatures") return;
+      const rect = npcCanvas.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      for (const npc of npcs) {
+        const distance = Math.sqrt((x - npc.x) ** 2 + (y - npc.y) ** 2);
+        if (distance < 15) {
+          document.body.style.cursor = 'pointer';
+          return;
+        }
+      }
+      document.body.style.cursor = 'default';
+    });
+  }
+
+  // Bottom tabs
+  const bottomTabIds = ['terrainTab', 'creaturesTab', 'budgetsTab', 'buildingsTab', 'animalsTab'];
+  bottomTabIds.forEach(tabId => {
+    const tabElement = document.getElementById(tabId);
+    if (tabElement) {
+      tabElement.addEventListener('click', () => handleBottomTabClick(tabId));
+    }
+  });
+
+  // Set default active tab
+  const creaturesTab = document.getElementById('creaturesTab');
+  if (creaturesTab) {
+    handleBottomTabClick('creaturesTab');
+  }
+
+  // Keyboard controls
+  window.addEventListener("keydown", (event) => {
+    if (event.key.toLowerCase() === 'r') {
+      drawXOnCanvas();
+    }
+  });
+
+  setupKeyboardZoom();
+});
+
 //finished canvases setup
 
 
@@ -112,23 +282,6 @@ function handleBottomTabClick(tabId) {
 
   console.log(`Active bottom tab: ${window.activeTabBottomLeft}`);
 }
-
-// Add event listeners to bottom tabs
-document.addEventListener('DOMContentLoaded', () => {
-  const bottomTabIds = ['terrainTab', 'creaturesTab', 'budgetsTab', 'buildingsTab', 'animalsTab'];
-  
-  bottomTabIds.forEach(tabId => {
-    const tabElement = document.getElementById(tabId);
-    if (tabElement) {
-      tabElement.addEventListener('click', () => handleBottomTabClick(tabId));
-    }
-  });
-  
-  // Set default active tab
-  if (document.getElementById('creaturesTab')) {
-    handleBottomTabClick('creaturesTab');
-  }
-});
 
 // Function to toggle the visibility of a tab and show the most recent clicked tab
 function hideTabs() {
@@ -232,12 +385,20 @@ loadGameWelcomeScreen.addEventListener("click", function () {
 });
 
 function hideWelcomeScreen() {
-  welcomePopup.style.visibility = "collapse";
-  welcomeScreen.style.visibility = "collapse";
-  welcomePopup.style.display = "none";
-  container.style.visibility = "visible";
-  tools.style.visibility = "visible";
-  bottomToolBar.style.visibility = "visible";
+  const welcomePopup = document.getElementById("welcomePopup");
+  const welcomeScreen = document.getElementById("welcomeScreen");
+  const container = document.getElementById("container");
+  const tools = document.getElementById("tools");
+  const bottomToolBar = document.getElementById("bottomToolBar");
+  
+  if (welcomePopup) {
+    welcomePopup.style.visibility = "collapse";
+    welcomePopup.style.display = "none";
+  }
+  if (welcomeScreen) welcomeScreen.style.visibility = "collapse";
+  if (container) container.style.visibility = "visible";
+  if (tools) tools.style.visibility = "visible";
+  if (bottomToolBar) bottomToolBar.style.visibility = "visible";
 }
 
 //appens new toast notifications to the UI table
@@ -277,75 +438,58 @@ gameNotificationsTableHeader.textContent = `${tableBody.children.length} Notific
 }
 
 // UI Tester button - shows UI without rendering game map
-document.getElementById("uiTesterWelcomeScreen").addEventListener("click", function() {
-  hideWelcomeScreen();
-  
-  // Make UI elements visible
-  container.style.visibility = "visible";
-  tools.style.visibility = "visible";
-  bottomToolBar.style.visibility = "visible";
-  
-  // Set default tab visibility
-  gameTab.style.display = "block";
-  
-  // Optionally update the UI with some dummy data
-  updateUIbottomToolbar(10000);
-  addNotification("UI Test", "UI Test Mode", "UI elements loaded without game map", [], "#4b81bf");
-  
-  console.log("UI Tester mode activated - showing UI without game map");
-});
+if (uiTesterWelcomeScreen) {
+  uiTesterWelcomeScreen.addEventListener("click", function() {
+    hideWelcomeScreen();
+    
+    // Make UI elements visible
+    if (container) container.style.visibility = "visible";
+    if (tools) tools.style.visibility = "visible";
+    if (bottomToolBar) bottomToolBar.style.visibility = "visible";
+    
+    // Set default tab visibility
+    if (gameTab) gameTab.style.display = "block";
+    
+    // Optionally update the UI with some dummy data
+    updateUIbottomToolbar(10000);
+    addNotification("UI Test", "UI Test Mode", "UI elements loaded without game map", [], "#4b81bf");
+    
+    console.log("UI Tester mode activated - showing UI without game map");
+  });
+}
 
-infoPanel.addEventListener('click', () => {
-  // Toggle the visibility property
-  infoPanel.style.visibility = 'collapse'
-  foundNPC = false;
-});
+if (infoPanel) {
+  infoPanel.addEventListener('click', () => {
+    // Toggle the visibility property
+    infoPanel.style.visibility = 'collapse'
+    foundNPC = false;
+  });
+}
 
 let foundNPC = false;
 
-// Add click event handler for NPCs
-npcCanvas.addEventListener("click", function(event) {
-  // Only show NPC info if the active tab is "creatures"
-  if (window.activeTabBottomLeft !== "creatures") return;
-  
-  const rect = npcCanvas.getBoundingClientRect();
-  const x = event.clientX - rect.left;
-  const y = event.clientY - rect.top;
-  
-  console.log(`Click at (${x}, ${y}), Active tab: ${window.activeTabBottomLeft}`);
-  
-  for (const npc of npcs) {
-    const distance = Math.sqrt((x - npc.x) ** 2 + (y - npc.y) ** 2);
-    if (distance < 20) { // Larger hit area for clicking
-      console.log(`Clicked NPC: ${npc.name}`);
-      showNPCInfo(npc);
-      foundNPC = true;
-      infoPanel.style.visibility = 'visible';
-      break;
-    }
-  }
-});
-
 // Keep the existing mousemove handler with simplified functionality
-npcCanvas.addEventListener("mousemove", function (event) {
-  // Only show NPC info if the active tab is "creatures"
-  if (window.activeTabBottomLeft !== "creatures") return;
-  
-  const rect = npcCanvas.getBoundingClientRect();
-  const x = event.clientX - rect.left;
-  const y = event.clientY - rect.top;
-  
-  for (const npc of npcs) {
-    const distance = Math.sqrt((x - npc.x) ** 2 + (y - npc.y) ** 2);
-    if (distance < 15) {
-      // Just highlight or change cursor here if needed
-      // No popup showing on mousemove
-      document.body.style.cursor = 'pointer';
-      return;
+if (npcCanvas) {
+  npcCanvas.addEventListener("mousemove", function (event) {
+    // Only show NPC info if the active tab is "creatures"
+    if (window.activeTabBottomLeft !== "creatures") return;
+    
+    const rect = npcCanvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    
+    for (const npc of npcs) {
+      const distance = Math.sqrt((x - npc.x) ** 2 + (y - npc.y) ** 2);
+      if (distance < 15) {
+        // Just highlight or change cursor here if needed
+        // No popup showing on mousemove
+        document.body.style.cursor = 'pointer';
+        return;
+      }
     }
-  }
-  document.body.style.cursor = 'default';
-});
+    document.body.style.cursor = 'default';
+  });
+}
 
 //npc card details
 function showNPCInfo(npc) {
@@ -533,13 +677,6 @@ function drawXOnCanvas() {
   console.log("X print intersection 0,0 value: " + ctx.getImageData(0, 0, 1, 1).data[0]);
 }
 
-// Add event listener for the R key
-window.addEventListener("keydown", (event) => {
-  if (event.key.toLowerCase() === 'r') {
-    drawXOnCanvas();
-  }
-});
-
 // Function to handle zoom with Q and E keys
 function setupKeyboardZoom() {
   const zoomSpeed = 0.05; // Adjust this value to control zoom speed
@@ -604,4 +741,137 @@ document.addEventListener('DOMContentLoaded', () => {
 
     requestAnimationFrame(animateZoom);
   };
+
+document.addEventListener('DOMContentLoaded', function() {
+    function setupCanvas(canvas) {
+        if (!canvas) {
+            console.warn('Canvas not found');
+            return null;
+        }
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        return ctx;
+    }
+
+    // Initialize all canvases after DOM is loaded
+    const canvases = {
+        groundCanvas: document.getElementById('groundCanvas'),
+        waterCanvas: document.getElementById('waterCanvas'),
+        wavesCanvas: document.getElementById('wavesCanvas'),
+        pathCanvas: document.getElementById('path'),
+        oreDepositsCanvas: document.getElementById('oreDeposits'),
+        treeCanvas: document.getElementById('treeCanvas'),
+        npcInfoOverlay: document.getElementById('npcInfoOverlay'),
+        boatCanvas: document.getElementById('boatCanvas'),
+        animalCanvas: document.getElementById('animalCanvas'),
+        npcCanvas: document.getElementById('npcCanvas'),
+        homesCanvas: document.getElementById('homes')
+    };
+
+    // Setup each canvas with error handling
+    Object.entries(canvases).forEach(([name, canvas]) => {
+        if (canvas) {
+            window[name.replace('Canvas', 'Ctx')] = setupCanvas(canvas);
+        }
+    });
+});
+
+function initializeUI() {
+    // Event listeners for sliders
+    const gridSizeSlider = document.getElementById("gridSizeSlider");
+    const perlinNoiseScaleSlider = document.getElementById("perlinNoiseScaleSlider");
+    
+    if (gridSizeSlider) {
+        gridSizeSlider.addEventListener("input", function() {
+            gridSize = parseFloat(this.value);
+            updateVariables();
+        });
+    }
+
+    if (perlinNoiseScaleSlider) {
+        perlinNoiseScaleSlider.addEventListener("input", function() {
+            perlinNoiseScale = parseFloat(this.value);
+            updateVariables();
+        });
+    }
+
+    // Welcome screen buttons
+    const newGameWelcomeScreen = document.getElementById("newGameWelcomeScreen");
+    if (newGameWelcomeScreen) {
+        newGameWelcomeScreen.addEventListener("click", function() {
+            hideWelcomeScreen();
+            generateTerrainMap(gridSize, gridSize, perlinNoiseScale);
+            zoomOutAnimation();
+        });
+    }
+
+    // Race cards
+    const raceCards = document.querySelectorAll(".race-card");
+    raceCards.forEach((raceCard) => {
+        raceCard.addEventListener("click", function() {
+            const welcomePopup = document.getElementById("welcomePopup");
+            const welcomeScreenRaceSelector = document.getElementById("welcomeScreenRaceSelector");
+            const elfCounselor1 = document.getElementById("elfCounselor1");
+            
+            if (welcomePopup) welcomePopup.style.display = "none";
+            if (welcomeScreenRaceSelector) welcomeScreenRaceSelector.style.visibility = 'collapse';
+            if (elfCounselor1) elfCounselor1.style.visibility = "collapse";
+            if (treeCtx) startTrees(treeCtx, cellSize);
+            hideWelcomeScreen();
+            generateTerrainMap(gridSize, gridSize, perlinNoiseScale);
+        });
+    });
+
+    // UI Tester
+    const uiTesterWelcomeScreen = document.getElementById("uiTesterWelcomeScreen");
+    if (uiTesterWelcomeScreen) {
+        uiTesterWelcomeScreen.addEventListener("click", function() {
+            hideWelcomeScreen();
+            const container = document.getElementById("container");
+            const tools = document.getElementById("tools");
+            const bottomToolBar = document.getElementById("bottomToolBar");
+            const gameTab = document.getElementById("gameTab");
+            
+            if (container) container.style.visibility = "visible";
+            if (tools) tools.style.visibility = "visible";
+            if (bottomToolBar) bottomToolBar.style.visibility = "visible";
+            if (gameTab) gameTab.style.display = "block";
+            
+            updateUIbottomToolbar(10000);
+            addNotification("UI Test", "UI Test Mode", "UI elements loaded without game map", [], "#4b81bf");
+        });
+    }
+
+    // Info panel
+    const infoPanel = document.getElementById("infoPanel");
+    if (infoPanel) {
+        infoPanel.addEventListener('click', () => {
+            infoPanel.style.visibility = 'collapse';
+            foundNPC = false;
+        });
+    }
+
+    // NPC Canvas handlers
+    const npcCanvas = document.getElementById("npcCanvas");
+    if (npcCanvas) {
+        npcCanvas.addEventListener("click", handleNPCClick);
+        npcCanvas.addEventListener("mousemove", handleNPCMouseMove);
+    }
+
+    // Bottom tabs
+    const bottomTabIds = ['terrainTab', 'creaturesTab', 'budgetsTab', 'buildingsTab', 'animalsTab'];
+    bottomTabIds.forEach(tabId => {
+        const tabElement = document.getElementById(tabId);
+        if (tabElement) {
+            tabElement.addEventListener('click', () => handleBottomTabClick(tabId));
+        }
+    });
+
+    // Set default active tab
+    const creaturesTab = document.getElementById('creaturesTab');
+    if (creaturesTab) {
+        handleBottomTabClick('creaturesTab');
+    }
+}
 

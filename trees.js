@@ -260,13 +260,15 @@ function distributeOreDeposits(ctx) {
     clearCanvas(oreDepositsCtx);
     oreDeposits = [];
 
-
     betterOreCellsDistribution = groundCells.filter((cell) => {
         const noiseValue = parseFloat(cell.noise);
         return noiseValue >= 0.42;
-
     });
 
+    // Return early if there are no suitable cells for ore deposits
+    if (betterOreCellsDistribution.length === 0) {
+        return;
+    }
 
     const clusterCount = 5; // Number of ore deposit clusters
     const depositsPerCluster = 3;
@@ -300,10 +302,6 @@ function distributeOreDeposits(ctx) {
             const { x, y } = adjacentCells[i];
             drawOreDeposit(ctx, x, y);
         }
-
-
-
-
     }
 
     // Filter out cells with ore deposits from groundCells

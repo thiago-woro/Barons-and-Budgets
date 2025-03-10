@@ -1,0 +1,599 @@
+// Canvas setup function
+function setupCanvas(canvasId, width, height) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) {
+    console.warn(`Canvas ${canvasId} not found`);
+    return [null, null];
+  }
+  
+  const ctx = canvas.getContext("2d");
+  canvas.width = cellSize * rows;
+  canvas.height = cellSize * rows;
+
+  // Set canvas position relative to the container
+  canvas.style.position = "absolute";
+  canvas.style.top = "0";
+  canvas.style.left = "0";
+  return [canvas, ctx];
+}
+
+// UI Functions
+function toggleTab(tabId) {
+  const tab = document.getElementById(tabId);
+  if (!tab) return;
+  
+  const tabWindows = document.querySelectorAll(".card");
+  const tabButtons = document.querySelectorAll(".tabSelector");
+
+  // Hide all tab windows
+  tabWindows.forEach((tabWindow) => {
+    tabWindow.style.display = "none";
+  });
+
+  // Remove "active" class from all tab buttons
+  tabButtons.forEach((tabButton) => {
+    tabButton.classList.remove("active");
+  });
+
+  // Show the clicked tab window
+  tab.style.display = "block";
+
+  // Add "active" class to the clicked tab button
+  const tabButton = document.getElementById(`${tabId}Button`);
+  if (tabButton) tabButton.classList.add("active");
+}
+
+function handleBottomTabClick(tabId) {
+  // Remove active class from all bottom tabs
+  const bottomTabs = document.querySelectorAll('.bottomTabs span');
+  bottomTabs.forEach(tab => {
+    tab.parentElement.classList.remove('active');
+  });
+  
+  // Add active class to clicked tab
+  const clickedTab = document.getElementById(tabId);
+  if (clickedTab && clickedTab.parentElement) {
+    clickedTab.parentElement.classList.add('active');
+  }
+  
+  // Set global variable to the name of the tab
+  window.activeTabBottomLeft = tabId.replace('Tab', '').toLowerCase();
+  
+  // Hide all rows first
+  const rows = ['terrainRow', 'creaturesRow', 'buildingsRow', 'budgetsRow', 'animalsRow'];
+  rows.forEach(rowId => {
+    const row = document.getElementById(rowId);
+    if (row) {
+      row.style.display = 'none';
+    }
+  });
+  
+  // Show only the row corresponding to the clicked tab
+  const rowToShow = tabId.replace('Tab', 'Row');
+  const targetRow = document.getElementById(rowToShow);
+  if (targetRow) {
+    targetRow.style.display = 'flex';
+  }
+
+  console.log(`Active bottom tab: ${window.activeTabBottomLeft}`);
+}
+
+function hideTabs() {
+  const gameTab = document.getElementById("gameTab");
+  const statsTab = document.getElementById("statsTab");
+  const chartTab = document.getElementById("chartTab");
+  const npcTab = document.getElementById("npcTab");
+  const minimizeTabButton = document.getElementById("minimizeTabButton");
+  
+  if (hideMenu === true) {
+    if (gameTab) gameTab.style.display = "block";
+    if (minimizeTabButton) minimizeTabButton.textContent = "📂"; // open folder icon
+    hideMenu = false;
+  } else {
+    hideMenu = true;
+    if (gameTab) gameTab.style.display = "none";
+    if (statsTab) statsTab.style.display = "none";
+    if (chartTab) chartTab.style.display = "none";
+    if (npcTab) npcTab.style.display = "none";
+    if (minimizeTabButton) minimizeTabButton.textContent = "📂"; // folder icon
+  }
+
+  // Store hideMenu value in localStorage
+  localStorage.setItem("hideMenu", JSON.stringify(hideMenu));
+}
+
+function updateVariables() {
+  const gridSizeDisplay = document.getElementById("gridSizeDisplay");
+  const perlinDisplay = document.getElementById("perlinDisplay");
+  
+  if (gridSizeDisplay) gridSizeDisplay.textContent = gridSize;
+  if (perlinDisplay) perlinDisplay.textContent = perlinNoiseScale;
+  
+  console.log(`Updated variables - Grid Size: ${gridSize}, Perlin Noise Scale: ${perlinNoiseScale}`);
+}
+
+function hideWelcomeScreen() {
+  const welcomePopup = document.getElementById("welcomePopup");
+  const welcomeScreen = document.getElementById("welcomeScreen");
+  const container = document.getElementById("container");
+  const tools = document.getElementById("tools");
+  const bottomToolBar = document.getElementById("bottomToolBar");
+  
+  if (welcomePopup) {
+    welcomePopup.style.visibility = "collapse";
+    welcomePopup.style.display = "none";
+  }
+  if (welcomeScreen) welcomeScreen.style.visibility = "collapse";
+  if (container) container.style.visibility = "visible";
+  if (tools) tools.style.visibility = "visible";
+  if (bottomToolBar) bottomToolBar.style.visibility = "visible";
+}
+
+function addNotification(category, title, message, npcs, color) {
+  const tableBody = document.querySelector("#notificationTable tbody");
+  if (!tableBody) return;
+
+  const newRow = document.createElement("tr");
+  newRow.innerHTML = `
+    <td>${category}</td>
+    <td>${title}</td>
+    <td>${message}</td>
+  `;
+  newRow.style.backgroundColor = color;
+
+  tableBody.appendChild(newRow);
+
+  // Create a notification object
+  const notification = {
+    category: category,
+    title: title,
+    message: message,
+    npcs: npcs,
+    color: color
+  };
+  
+  // Check if the table has more than 30 rows
+  const maxRows = 30;
+  if (tableBody.children.length > maxRows) {
+    // Remove the last row(s) until the row count is 30
+    while (tableBody.children.length > maxRows) {
+      tableBody.removeChild(tableBody.children[0]); // Remove the first row
+    }
+  }
+
+  const gameNotificationsTableHeader = document.getElementById("gameNotificationsTableHeader");
+  if (gameNotificationsTableHeader) {
+    gameNotificationsTableHeader.textContent = `${tableBody.children.length} Notifications`;
+  }
+}
+
+function showNPCInfo(npc) {
+  const infoPanel = document.getElementById('infoPanel');
+  if (!infoPanel) return;
+  
+  let infoHtml = `
+    Name: <strong>${npc.name}</strong><br/>
+    Race: ${npc.race}<br/>
+    Age: <strong>${npc.age}</strong><br/>
+    #${npc.myNumber}<br/><br/>
+  `;
+
+  // Check if parents exist before adding parent information
+  if (npc.parents && npc.parents.length > 0) {
+    infoHtml += `<br/>Parent: ${npc.parents[0].name}, ${npc.parents[0].race}`;
+  }
+  if (npc.spouse) {
+    infoHtml += `<br/>Married to: <strong> ${npc.spouse} 💍</strong><br/> `;
+  }
+  infoHtml += `<br/>Profession:<br/>${npc.profession}       
+  <span style="color: green;">$ ${npc.salary}</span><br/> `;
+
+  // Get random conversation line based on npc's profession
+  const conversationLines = purryNPCConversations[npc.profession];
+  let randomLine = "";
+  
+  if (conversationLines && conversationLines.length > 0) {
+    const randomIndex = Math.floor(Math.random() * conversationLines.length);
+    randomLine = conversationLines[randomIndex];
+  }
+
+  infoHtml += `<br/><style="font-size: 13px;">${randomLine}</style=>`;
+
+  if (npc.children.length > 0) {
+    infoHtml += `<br/><strong>${npc.children.length} kids:</strong><ul>`;
+    npc.children.forEach((child) => {
+      infoHtml += `<li>${child.name} - ${child.age}</li>`;
+    });
+    infoHtml += `</ul>`;
+  }
+
+  // Create an img element
+  const imgElement = document.createElement('img');
+
+  if (npc.gender === 'male') {
+    imgElement.src = `./assets/Races/${npc.race}/male/male.png`;
+  } else {
+    imgElement.src = `./assets/Races/${npc.race}/female/female (3).png`;
+  }
+
+  imgElement.height = 100;
+  imgElement.width = 100;
+
+  // Append the img element to infoPanel
+  infoPanel.innerHTML = infoHtml;
+  infoPanel.appendChild(imgElement);
+
+  // Ensure the position is updated
+  npc.updateInfoPanel();
+
+  // Make the info panel visible
+  infoPanel.style.visibility = 'visible';
+}
+
+function updateUIbottomToolbar(totalSalaries) {
+  const yearBottomToolBar = document.getElementById("yearBottomToolBar");
+  const populationBottomToolBar = document.getElementById("populationBottomToolBar");
+  const GDPbottomToolBar = document.getElementById("GDPbottomToolBar");
+  const crystalbottomToolBar = document.getElementById("crystalbottomToolBar");
+  const statsUIhomes = document.getElementById("statsUIhomes");
+  const currentYear = document.getElementById("currentYear");
+
+  function formatGDP(gdp) {
+    if (gdp >= 1e9) {
+      return (gdp / 1e9).toFixed(2) + " Bi"; // Convert to billions
+    } else if (gdp >= 1e6) {
+      return (gdp / 1e6).toFixed(2) + " M"; // Convert to millions
+    } else {
+      return gdp.toFixed(0); // Keep as is if less than a million
+    }
+  }
+
+  if (yearBottomToolBar) yearBottomToolBar.textContent = year;
+  if (populationBottomToolBar) populationBottomToolBar.textContent = npcs.length;
+  if (GDPbottomToolBar) GDPbottomToolBar.textContent = formatGDP(totalSalaries);
+  if (crystalbottomToolBar) crystalbottomToolBar.textContent = (npcs.length * 0.7).toFixed(0) + " tons";
+  if (statsUIhomes) statsUIhomes.textContent = houses.length;
+  if (currentYear) currentYear.textContent = "Year: " + year;
+}
+
+function drawNearCells(ctx, x, y, color, radius) {
+  const centerX = Math.floor(x / cellSize);
+  const centerY = Math.floor(y / cellSize);
+
+  for (let i = -radius; i <= radius; i++) {
+    for (let j = -radius; j <= radius; j++) {
+      const cellX = centerX + i;
+      const cellY = centerY + j;
+      
+      // Calculate distance from center cell
+      const distance = Math.sqrt(i * i + j * j);
+      
+      // Only draw cells within the radius
+      if (distance <= radius) {
+        ctx.fillStyle = color;
+        ctx.fillRect(cellX * cellSize, cellY * cellSize, cellSize, cellSize);
+      }
+    }
+  }
+}
+
+function drawCircle(ctx, x, y, diameter, fillColor) {
+  const radius = diameter / 2;
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.fillStyle = fillColor;
+  ctx.fill();
+}
+
+function drawXOnCanvas() {
+  const ctx = groundCtx;
+  if (!ctx) return;
+  
+  const width = ctx.canvas.width;
+  const height = ctx.canvas.height;
+  
+  // Draw X from corner to corner
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(width, height);
+  ctx.moveTo(width, 0);
+  ctx.lineTo(0, height);
+  ctx.strokeStyle = 'red';
+  ctx.lineWidth = 5;
+  ctx.stroke();
+  
+  // Draw a circle in the center
+  const centerX = width / 2;
+  const centerY = height / 2;
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, 20, 0, Math.PI * 2);
+  ctx.fillStyle = 'red';
+  ctx.fill();
+  
+  console.log("X print intersection 0,0 value: " + ctx.getImageData(0, 0, 1, 1).data[0]);
+}
+
+function setupKeyboardZoom() {
+  const zoomSpeed = 0.1;
+  
+  document.addEventListener('keydown', (e) => {
+    if (!camera) return;
+    
+    if (e.key.toLowerCase() === 'q') {
+      // Increase zoom (zoom in)
+      const newZoom = Math.min(camera.zoom + zoomSpeed, camera.maxZoom);
+      if (newZoom !== camera.zoom) {
+        camera.zoom = newZoom;
+        camera.updateTransform();
+      }
+    } else if (e.key.toLowerCase() === 'e') {
+      // Decrease zoom (zoom out)
+      const newZoom = Math.max(camera.zoom - zoomSpeed, camera.minZoom);
+      if (newZoom !== camera.zoom) {
+        camera.zoom = newZoom;
+        camera.updateTransform();
+      }
+    }
+  });
+  
+  console.log('Keyboard zoom controls initialized: Q to zoom in, E to zoom out');
+}
+
+const zoomOutAnimation = () => {
+  if (!camera) return;
+  
+  const duration = 1000; 
+  const start = performance.now();
+  const initialZoom = camera.zoom;
+  const targetZoom = 0.3; 
+
+  const animateZoom = (currentTime) => {
+    const elapsed = currentTime - start;
+    const progress = Math.min(elapsed / duration, 1);
+
+    // Use a smooth easing function (easeInOutQuad)
+    const easedProgress = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
+
+    // Calculate new zoom level and apply to camera
+    camera.zoom = initialZoom + (targetZoom - initialZoom) * easedProgress;
+    
+    // Update camera transform
+    camera.updateTransform();
+
+    if (progress < 1) {
+      requestAnimationFrame(animateZoom);
+    } else {
+      // Animation complete
+      camera.zoom = targetZoom;
+      camera.updateTransform();
+    }
+  };
+
+  requestAnimationFrame(animateZoom);
+};
+
+// Handle NPC click
+function handleNPCClick(event) {
+  // Only show NPC info if the active tab is "creatures"
+  if (window.activeTabBottomLeft !== "creatures") return;
+  
+  const npcCanvas = document.getElementById("npcCanvas");
+  const infoPanel = document.getElementById("infoPanel");
+  if (!npcCanvas || !infoPanel) return;
+  
+  const rect = npcCanvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  
+  console.log(`Click at (${x}, ${y}), Active tab: ${window.activeTabBottomLeft}`);
+  
+  for (const npc of npcs) {
+    const distance = Math.sqrt((x - npc.x) ** 2 + (y - npc.y) ** 2);
+    if (distance < 20) {
+      console.log(`Clicked NPC: ${npc.name}`);
+      showNPCInfo(npc);
+      foundNPC = true;
+      infoPanel.style.visibility = 'visible';
+      break;
+    }
+  }
+}
+
+// Handle NPC mousemove
+function handleNPCMouseMove(event) {
+  // Only show NPC info if the active tab is "creatures"
+  if (window.activeTabBottomLeft !== "creatures") return;
+  
+  const npcCanvas = document.getElementById("npcCanvas");
+  if (!npcCanvas) return;
+  
+  const rect = npcCanvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  
+  for (const npc of npcs) {
+    const distance = Math.sqrt((x - npc.x) ** 2 + (y - npc.y) ** 2);
+    if (distance < 15) {
+      document.body.style.cursor = 'pointer';
+      return;
+    }
+  }
+  document.body.style.cursor = 'default';
+}
+
+// Main initialization function
+function initializeUI() {
+  console.log("Initializing UI...");
+  
+  // Event listeners for sliders
+  const gridSizeSlider = document.getElementById("gridSizeSlider");
+  const perlinNoiseScaleSlider = document.getElementById("perlinNoiseScaleSlider");
+  
+  if (gridSizeSlider) {
+    gridSizeSlider.addEventListener("input", function() {
+      gridSize = parseFloat(this.value);
+      updateVariables();
+    });
+  }
+
+  if (perlinNoiseScaleSlider) {
+    perlinNoiseScaleSlider.addEventListener("input", function() {
+      perlinNoiseScale = parseFloat(this.value);
+      updateVariables();
+    });
+  }
+
+  // Welcome screen buttons
+  const newGameWelcomeScreen = document.getElementById("newGameWelcomeScreen");
+  if (newGameWelcomeScreen) {
+    newGameWelcomeScreen.addEventListener("click", function() {
+      hideWelcomeScreen();
+      generateTerrainMap(gridSize, gridSize, perlinNoiseScale);
+      zoomOutAnimation();
+    });
+  }
+
+  // Race cards
+  const raceCards = document.querySelectorAll(".race-card");
+  raceCards.forEach((raceCard) => {
+    raceCard.addEventListener("click", function() {
+      const welcomePopup = document.getElementById("welcomePopup");
+      const welcomeScreenRaceSelector = document.getElementById("welcomeScreenRaceSelector");
+      const elfCounselor1 = document.getElementById("elfCounselor1");
+      
+      if (welcomePopup) welcomePopup.style.display = "none";
+      if (welcomeScreenRaceSelector) welcomeScreenRaceSelector.style.visibility = 'collapse';
+      if (elfCounselor1) elfCounselor1.style.visibility = "collapse";
+      if (treeCtx) startTrees(treeCtx, cellSize);
+      hideWelcomeScreen();
+      generateTerrainMap(gridSize, gridSize, perlinNoiseScale);
+    });
+  });
+
+  // New Game Custom button
+  const newGameCustomWelcomeScreen = document.getElementById("newGameCustomWelcomeScreen");
+  if (newGameCustomWelcomeScreen) {
+    newGameCustomWelcomeScreen.addEventListener("click", function() {
+      const welcomePopup = document.getElementById("welcomePopup");
+      const welcomeScreenRaceSelector = document.getElementById("welcomeScreenRaceSelector");
+      const elfCounselor1 = document.getElementById("elfCounselor1");
+      
+      if (welcomePopup) {
+        welcomePopup.style.visibility = "collapse";
+        welcomePopup.style.display = "none";
+      }
+      if (welcomeScreenRaceSelector) welcomeScreenRaceSelector.style.visibility = 'visible';
+      if (elfCounselor1) elfCounselor1.style.visibility = "collapse";
+    });
+  }
+
+  // Load Game button
+  const loadGameWelcomeScreen = document.getElementById("loadGameWelcomeScreen");
+  if (loadGameWelcomeScreen) {
+    loadGameWelcomeScreen.addEventListener("click", function() {
+      hideWelcomeScreen();
+      generateTerrainMap(gridSize, gridSize, perlinNoiseScale);
+    });
+  }
+
+  // UI Tester button
+  const uiTesterWelcomeScreen = document.getElementById("uiTesterWelcomeScreen");
+  if (uiTesterWelcomeScreen) {
+    uiTesterWelcomeScreen.addEventListener("click", function() {
+      hideWelcomeScreen();
+      const container = document.getElementById("container");
+      const tools = document.getElementById("tools");
+      const bottomToolBar = document.getElementById("bottomToolBar");
+      const gameTab = document.getElementById("gameTab");
+      
+      if (container) container.style.visibility = "visible";
+      if (tools) tools.style.visibility = "visible";
+      if (bottomToolBar) bottomToolBar.style.visibility = "visible";
+      if (gameTab) gameTab.style.display = "block";
+      
+      updateUIbottomToolbar(10000);
+      addNotification("UI Test", "UI Test Mode", "UI elements loaded without game map", [], "#4b81bf");
+    });
+  }
+
+  // Info panel
+  const infoPanel = document.getElementById("infoPanel");
+  if (infoPanel) {
+    infoPanel.addEventListener('click', () => {
+      infoPanel.style.visibility = 'collapse';
+      foundNPC = false;
+    });
+  }
+
+  // NPC Canvas handlers
+  const npcCanvas = document.getElementById("npcCanvas");
+  if (npcCanvas) {
+    npcCanvas.addEventListener("click", handleNPCClick);
+    npcCanvas.addEventListener("mousemove", handleNPCMouseMove);
+  }
+
+  // Bottom tabs
+  const bottomTabIds = ['terrainTab', 'creaturesTab', 'budgetsTab', 'buildingsTab', 'animalsTab'];
+  bottomTabIds.forEach(tabId => {
+    const tabElement = document.getElementById(tabId);
+    if (tabElement) {
+      tabElement.addEventListener('click', () => handleBottomTabClick(tabId));
+    }
+  });
+
+  // Set default active tab
+  const creaturesTab = document.getElementById('creaturesTab');
+  if (creaturesTab) {
+    handleBottomTabClick('creaturesTab');
+  }
+  
+  // Minimize tab button
+  const minimizeTabButton = document.getElementById("minimizeTabButton");
+  if (minimizeTabButton) {
+    minimizeTabButton.addEventListener("click", hideTabs);
+  }
+  
+  // Keyboard controls
+  setupKeyboardZoom();
+  
+  // Load saved state
+  const storedHideMenu = localStorage.getItem("hideMenu");
+  if (storedHideMenu !== null) {
+    hideMenu = JSON.parse(storedHideMenu);
+    const gameTab = document.getElementById("gameTab");
+    const statsTab = document.getElementById("statsTab");
+    const chartTab = document.getElementById("chartTab");
+    const npcTab = document.getElementById("npcTab");
+    
+    if (hideMenu === false) {
+      if (gameTab) gameTab.style.display = "block";
+      if (statsTab) statsTab.style.display = "block";
+      if (chartTab) chartTab.style.display = "block";
+      if (npcTab) npcTab.style.display = "block";
+      if (minimizeTabButton) minimizeTabButton.textContent = "Hide";
+    }
+  }
+  
+  console.log("UI initialization complete");
+}
+
+// Initialize global variables
+let foundNPC = false;
+let hideMenu = true;
+
+// Export functions and variables
+window.setupCanvas = setupCanvas;
+window.toggleTab = toggleTab;
+window.handleBottomTabClick = handleBottomTabClick;
+window.hideTabs = hideTabs;
+window.updateVariables = updateVariables;
+window.hideWelcomeScreen = hideWelcomeScreen;
+window.addNotification = addNotification;
+window.showNPCInfo = showNPCInfo;
+window.updateUIbottomToolbar = updateUIbottomToolbar;
+window.drawNearCells = drawNearCells;
+window.drawCircle = drawCircle;
+window.drawXOnCanvas = drawXOnCanvas;
+window.setupKeyboardZoom = setupKeyboardZoom;
+window.zoomOutAnimation = zoomOutAnimation;
+window.initializeUI = initializeUI; 

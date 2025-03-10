@@ -8,7 +8,7 @@ var gridSize = 10; // seems to be unused
 
 let terrainGrid;
 let perlinNoiseScale = 0.03; //original number is 0.025
-rows = 150;  //maximum 300 rows recommend, mid range gpu
+rows = 250;  //maximum 300 rows recommend, mid range gpu
 
 
 let offset = 0.75; //og is 0.35
@@ -49,6 +49,8 @@ let onScreenNPCSlimit = 50 //limits move(), draw() to only these,
 let elfWoodCount = 0;
 let elfFoodCount = 0;
 let elfCrystalliteCount = 0;
+let huntedAnimalsCount = 0;
+let fishCount = 0;
 
 let purriesWoodCount = 0;
 let purriesFoodCount = 0;

@@ -54,18 +54,17 @@ function updateWoodcutter(npc) {
         // This ensures the tree falls as the woodcutter is still chopping
         if (npc.waitTime === Math.floor(npc.maxWaitTime / 2) && npc.stateData.targetTreeIndex !== undefined) {
           dyingTreeAnimation(npc.stateData.targetTreeIndex, () => {
-           // console.log(`woodcutter: ${npc.name} cut down a tree`);
-
             //add wood to the wood count
             elfWoodCount += 1;
+            
+            // Add wood to personal inventory
+            npc.addToInventory('wood');
 
             //log total amount of trees on the map
             console.log(`Total trees remaining on map: ${treePositions.length}`);
 
-           //update the wood count display
+            //update the wood count display
             document.getElementById("woodCount").textContent = elfWoodCount + "/ " + treePositions.length;
- 
-        
           });
         }
       } else {

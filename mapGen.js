@@ -1,8 +1,24 @@
-document.getElementById("gen2").addEventListener("click", function () {
-  trees = [];
-  treePositions = [];
-  //startTrees(treeCtx, cellSize)
-  generateTerrainMap();
+document.addEventListener('DOMContentLoaded', function() {
+    const gen2Button = document.getElementById('gen2');
+    if (gen2Button) {
+        gen2Button.addEventListener('click', function() {
+            trees = [];
+            treePositions = [];
+            //startTrees(treeCtx, cellSize)
+            generateTerrainMap();
+        });
+    }
+    
+    const clearGround = document.getElementById('clearGround');
+    if (clearGround) {
+        clearGround.addEventListener("click", function () {
+            clearCanvas(groundCtx); // Clears the ground canvas
+            clearCanvas(waterCtx); // Clears the water canvas
+            clearCanvas(treeCtx); // Clears the tree canvas
+        });
+    }
+    
+    // Rest of your mapGen.js code
 });
 
 //main terrain map generator function
@@ -247,6 +263,9 @@ function afterMapGen() {
 
   drawHousePaths(flatLandCells, 7, 2);
   //debugTerrain(npcCtx, gridSize, cellSize);
+
+  // Initialize animal populations after everything else is set up
+  starterAnimalPopulations(40);
 }
 
 function drawHousePaths(cellArray, numRowsToSkip, pathCurveAmount) {
@@ -445,13 +464,6 @@ function drawRoundedRect(ctx, x, y, height, borderRadius, color) {
   ctx.closePath();
   ctx.fill();
 }
-
-clearGround.addEventListener("click", function () {
-  //DO NO DELETE
-  clearCanvas(groundCtx); // Clears the ground canvas
-  clearCanvas(waterCtx); // Clears the water canvas
-  clearCanvas(treeCtx); // Clears the tree canvas
-});
 
 function clearCanvas(ctx) {
   // DO NOT DELETE - super useful to clear any canvas before regen/redraw

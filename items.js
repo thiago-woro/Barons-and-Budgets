@@ -111,3 +111,37 @@ const foods = {
 // Example usage:
 console.log(foods.bread); // Accessing the properties of the "Bread" food
 console.log(foods.roastedMeat); // Accessing the properties of the "Roasted Meat" food
+
+// Item class for inventory system
+class Item {
+  constructor(type, amount = 1) {
+    this.type = type;
+    this.amount = amount;
+    this.emoji = this.getEmoji();
+  }
+
+  getEmoji() {
+    const emojiMap = {
+      'wood': '🪵',
+      'meat': '🥩',
+      'fish': '🐟',
+      'ore': '💎',
+      'rice': '🌾'
+    };
+    return emojiMap[this.type] || '❓';
+  }
+
+  // Add items of the same type
+  add(amount) {
+    this.amount += amount;
+  }
+
+  // Remove items
+  remove(amount) {
+    if (this.amount >= amount) {
+      this.amount -= amount;
+      return true;
+    }
+    return false;
+  }
+}

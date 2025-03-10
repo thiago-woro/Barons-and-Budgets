@@ -1,4 +1,4 @@
-// Initialize zoomLevel and other related variables
+// Initialize variables
 let zoomLevel = 1.0;
 let canvasX = 0;
 let canvasY = 0;
@@ -6,6 +6,90 @@ let mouseX = 0;
 let mouseY = 0;
 let cameraX = 0;
 let cameraY = 0;
+let camera = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('container');
+    if (!container) {
+        console.warn('Container element not found');
+        return;
+    }
+
+    // Initialize camera
+    camera = new Camera(container);
+
+    // Initialize canvas elements
+    const canvases = container.querySelectorAll("canvas");
+    let translateX = 0;
+    let translateY = 0;
+    const translateSpeed = 50;
+
+    // WASD controls
+    window.addEventListener("keydown", (event) => {
+        const key = event.key.toLowerCase();
+        switch (key) {
+            case "a": translateX += translateSpeed; break;
+            case "d": translateX -= translateSpeed; break;
+            case "w": translateY += translateSpeed; break;
+            case "s": translateY -= translateSpeed; break;
+        }
+        canvases.forEach((canvas) => {
+            canvas.style.transform = `translate(${translateX}px, ${translateY}px)`;
+        });
+    });
+
+    // Reset camera button
+    const resetCameraButton = document.getElementById("resetCameraButton");
+    if (resetCameraButton) {
+        resetCameraButton.addEventListener("click", function() {
+            if (camera) camera.reset();
+        });
+    }
+
+    // Recenter canvas button
+    const recenterCanvas = document.getElementById("recenterCanvas");
+    if (recenterCanvas) {
+        recenterCanvas.addEventListener("click", () => {
+            if (camera) {
+                resetCanvasPosition();
+                centerCanvasOnMap();
+            }
+        });
+    }
+
+    // ESC key handler
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+            hideMenu = true;
+            const gameTab = document.getElementById("gameTab");
+            const statsTab = document.getElementById("statsTab");
+            const chartTab = document.getElementById("chartTab");
+            const npcTab = document.getElementById("npcTab");
+            const minimizeTabButton = document.getElementById("minimizeTabButton");
+
+            if (gameTab) gameTab.style.display = "none";
+            if (statsTab) statsTab.style.display = "none";
+            if (chartTab) chartTab.style.display = "none";
+            if (npcTab) npcTab.style.display = "none";
+            if (minimizeTabButton) minimizeTabButton.textContent = "Show";
+
+            resetCanvasPosition();
+            if (camera) camera.reset();
+        }
+    });
+
+    // Center on 'c' key
+    document.addEventListener('keydown', (event) => {
+        if (event.key.toLowerCase() === 'c' && camera) {
+            centerCanvasOnMap();
+        }
+    });
+
+    // Mouse click handler
+    if (container && window.boatCtx && window.npcCtx && window.treeCtx && window.pathCtx) {
+        logCellOnClick(container, window.boatCtx, cellSize, window.npcCtx, window.treeCtx, window.pathCtx);
+    }
+});
 
 class Camera {
   constructor(container) {
@@ -109,6 +193,8 @@ class Camera {
   
 
   updateHoveredCell(event) {
+    if (!window.boatCtx) return;  // Exit early if boatCtx is not available
+    
     // Use offsetX/offsetY for mouse coordinates relative to the container
     const mouseX = event.offsetX;
     const mouseY = event.offsetY;
@@ -122,16 +208,15 @@ class Camera {
     const cellScreenX = (cellX * cellSize - this.position.x) * this.zoom;
     const cellScreenY = (cellY * cellSize - this.position.y) * this.zoom;
     // Clear previous highlight
-    boatCtx.clearRect(0, 0, boatCanvas.width, boatCanvas.height);
+    window.boatCtx.clearRect(0, 0, window.boatCtx.canvas.width, window.boatCtx.canvas.height);
     // Draw the highlight
-    boatCtx.fillStyle = 'rgba(128, 0, 128, 0.5)';
-    boatCtx.fillRect(cellScreenX, cellScreenY, cellSize * this.zoom, cellSize * this.zoom);
+    window.boatCtx.fillStyle = 'rgba(128, 0, 128, 0.5)';
+    window.boatCtx.fillRect(cellScreenX, cellScreenY, cellSize * this.zoom, cellSize * this.zoom);
     // Update camera zoom info with additional cell info
     const cameraZoomInfo = document.getElementById('cameraZoomInfo');
     if (cameraZoomInfo) {
       cameraZoomInfo.innerHTML = `updateHoveredCell: Zoom: ${this.zoom.toFixed(2)} | Position: (${this.position.x.toFixed(2)}, ${this.position.y.toFixed(2)}) | Cell: (${cellX}, ${cellY}) | Screen: (${cellScreenX.toFixed(2)}, ${cellScreenY.toFixed(2)})`;
     }
-    
   }
 
   updateTransform() {
@@ -175,59 +260,6 @@ class Camera {
     this.updateTransform();
   }
 }
-
-// Initialize camera
-const camera = new Camera(container);
-
-const canvases = container.querySelectorAll("canvas");
-        let translateX = 0;
-        let translateY = 0;
-
-        // Adjust the translation values based on your desired speed
-        const translateSpeed = 50;
-
-        window.addEventListener("keydown", (event) => {
-            const key = event.key.toLowerCase();
-
-            switch (key) {
-                case "a":
-                    translateX += translateSpeed;
-                    break;
-                case "d":
-                    translateX -= translateSpeed;
-                    break;
-                case "w":
-                    translateY += translateSpeed;
-                    break;
-                case "s":
-                    translateY -= translateSpeed;
-                    break;
-            }
-
-            // Apply the translation to all canvas elements
-            canvases.forEach((canvas) => {
-                canvas.style.transform = `translate(${translateX}px, ${translateY}px)`;
-            });
-        });
-
-// Add event listener for the reset camera button
-document.getElementById("resetCameraButton").addEventListener("click", function() {
-  camera.reset();
-});
-
-// Listen for 'Esc' key
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") {
-    hideMenu = true;
-    gameTab.style.display = "none";
-    statsTab.style.display = "none";
-    chartTab.style.display = "none";
-    npcTab.style.display = "none";
-    minimizeTabButton.textContent = "Show";
-    resetCanvasPosition();
-    camera.reset(); // Reset the camera too
-  }
-});
 
 ///this works - do not delete
 function getAdjacentCells(targetCell) {
@@ -278,21 +310,11 @@ function logCellOnClick(container, ctx, cellSize, npcCtx, treeCtx, pathCtx) {
   });
 }
 
-logCellOnClick(container, boatCtx, cellSize, npcCtx, treeCtx, pathCtx);
-
-
-
 // Reset camera controls - DO NOT DELETE
 function resetCanvasPosition() {
   // Update camera object instead of directly setting values
   camera.reset();
 }
-
-// Listen for click on the 'recenterCanvas' icon
-document.getElementById("recenterCanvas").addEventListener("click", () => {
-  resetCanvasPosition();
-  centerCanvasOnMap();
-});
 
 // Function to center the canvas on the map
 function centerCanvasOnMap() {
@@ -324,12 +346,3 @@ function centerCanvasOnMap() {
 
   camera.updateTransform();
 }
-
-
-
-document.addEventListener('keydown', (event) => {
-  if (event.key.toLowerCase() === 'c') {
-
-    centerCanvasOnMap();
-  }
-});

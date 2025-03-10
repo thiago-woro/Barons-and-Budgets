@@ -1,6 +1,3 @@
-
-
-
 const houseSimple = new Image();
 houseSimple.src = '/assets/tilesets/houses/simple.png';
 
@@ -21,8 +18,6 @@ stableHouse.src = '/assets/tilesets/houses/stable.png';
 
 const buildSound = new Audio('/assets/sounds/building_completed.wav');
 
-
-
 // Create an array to hold the house images
 const houseImages = [];
 
@@ -34,10 +29,39 @@ houseImages.push(houseMint);
 houseImages.push(houseBlack);
 houseImages.push(stableHouse);
 
-class House {
-  constructor(x, y) {
-    this.x = x * cellSize;
-    this.y = y * cellSize;
+class Building {
+  constructor(x, y, cellSize, owner) {
+    this.x = x;
+    this.y = y;
+    this.size = cellSize;
+    this.owner = owner;
+    this.type = "Building";
+    this.inhabitants = [];
+    this.upgrades = [];
+  }
+
+  addInhabitant(npc) {
+    this.inhabitants.push(npc);
+  }
+
+  addUpgrade(upgrade) {
+    this.upgrades.push(upgrade);
+  }
+
+  draw(buildingCtx, cellSize) {
+    // Select a random house image from the array
+    const randomHouseImage = houseImages[Math.floor(Math.random() * houseImages.length)];
+    
+    // Draw the house image
+    buildingCtx.drawImage(randomHouseImage, this.x, this.y, cellSize, cellSize);
+  }
+}
+
+class Home extends Building {
+  constructor(x, y, size) {
+    super(x, y, size);
+    this.type = "Home";
+    this.emoji = "🏠";
     this.inhabitants = []; // Array to store NPCs living in this house
     this.upgrades = []; // Array to store home upgrades
     this.economicStatus = "Average"; // Economic status of the house
@@ -50,7 +74,7 @@ class House {
     buildSound.play();
   }
 
-   validateCells() {
+  validateCells() {
     // Get the last placed house
     const lastHouse = houses[houses.length - 1];
   
@@ -89,74 +113,55 @@ class House {
     console.error('House constructed at (x:', this.x / cellSize, ', y:', this.y / cellSize, ')');
   }
   
-  
-    // Helper function to find a random adjacent cell
-    findRandomAdjacentCell() {
-      const currentX = Math.floor(this.x / cellSize);
-      const currentY = Math.floor(this.y / cellSize);
-  
-      const adjacentCells = [
-        { x: currentX - 2, y: currentY },
-        { x: currentX + 2, y: currentY },
-        { x: currentX, y: currentY - 2 },
-        { x: currentX, y: currentY + 2 },
-      ];
-  
-      const validAdjacentCells = adjacentCells.filter((cell) =>
-        availableHouseCells.some(
-          (groundCell) =>
-            groundCell.x === cell.x &&
-            groundCell.y === cell.y &&
-            !houses.some(
-              (existingHouse) =>
-                Math.floor(existingHouse.x / cellSize) === cell.x &&
-                Math.floor(existingHouse.y / cellSize) === cell.y
-            )
-        )
+  findRandomAdjacentCell() {
+    const currentX = Math.floor(this.x / cellSize);
+    const currentY = Math.floor(this.y / cellSize);
+
+    const adjacentCells = [
+      { x: currentX - 2, y: currentY },
+      { x: currentX + 2, y: currentY },
+      { x: currentX, y: currentY - 2 },
+      { x: currentX, y: currentY + 2 },
+    ];
+
+    const validAdjacentCells = adjacentCells.filter((cell) =>
+      availableHouseCells.some(
+        (groundCell) =>
+          groundCell.x === cell.x &&
+          groundCell.y === cell.y &&
+          !houses.some(
+            (existingHouse) =>
+              Math.floor(existingHouse.x / cellSize) === cell.x &&
+              Math.floor(existingHouse.y / cellSize) === cell.y
+          )
+      )
+    );
+
+    if (validAdjacentCells.length > 0) {
+      const randomIndex = Math.floor(
+        Math.random() * validAdjacentCells.length
       );
-  
-      if (validAdjacentCells.length > 0) {
-        const randomIndex = Math.floor(
-          Math.random() * validAdjacentCells.length
-        );
-        console.log(`Found a place for 🏠✅ `);
-        
-        return validAdjacentCells[randomIndex];
-      }
-  
-      return null; // No valid adjacent cell found
+      console.log(`Found a place for 🏠✅ `);
+      
+      return validAdjacentCells[randomIndex];
     }
-  
 
-  // Method to draw the house on the ground canvas
+    return null; // No valid adjacent cell found
+  }
+
   draw(ctx) {
-
-    if (Math.random() < 0.4) {
-      this.y -= 50;
-    }
-
-
-    // Randomly select an image from the houseImages array
-    const randomIndex = Math.floor(Math.random() * houseImages.length);
-    const selectedHouseImage = houseImages[randomIndex];
-
-    //draw house
-    ctx.drawImage(selectedHouseImage, this.x, this.y, cellSize * 2, cellSize * 2);
-
-    // draw house shadow
-    drawCircle(pathCtx,  this.x,  this.y, 20, "rgba(227, 204, 162, 0.3)");
-
-     //drawRectanglesBetweenHouses(houses, pathCtx);
-     drawPaths(houses, pathCtx);
-
+    super.draw(ctx);
+    // Draw home emoji
+    ctx.font = "20px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(this.emoji, this.x + this.size/2, this.y + this.size/2);
   }
 
   addInhabitant(npc) {
     this.inhabitants.push(npc);
   }
 }
-
-
 
 function drawPaths(houses, ctx) {
   const lineHeight = Math.floor(Math.random() * 7) + 1;
@@ -210,9 +215,6 @@ function drawPaths(houses, ctx) {
     }
   }
 }
-
-
-
 
 function drawRectanglesBetweenHouses(houses, ctx) {
   const lineHeight = Math.floor(Math.random() * 7) + 1;
@@ -300,60 +302,8 @@ function drawRectanglesBetweenHouses(houses, ctx) {
 
 //commercial buildings
 
-class Building {
-  constructor(x, y, cellSize, owner) {
-    this.x = x * cellSize;
-    this.y = y * cellSize;
-    this.owner = owner; // The NPC owner of the building
-    this.type = owner.profession; // Type of the building based on owner's profession
-    this.inhabitants = []; // Array to store NPCs or characters in the building
-    this.upgrades = []; // Array to store building upgrades
-    this.economicStatus = "Average"; // Economic status of the building
-    this.value = Math.floor(Math.random() * 100000) + 50000; // Random building value
-  }
-
-  // Method to add an inhabitant (NPC) to this building
-  addInhabitant(npc) {
-    this.inhabitants.push(npc);
-  }
-
-  // Method to add an upgrade to the building
-  addUpgrade(upgrade) {
-    this.upgrades.push(upgrade);
-  }
-
-  // Method to draw the building on the canvas
-  draw(buildingCtx, cellSize) {
-    // Choose emoji character based on building type, economic status, and upgrades
-    let emoji = "🏠"; // Default emoji for average house
-
-    if (this.type === "House") {
-      if (this.economicStatus === "Wealthy") {
-        emoji = "🏡"; // Emoji for wealthy house
-      } else if (this.economicStatus === "Poor") {
-        emoji = "🏚"; // Emoji for poor house
-      } else if (this.upgrades.length > 0) {
-        emoji = "🏢"; // Emoji for house with upgrades
-      }
-    } else if (this.type === "Shop") {
-      // Add emoji for shops based on their attributes or upgrades
-      // Customize this part based on your game mechanics
-    } else if (this.type === "Guild") {
-      // Add emoji for guilds based on their attributes or upgrades
-      // Customize this part based on your game mechanics
-    }
-
-    // Draw the emoji on the canvas
-    buildingCtx.font = "bold 20px Arial";
-    buildingCtx.fillText(emoji, this.x, this.y);
-
-    //console.log(`✅ ${this.type} placed on map!\n\n  X: ${this.x}, Y: ${this.y}`);
-  }
-}
-
-
-  // Convert waterCells to a Set for faster lookup
-  const waterSet = new Set(waterCells.map((cell) => `${cell.x},${cell.y}`));
+// Convert waterCells to a Set for faster lookup
+const waterSet = new Set(waterCells.map((cell) => `${cell.x},${cell.y}`));
 
 function bfsFindPath(waterCells, startCell) {
 
