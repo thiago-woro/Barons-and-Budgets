@@ -438,3 +438,58 @@ class Animal {
     }
   }
 } 
+
+
+function starterAnimalPopulations(amount = 43) {
+  // Clear existing animals
+  animals = [];
+
+  // Group cells by terrain type
+  const sandCells = groundCells.filter(cell => parseFloat(cell.noise) < 0.05);
+  const mountainCells = groundCells.filter(cell => parseFloat(cell.noise) > 0.4);
+  const middleCells = groundCells.filter(cell => {
+    const noise = parseFloat(cell.noise);
+    return noise >= 0.15 && noise <= 0.2;
+  });
+
+  // Distribution percentages
+  const coyotePercent = 0.10;  // 15% coyotes
+  const bearPercent = 0.10;    // 15% bears
+  const sheepPercent = 0.45;   // 35% sheep
+  const chickenPercent = 0.35; // 35% chickens
+
+  // Calculate counts
+  const coyoteCount = Math.floor(amount * coyotePercent);
+  const bearCount = Math.floor(amount * bearPercent);
+  const sheepCount = Math.floor(amount * sheepPercent);
+  const chickenCount = Math.floor(amount * chickenPercent);
+
+  // Helper function to place animals
+  function placeAnimals(count, type, cells) {
+    for (let i = 0; i < count; i++) {
+      if (cells.length === 0) return;
+      const randomIndex = Math.floor(Math.random() * cells.length);
+      const cell = cells[randomIndex];
+      // Remove used cell to prevent overlap
+      cells.splice(randomIndex, 1);
+      
+      const animal = new Animal(cell.x, cell.y, type);
+      animals.push(animal);
+    }
+  }
+
+  // Place predators
+  placeAnimals(coyoteCount, 'creaturesCardCoyote', sandCells);
+  placeAnimals(bearCount, 'creaturesCardBear', mountainCells);
+
+  // Place prey
+  placeAnimals(sheepCount, 'creaturesCardSheep', middleCells);
+  placeAnimals(chickenCount, 'creaturesCardChicken', middleCells);
+
+  console.log(`Distributed ${animals.length} animals:`,
+    `${coyoteCount} coyotes,`,
+    `${bearCount} bears,`,
+    `${sheepCount} sheep,`,
+    `${chickenCount} chickens`
+  );
+} 
