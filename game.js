@@ -36,6 +36,13 @@ startButton.addEventListener("click", function () {
 
 startColony.addEventListener("click", function () {
   startNPCs(npcCtx, cellSize);
+  
+  // Initialize fishing resources after NPCs are started
+  if (typeof window.initializeFishingResources === 'function') {
+    window.initializeFishingResources();
+    console.log("Fishing resources initialized after startNPCs");
+  }
+  
   startButton.removeAttribute("disabled");
 });
 
@@ -83,8 +90,8 @@ function gameLoop(timestamp) {
       npc.update();
       
       // Only move NPCs if they're not in a stationary state
-      const stationaryStates = ["cuttingTree", "restingAtHome"];
-      if (npc.shouldMove() && !stationaryStates.includes(npc.state)) {
+      const stationaryStates = ["cuttingTree", "restingAtHome", "constructingHarbor", "constructingFarm", "constructing"];
+      if (npc.shouldMove() && !stationaryStates.includes(npc.state) && !npc.state.includes("constructing")) {
         npc.move();
       }
       
@@ -97,6 +104,20 @@ function gameLoop(timestamp) {
          drawPath(npcCtx, npc.currentPath);
       }
     });
+
+    // Update and draw fishing boats if the function exists
+    if (typeof window.updateAndDrawFishingBoats === 'function') {
+      window.updateAndDrawFishingBoats(npcCtx);
+    }
+
+    // Draw all buildings
+    if (buildings && buildings.length > 0) {
+      buildings.forEach(building => {
+        if (typeof building.draw === 'function') {
+          building.draw(npcCtx);
+        }
+      });
+    }
 
     // Only run these activities on major activities loops (every 5th loop)
     if (isMajorActivitiesLoop) {

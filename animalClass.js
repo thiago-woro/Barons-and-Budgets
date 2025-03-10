@@ -493,3 +493,43 @@ function starterAnimalPopulations(amount = 43) {
     `${chickenCount} chickens`
   );
 } 
+
+
+/* 
+function moveCoyote(coyote, prey = null) {
+  // If chasing prey, use normal movement logic
+  if (prey) {
+    // Use existing movement logic
+    return moveAnimal(coyote);
+  }
+
+  // If no sand cells available, use normal movement
+  if (sandCells.length === 0) {
+    return moveAnimal(coyote);
+  }
+
+  // Find nearby sand cells within movement range
+  const nearbySteps = 3; // How far the coyote can move
+  const nearbySand = sandCells.filter(cell => {
+    const distance = Math.sqrt(
+      Math.pow(cell.x - coyote.x, 2) + 
+      Math.pow(cell.y - coyote.y, 2)
+    );
+    return distance <= nearbySteps;
+  });
+
+  // If no nearby sand cells, stay in place
+  if (nearbySand.length === 0) {
+    return false;
+  }
+
+  // Choose a random nearby sand cell
+  const targetCell = nearbySand[Math.floor(Math.random() * nearbySand.length)];
+  
+  // Update coyote position
+  coyote.x = targetCell.x;
+  coyote.y = targetCell.y;
+  
+  return true;
+}
+ */

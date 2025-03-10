@@ -159,7 +159,7 @@ function drawHunterInfo(npc, ctx) {
       bgColor = "rgba(152, 251, 152, 0.7)";
       break;
     case "movingToHome": 
-      text = "🚶 To home"; 
+      text = "To home"; 
       bgColor = "rgba(135, 206, 250, 0.7)";
       break;
     case "restingAtHome": 

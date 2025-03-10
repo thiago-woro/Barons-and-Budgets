@@ -180,7 +180,7 @@ function drawFarmerInfo(npc, ctx) {
       bgColor = "rgba(152, 251, 152, 0.7)";
       break;
     case "movingToFarmSpot": 
-      text = "🚶 To farm spot"; 
+      text = "To farm spot"; 
       bgColor = "rgba(135, 206, 250, 0.7)";
       break;
     case "constructingFarm": 

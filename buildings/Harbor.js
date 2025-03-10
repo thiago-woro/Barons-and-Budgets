@@ -1,4 +1,13 @@
 // Harbor building class
+// Load the harbor image once globally
+const harborImage = new Image();
+harborImage.src = "assets/buildings/harbor.png";
+console.log("Loading harbor image from: assets/buildings/harbor.png");
+
+// Add an onload handler to log when the image is loaded
+harborImage.onload = function() {
+};
+
 class Harbor extends Building {
   constructor(x, y, size, owner) {
     super(x, y, size, owner);
@@ -6,15 +15,40 @@ class Harbor extends Building {
     this.emoji = "⚓";
     this.owner = owner;
     this.resources = Infinity; // Harbors don't deplete
-    this.fishStorage = 0; // Amount of fish stored
-    this.maxFishStorage = 50; // Maximum fish storage capacity
+    this.id = `harbor_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    
+    // Log when the harbor is created
+    console.log(`Harbor created at (${x}, ${y}) with size ${size}`);
   }
 
   draw(ctx) {
-    //use assets/harbor.png
-    const harborImage = new Image();
-    harborImage.src = "assets/harbor.png";
-    ctx.drawImage(harborImage, this.x, this.y, this.size, this.size);
+    // Draw the harbor image if it's loaded
+    if (harborImage && harborImage.complete) {
+      // Draw with proper dimensions - make it larger and centered
+      const scale = 2.0; // Make it twice as large
+      const width = this.size * scale;
+      const height = this.size * scale;
+      
+      // Center the image on the harbor position
+      const x = this.x - (width - this.size) / 2;
+      const y = this.y - (width - this.size) / 2;
+      
+      ctx.drawImage(harborImage, x, y, 99, 99);
+      
+      // Debug info
+      console.log(`Harbor drawn at (${x}, ${y}) with size ${width}x${height}`);
+    } else {
+      // If image is not loaded yet, draw a placeholder
+      ctx.fillStyle = "blue";
+      ctx.fillRect(this.x, this.y, this.size, this.size);
+      ctx.fillStyle = "white";
+      ctx.font = "20px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(this.emoji, this.x + this.size/2, this.y + this.size/2);
+      
+      console.error("Harbor image not loaded yet, drawing placeholder");
+    }
 
     const x = this.x / cellSize;
     const y = this.y / cellSize;
@@ -23,42 +57,6 @@ class Harbor extends Building {
     ctx.strokeStyle = "rgba(0, 100, 255, 0.5)";
     ctx.lineWidth = 2;
     ctx.strokeRect(x * cellSize - cellSize/2, y * cellSize - cellSize/2, cellSize * 2, cellSize * 2);
-    
-    // Draw fish storage indicator if there are fish
-    if (this.fishStorage > 0) {
-      const percentage = this.fishStorage / this.maxFishStorage;
-      ctx.fillStyle = "rgba(0, 100, 255, 0.3)";
-      ctx.fillRect(
-        x * cellSize - cellSize/2, 
-        (y + 1) * cellSize - percentage * cellSize, 
-        cellSize * 2, 
-        percentage * cellSize
-      );
-      
-      // Draw fish count
-      ctx.fillStyle = "white";
-      ctx.font = "12px Arial";
-      ctx.fillText(
-        `🐟 ${this.fishStorage}`, 
-        (x + 0.5) * cellSize, 
-        (y + 0.8) * cellSize
-      );
-    }
-  }
-  
-  // Add fish to storage
-  addFish(amount) {
-    const spaceLeft = this.maxFishStorage - this.fishStorage;
-    const amountToAdd = Math.min(amount, spaceLeft);
-    this.fishStorage += amountToAdd;
-    return amountToAdd; // Return how much was actually added
-  }
-  
-  // Remove fish from storage
-  removeFish(amount) {
-    const amountToRemove = Math.min(amount, this.fishStorage);
-    this.fishStorage -= amountToRemove;
-    return amountToRemove; // Return how much was actually removed
   }
   
   // Animation method

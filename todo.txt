@@ -14,6 +14,9 @@ change farming spot, its going to the sea, for some reason...
 issue an alert when mine Ore Deposits deplete.
 stop moving animals when game is paused.
 
+global var for sandCells. grasslandCells.
+move coyotes on sandCells only.
+
 
 
 

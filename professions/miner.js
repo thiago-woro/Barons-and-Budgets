@@ -164,7 +164,7 @@ function drawMinerInfo(npc, ctx) {
       bgColor = "rgba(152, 251, 152, 0.7)";
       break;
     case "movingToOre": 
-      text = "🚶 To ore"; 
+      text = "To ore"; 
       bgColor = "rgba(135, 206, 250, 0.7)";
       break;
     case "mining": 
@@ -176,7 +176,7 @@ function drawMinerInfo(npc, ctx) {
       bgColor = "rgba(152, 251, 152, 0.7)";
       break;
     case "movingToHome": 
-      text = "🚶 To home"; 
+      text = "To home"; 
       bgColor = "rgba(135, 206, 250, 0.7)";
       break;
     case "restingAtHome": 

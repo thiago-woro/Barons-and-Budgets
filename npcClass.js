@@ -505,9 +505,9 @@ class NPC {
 
 const raceProfessions = {
   Purries: [
-    { profession: "Miner", probability: 0.3, salary: 300 },
-    { profession: "Hunter", probability: 0.4, salary: 1400 },
-    { profession: "Fisher", probability: 0.3, salary: 1500 },
+    { profession: "Miner", probability: 0.2, salary: 300 },
+    { profession: "Hunter", probability: 0.2, salary: 1400 },
+    { profession: "Fisher", probability: 0.5, salary: 1500 },
 /*     { profession: "Jester", probability: 0.05, salary: 1000 }, // Low probability
     { profession: "Innkeeper", probability: 0.1, salary: 1200 }, // Medium probability
     { profession: "Tailor", probability: 0.15, salary: 1300 },

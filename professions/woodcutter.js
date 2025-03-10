@@ -59,9 +59,6 @@ function updateWoodcutter(npc) {
             //add wood to the wood count
             elfWoodCount += 1;
 
-            //log total amount of trees on the map
-            console.log(`Total trees remaining on map: ${treePositions.length}`);
-
            //update the wood count display
             document.getElementById("woodCount").textContent = elfWoodCount + "/ " + treePositions.length;
  
@@ -135,7 +132,7 @@ function drawWoodcutterInfo(npc, ctx) {
       bgColor = "rgba(152, 251, 152, 0.7)"; // Pale green
       break;
     case "movingToTree": 
-      text = "🚶 To tree"; 
+      text = "To tree"; 
       bgColor = "rgba(135, 206, 250, 0.7)"; // Light blue
       break;
     case "cuttingTree": 
@@ -147,7 +144,7 @@ function drawWoodcutterInfo(npc, ctx) {
       bgColor = "rgba(152, 251, 152, 0.7)"; // Pale green
       break;
     case "movingToHome": 
-      text = "🚶 To home"; 
+      text = "To home"; 
       bgColor = "rgba(135, 206, 250, 0.7)"; // Light blue
       break;
     case "restingAtHome": 

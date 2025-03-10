@@ -1,3 +1,4 @@
+
 document.getElementById("gen2").addEventListener("click", function () {
   trees = [];
   treePositions = [];
@@ -20,6 +21,7 @@ function generateTerrainMap() {
   houses = [];
   npcs = [];
   emptyCells = [];
+  sandCells = []; // Add this line
   
   // Clear all canvases
   clearCanvas(groundCtx);
@@ -79,6 +81,16 @@ function generateTerrainMap() {
           color: terrainMap[y][x],
           noise: smoothedNoiseValue.toFixed(5),
         });
+        
+        // After adding to groundCells, check if it's a sand cell
+        if (smoothedNoiseValue < 0.09) {
+          sandCells.push({
+            x,
+            y,
+            color: terrainMap[y][x],
+            noise: smoothedNoiseValue.toFixed(5),
+          });
+        }
       } else {
         // For water cells, use a non-linear mapping to create more variation in shallow water
         // and less variation in deep water
@@ -249,7 +261,7 @@ function afterMapGen() {
   //debugTerrain(npcCtx, gridSize, cellSize);
 
   // Initialize animal populations after everything else is set up
-  starterAnimalPopulations(10);
+  starterAnimalPopulations(0);  //animpop
 }
 
 function drawHousePaths(cellArray, numRowsToSkip, pathCurveAmount) {
@@ -475,7 +487,7 @@ function clearNPC() {
 // Function to draw sand texture on beach/sand tiles
 function drawSandTexture(ctx) {
   // Get all sand cells (cells with noise below 0.04)
-  const sandCells = groundCells.filter(cell => {
+   sandCells = groundCells.filter(cell => {
     return cell.noise && parseFloat(cell.noise) < 0.09;
   });
   
