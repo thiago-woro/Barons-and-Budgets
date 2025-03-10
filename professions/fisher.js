@@ -176,11 +176,6 @@ let boatImageFailed = false;
 
 // Pre-calculate data for pathfinding
 function preCalculateData() {
-  // Skip if waterCells or groundCells are not defined
-  if (!waterCells || !Array.isArray(waterCells) || !groundCells || !Array.isArray(groundCells)) {
-    console.error("Cannot pre-calculate data - water or ground cells not defined");
-    return;
-  }
 
   // Build the water cells lookup map for O(1) access
   waterCellsMap.clear();
@@ -345,7 +340,7 @@ function generateFishingSpotsForHarbor(harbor) {
   if (preCalc.harborFishingSpots.has(key)) return preCalc.harborFishingSpots.get(key);
 
   const fishingSpots = [];
-  const spotsToGenerate = 20;
+  const spotsToGenerate = 3;
   const harborGridX = Math.floor(harbor.x / cellSize);
   const harborGridY = Math.floor(harbor.y / cellSize);
 
@@ -615,7 +610,7 @@ class FishingBoat {
     if (pathCompleted) {
       if (this.state === "goingToFishSpot") {
         this.state = "fishing";
-        this.waitTime = 20; // Time to fish
+        this.waitTime = 5; // Time to fish
       } else if (this.state === "returningToHarbor") {
         // Process the catch
         this.processCatch();

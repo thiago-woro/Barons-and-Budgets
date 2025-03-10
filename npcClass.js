@@ -88,6 +88,8 @@ class NPC {
     } else if (this.profession === "Fisher") {
       if (typeof updateFisher === 'function') {
         updateFisher(this);
+      } else if (typeof window.updateFisher === 'function') {
+        window.updateFisher(this);
       } else {
         console.warn("updateFisher function not available yet for NPC:", this.id);
       }
