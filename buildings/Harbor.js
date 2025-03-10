@@ -10,47 +10,54 @@ harborImage.onload = function() {
 
 class Harbor extends Building {
   constructor(x, y, size, owner) {
-    super(x, y, size, owner);
+    // Ensure size has a default value if undefined
+    const safeSize = size || 20; // Default size of 20 if not provided
+    
+    super(x, y, safeSize, owner);
     this.type = "Harbor";
     this.emoji = "⚓";
     this.owner = owner;
     this.resources = Infinity; // Harbors don't deplete
     this.id = `harbor_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     
+    // Ensure this.size is explicitly set
+    this.size = safeSize;
+    
     // Log when the harbor is created
-    console.log(`Harbor created at (${x}, ${y}) with size ${size}`);
+    console.log(`Harbor created at (${x}, ${y}) with size ${this.size}`);
   }
 
   draw(ctx) {
     // Ensure valid coordinates and size
-    if (isNaN(this.x) || isNaN(this.y) || isNaN(this.size)) {
+    if (isNaN(this.x) || isNaN(this.y)) {
       console.error(`Invalid harbor coordinates: (${this.x}, ${this.y}) with size ${this.size}`);
       return; // Skip drawing if coordinates are invalid
     }
+    
+    // If size is undefined, use a default value
+    const harborSize = this.size || 20;
     
     // Draw the harbor image if it's loaded
     if (harborImage && harborImage.complete) {
       // Draw with proper dimensions - make it larger and centered
       const scale = 2.0; // Make it twice as large
-      const width = this.size * scale;
-      const height = this.size * scale;
+      const width = harborSize * scale;
+      const height = harborSize * scale;
       
       // Center the image on the harbor position
-      const x = this.x - (width - this.size) / 2;
-      const y = this.y - (width - this.size) / 2;
+      const x = this.x - (width - harborSize) / 2;
+      const y = this.y - (width - harborSize) / 2;
       
       ctx.drawImage(harborImage, x, y, 99, 99);
-      
-      // Remove the debug log that runs every frame
     } else {
       // If image is not loaded yet, draw a placeholder
       ctx.fillStyle = "blue";
-      ctx.fillRect(this.x, this.y, this.size, this.size);
+      ctx.fillRect(this.x, this.y, harborSize, harborSize);
       ctx.fillStyle = "white";
       ctx.font = "20px Arial";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(this.emoji, this.x + this.size/2, this.y + this.size/2);
+      ctx.fillText(this.emoji, this.x + harborSize/2, this.y + harborSize/2);
     }
 
     const x = this.x / cellSize;

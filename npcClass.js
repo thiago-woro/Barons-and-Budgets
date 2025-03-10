@@ -86,7 +86,11 @@ class NPC {
     } else if (this.profession === "Hunter") {
       updateHunter(this);
     } else if (this.profession === "Fisher") {
-      updateFisher(this);
+      if (typeof updateFisher === 'function') {
+        updateFisher(this);
+      } else {
+        console.warn("updateFisher function not available yet for NPC:", this.id);
+      }
     } else if (this.profession === "Miner") {
       updateMiner(this);
     } else if (this.profession === "Farmer") {

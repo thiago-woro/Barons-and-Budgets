@@ -37,10 +37,9 @@ startButton.addEventListener("click", function () {
 startColony.addEventListener("click", function () {
   startNPCs(npcCtx, cellSize);
   
-  // Initialize fishing resources after NPCs are started
-  if (typeof window.initializeFishingResources === 'function') {
-    window.initializeFishingResources();
-    console.log("Fishing resources initialized after startNPCs");
+  // Initialize fishing functionality if available
+  if (typeof initializeFishingResources === 'function') {
+    initializeFishingResources();
   }
   
   startButton.removeAttribute("disabled");
@@ -105,9 +104,9 @@ function gameLoop(timestamp) {
       }
     });
 
-    // Update and draw fishing boats if the function exists
-    if (typeof window.updateAndDrawFishingBoats === 'function') {
-      window.updateAndDrawFishingBoats(npcCtx);
+    // Update and draw fishing boats if the fisher module is loaded
+    if (typeof updateAndDrawFishingBoats === 'function') {
+      updateAndDrawFishingBoats(npcCtx);
     }
 
     // Draw all buildings

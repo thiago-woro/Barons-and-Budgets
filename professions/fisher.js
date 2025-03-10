@@ -1,28 +1,167 @@
 // Fisher profession behaviors
 // This file contains all the logic for fisher NPCs
 
+// Don't destructure these functions since we have local versions with the same names
+// Just use the global functions directly when needed
+
+// Define updateFisher first to make it globally available
+function updateFisher(npc) {
+  switch (npc.state) {
+    case "idle":
+      // First, check if there's a harbor for our race or if we need to build one
+      if (!harborsByRace[npc.race]) {
+        // No harbor for our race yet, transition to building a harbor
+        npc.transitionTo("buildingHarbor");
+        return;
+      }
+      
+      // If we already have a boat, just go to fishing state
+      if (fishingBoats.some(boat => boat.owner === npc)) {
+        npc.transitionTo("fishing");
+        return;
+      }
+      
+      // Create a new fishing boat for this NPC
+      const harbor = harborsByRace[npc.race];
+      const newBoat = new FishingBoat(harbor, npc);
+      fishingBoats.push(newBoat);
+      
+      // Transition to fishing state
+      npc.transitionTo("fishing");
+      break;
+      
+    case "fishing":
+      // Just wait and let the boat do its work
+      // The fishing spot is handled by the boat
+      npc.animationState = "working";
+      
+      // Check if our boat has returned with fish
+      const myBoat = fishingBoats.find(boat => boat.owner === npc);
+      if (myBoat && myBoat.hasReturnedWithFish()) {
+        // Display a "Fish caught!" animation
+        npc.animationState = "celebrating";
+        
+        // Trigger the harbor to show a fish collection animation
+        const harbor = harborsByRace[npc.race];
+        if (harbor && typeof harbor.animateEmoji === 'function') {
+          harbor.animateEmoji("collecting", "🐟", 2000);
+        }
+      }
+      break;
+      
+    case "buildingHarbor":
+      // Only build if there isn't already a harbor for this race
+      if (harborsByRace[npc.race]) {
+        npc.transitionTo("idle");
+        break;
+      }
+      
+      // If we're waiting for another fisher to complete the harbor
+      if (npc.stateData.waitingForHarbor) {
+        // Check if the harbor is now built
+        if (harborsByRace[npc.race]) {
+          npc.transitionTo("idle"); // Will transition to fishing on next update
+          break;
+        }
+        
+        // Just wait near the construction site
+        npc.animationState = "normal";
+        // Don't show "Building harbor" for waiting fishers
+        npc.stateData.isWaiting = true;
+        break;
+      }
+      
+      // If we're already building (construction phase)
+      if (npc.stateData.isConstructing) {
+        if (npc.waitTime > 0) {
+          // Continue building
+          npc.waitTime--;
+          npc.animationState = "building";
+          
+          // Place harbor when construction is complete
+          if (npc.waitTime === 0) {
+            const spot = npc.stateData.harborSpot;
+            const harbor = new Harbor(spot.x, spot.y, cellSize, npc);
+            buildings.push(harbor);
+            
+            // Use our new registerHarbor function to register the harbor and calculate fishing paths
+            registerHarbor(npc.race, harbor);
+            
+            npc.transitionTo("fishing");
+          }
+        }
+        break;
+      }
+      
+      const harborBeingBuilt = findHarborBeingBuilt(npc.race);
+      if (harborBeingBuilt && harborBeingBuilt.builder !== npc) {
+        npc.stateData.waitingForHarbor = true;
+        npc.stateData.isWaiting = true;
+        npc.stateData.harborSpot = { x: harborBeingBuilt.spotX, y: harborBeingBuilt.spotY };
+
+        const path = findPathTo(npc, { x: harborBeingBuilt.spotX, y: harborBeingBuilt.spotY });
+        if (path && path.length > 0) {
+          npc.currentPath = path;
+          npc.pathIndex = 0;
+        }
+        break;
+      }
+
+      if (npc.currentPath && npc.pathIndex < npc.currentPath.length) {
+        const pathCompleted = followPath(npc);
+        if (pathCompleted) {
+          npc.stateData.isConstructing = true;
+          npc.waitTime = 3;
+          npc.maxWaitTime = 3;
+          npc.animationState = "building";
+        }
+        break;
+      }
+
+      const harborSpot = findHarborLocation(npc);
+      if (harborSpot) {
+        npc.currentPath = findPathTo(npc, harborSpot);
+        npc.pathIndex = 0;
+        npc.stateData.harborSpot = harborSpot;
+        registerHarborBeingBuilt(npc.race, harborSpot.x, harborSpot.y, npc);
+      } else {
+        npc.transitionTo("idle");
+      }
+      break;
+  }
+}
+
+// Counter for total fish caught
 let fishCount = 0;
 
+// Track harbors by race to limit one per race
 const harborsByRace = {
   "Elf": null,
   "Kurohi": null,
   "Purries": null
 };
 
+// Track harbors being built
 const harborsBeingBuilt = {
   "Elf": null,
   "Kurohi": null,
   "Purries": null
 };
 
+// Track fishing boats
 const fishingBoats = [];
 
+// Store fishing spots for each harbor and pre-calculated paths
 const fishingSpotsByHarbor = new Map();
 const harborToFishingSpotPaths = new Map();
 
-const boatImage = new Image();
+// Create a fast lookup map for water cells
+const waterCellsMap = new Map();
 
-// Pre-calculate fixed data
+// Additional cache for nearest water cells - to prevent repeated calculations
+const nearestWaterCache = new Map();
+
+// Pre-calculated data for performance
 const preCalc = {
   waterNeighbors: new Map(),
   groundNeighbors: new Map(),
@@ -30,12 +169,27 @@ const preCalc = {
   harborFishingSpots: new Map(),
 };
 
+// Declare boat image variables
+const boatImage = new Image();
+let boatImageLoaded = false;
+let boatImageFailed = false;
+
+// Pre-calculate data for pathfinding
 function preCalculateData() {
   // Skip if waterCells or groundCells are not defined
   if (!waterCells || !Array.isArray(waterCells) || !groundCells || !Array.isArray(groundCells)) {
     console.error("Cannot pre-calculate data - water or ground cells not defined");
     return;
   }
+
+  // Build the water cells lookup map for O(1) access
+  waterCellsMap.clear();
+  waterCells.forEach(cell => {
+    if (!cell) return;
+    const key = `${cell.x},${cell.y}`;
+    waterCellsMap.set(key, cell);
+  });
+  console.log(`Built water cells lookup map with ${waterCellsMap.size} entries`);
 
   const dirs = [{ x: 0, y: -1 }, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: -1, y: 0 }];
 
@@ -44,7 +198,7 @@ function preCalculateData() {
     if (!cell) return; // Skip invalid cells
     
     const neighbors = dirs.map(dir => ({ x: cell.x + dir.x, y: cell.y + dir.y }))
-      .filter(neighbor => waterCells.some(c => c && c.x === neighbor.x && c.y === neighbor.y));
+      .filter(neighbor => isWaterCell(neighbor.x, neighbor.y));
     preCalc.waterNeighbors.set(`${cell.x},${cell.y}`, neighbors);
   });
 
@@ -125,14 +279,14 @@ function getNeighbors(x, y, isWater) {
   }
 }
 
-// Simple function to check if a cell is water
+// Optimized function to check if a cell is water using the lookup map
 function isWaterCell(x, y) {
   if (x === undefined || y === undefined) {
     return false;
   }
   
-  return waterCells && Array.isArray(waterCells) && 
-    waterCells.some(cell => cell && cell.x === x && cell.y === y);
+  // Use the map for O(1) lookup instead of O(n) array scan
+  return waterCellsMap.has(`${x},${y}`);
 }
 
 function findNearestWaterCell(gridX, gridY) {
@@ -142,9 +296,17 @@ function findNearestWaterCell(gridX, gridY) {
   
   const key = `${gridX},${gridY}`;
   
-  // Try to get from pre-calculated data first
+  // First check the nearestWaterCache (persists across calculations)
+  const cachedResult = nearestWaterCache.get(key);
+  if (cachedResult) {
+    return cachedResult;
+  }
+  
+  // Then try to get from pre-calculated data
   const preCalcWater = preCalc.groundToNearestWater.get(key);
   if (preCalcWater) {
+    // Store in the global cache too
+    nearestWaterCache.set(key, preCalcWater);
     return preCalcWater;
   }
   
@@ -153,7 +315,8 @@ function findNearestWaterCell(gridX, gridY) {
   let minDistance = Infinity;
   
   if (waterCells && Array.isArray(waterCells)) {
-  console.warn("calculating on the fly");
+    console.warn(`Calculating nearest water cell on the fly for (${gridX}, ${gridY})`);
+    
     for (const cell of waterCells) {
       if (!cell) continue;
       
@@ -165,6 +328,12 @@ function findNearestWaterCell(gridX, gridY) {
         minDistance = distance;
         nearestWater = cell;
       }
+    }
+    
+    // Save the result in both caches for future use
+    if (nearestWater) {
+      nearestWaterCache.set(key, nearestWater);
+      preCalc.groundToNearestWater.set(key, nearestWater);
     }
   }
   
@@ -324,67 +493,73 @@ class FishingBoat {
     this.harborId = harbor.id || `${harbor.x}_${harbor.y}`;
     this.owner = owner;
     this.id = fishingBoats.length;
-
+    
     this.x = harbor.x;
     this.y = harbor.y;
     this.path = null;
     this.pathIndex = 0;
-
+    this.pathReversed = false;
+    
     this.state = "idle";
     this.waitTime = 0;
     this.catchSize = 0;
-
+    
+    // Assign a permanent fishing spot
     this.assignFishingSpot();
+    
+    // Set initial target
     this.targetX = this.fishingSpotX;
     this.targetY = this.fishingSpotY;
-    this.createPathToFishingSpot();
+    
+    // Get the pre-calculated path
+    this.useSavedPath();
+    
+    // Start in fishing state
     this.state = "goingToFishSpot";
   }
-
+  
+  // Use pre-calculated path instead of creating new ones
+  useSavedPath() {
+    if (this.state === "goingToFishSpot" || this.state === "idle") {
+      // Use the path from harbor to fishing spot
+      const pathKey = `${this.harborId}_to_${this.fishingSpotIndex}`;
+      this.path = harborToFishingSpotPaths.get(pathKey);
+      this.pathReversed = false;
+    } else {
+      // Use the path from fishing spot to harbor
+      const pathKey = `${this.fishingSpotIndex}_to_${this.harborId}`;
+      this.path = harborToFishingSpotPaths.get(pathKey);
+      this.pathReversed = false;
+    }
+    
+    this.pathIndex = 0;
+    
+    // If no path exists, create a direct one (fallback)
+    if (!this.path) {
+      console.warn(`No saved path found for boat ${this.id}. Creating direct path.`);
+      if (this.state === "goingToFishSpot" || this.state === "idle") {
+        this.path = [
+          { x: this.harbor.x, y: this.harbor.y },
+          { x: this.fishingSpotX * cellSize, y: this.fishingSpotY * cellSize }
+        ];
+      } else {
+        this.path = [
+          { x: this.fishingSpotX * cellSize, y: this.fishingSpotY * cellSize },
+          { x: this.harbor.x, y: this.harbor.y }
+        ];
+      }
+    }
+  }
+  
+  // These methods are no longer needed - paths are pre-calculated
   createPathToFishingSpot() {
-    const pathKey = `${this.harborId}_to_${this.fishingSpotIndex}`;
-    let cachedPath = harborToFishingSpotPaths.get(pathKey);
-
-    if (cachedPath) {
-      this.path = cachedPath;
-      this.pathIndex = 0;
-      return;
-    }
-
-    const start = { x: this.x, y: this.y };
-    const nearestWaterCell = findNearestWaterCell(Math.floor(this.x / cellSize), Math.floor(this.y / cellSize));
-    if (nearestWaterCell) {
-      start.x = nearestWaterCell.x * cellSize;
-      start.y = nearestWaterCell.y * cellSize;
-    }
-
-    const target = { x: this.fishingSpotX, y: this.fishingSpotY };
-    this.path = findWaterPath(start, target) || [{ x: start.x, y: start.y }, { x: target.x * cellSize, y:target.y * cellSize }];
-    this.pathIndex = 0;
+    this.useSavedPath();
   }
-
+  
   createPathToHarbor() {
-    const pathKey = `${this.fishingSpotIndex}_to_${this.harborId}`;
-    let cachedPath = harborToFishingSpotPaths.get(pathKey);
-
-    if (cachedPath) {
-      this.path = cachedPath;
-      this.pathIndex = 0;
-      return;
-    }
-
-    const start = { x: this.x, y: this.y };
-    const nearestWaterCell = findNearestWaterCell(Math.floor(this.x / cellSize), Math.floor(this.y / cellSize));
-    if (nearestWaterCell) {
-      start.x = nearestWaterCell.x * cellSize;
-      start.y = nearestWaterCell.y * cellSize;
-    }
-
-    const target = { x: Math.floor(this.harbor.x / cellSize), y: Math.floor(this.harbor.y / cellSize) };
-    this.path = findWaterPath(start, target) || [{ x: start.x, y: start.y }, { x: this.harbor.x, y: this.harbor.y }];
-    this.pathIndex = 0;
+    this.useSavedPath();
   }
-
+  
   assignFishingSpot() {
     const fishingSpots = generateFishingSpotsForHarbor(this.harbor);
     this.fishingSpotIndex = Math.floor(this.id % fishingSpots.length);
@@ -432,21 +607,27 @@ class FishingBoat {
     if (!this.path || this.path.length === 0 || this.pathIndex >= this.path.length) {
       return;
     }
-
-    const nextPoint = this.path[this.pathIndex];
-    this.x = nextPoint.x;
-    this.y = nextPoint.y;
-    this.pathIndex++;
-
-    if (this.pathIndex >= this.path.length) {
+    
+    // Use the followWaterPath utility function for consistent boat movement
+    const pathCompleted = followWaterPath(this);
+    
+    // Check if we've reached the end of the path
+    if (pathCompleted) {
       if (this.state === "goingToFishSpot") {
         this.state = "fishing";
-        this.waitTime = 20;
+        this.waitTime = 20; // Time to fish
       } else if (this.state === "returningToHarbor") {
+        // Process the catch
         this.processCatch();
+        
+        // Always go back to the same fishing spot
         this.targetX = this.fishingSpotX;
         this.targetY = this.fishingSpotY;
-        this.createPathToFishingSpot();
+        
+        // Use the saved path to fishing spot
+        this.useSavedPath();
+        
+        // Change state to go back to fishing
         this.state = "goingToFishSpot";
       }
     }
@@ -472,144 +653,70 @@ class FishingBoat {
   }
 
   draw(ctx) {
-    if (boatImage && boatImage.complete) {
-      const boatScale = 1.5;
-      const boatWidth = cellSize * boatScale;
-      const boatHeight = cellSize * boatScale;
-      const boatX = this.x - (boatWidth - cellSize) / 2;
-      const boatY = this.y - (boatHeight - cellSize) / 2;
-      ctx.drawImage(boatImage, boatX, boatY, boatWidth, boatHeight);
+    // Draw the boat (with safer image handling)
+    if (boatImageLoaded && !boatImageFailed && boatImage.complete) {
+      try {
+        const boatScale = 1.5;
+        const boatWidth = cellSize * boatScale;
+        const boatHeight = cellSize * boatScale;
+        const boatX = this.x - (boatWidth - cellSize) / 2;
+        const boatY = this.y - (boatHeight - cellSize) / 2;
+        ctx.drawImage(boatImage, boatX, boatY, boatWidth, boatHeight);
+      } catch(e) {
+        console.warn("Error drawing boat image:", e);
+        // If we get an error, mark the image as failed so we use the fallback in future
+        boatImageFailed = true;
+        // Draw fallback immediately this time
+        this.drawFallbackBoat(ctx);
+      }
     } else {
-      ctx.fillStyle = "blue";
-      ctx.fillRect(this.x, this.y, cellSize, cellSize);
+      // Image not successfully loaded, use fallback
+      this.drawFallbackBoat(ctx);
     }
 
+    // Draw path (unchanged)
     if (this.path && this.path.length > 0) {
       ctx.strokeStyle = "rgba(255, 0, 0, 0.5)";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(this.x + cellSize / 2, this.y + cellSize / 2);
-
+      ctx.moveTo(this.x + cellSize/2, this.y + cellSize/2);
       for (let i = this.pathIndex; i < this.path.length; i++) {
         const point = this.path[i];
-        ctx.lineTo(point.x + cellSize / 2, point.y + cellSize / 2);
+        ctx.lineTo(point.x + cellSize/2, point.y + cellSize/2);
       }
-
       ctx.stroke();
-
+      
       const targetPoint = this.path[this.path.length - 1];
       ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
       ctx.beginPath();
-      ctx.arc(targetPoint.x + cellSize / 2, targetPoint.y + cellSize / 2, 5, 0, Math.PI * 2);
+      ctx.arc(targetPoint.x + cellSize/2, targetPoint.y + cellSize/2, 5, 0, Math.PI * 2);
       ctx.fill();
     }
+  }
+
+  // Add a fallback method for drawing boats
+  drawFallbackBoat(ctx) {
+    // Draw a simple colored rectangle with a triangle sail
+    ctx.fillStyle = "#8B4513"; // Brown boat hull
+    ctx.fillRect(this.x, this.y + cellSize/2, cellSize, cellSize/2);
+    
+    // Draw a sail
+    ctx.fillStyle = "#FFFFFF"; // White sail
+    ctx.beginPath();
+    ctx.moveTo(this.x + cellSize/2, this.y);
+    ctx.lineTo(this.x + cellSize/2, this.y + cellSize/2);
+    ctx.lineTo(this.x + cellSize * 0.8, this.y + cellSize/2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 1;
+    ctx.stroke();
   }
 
   hasReturnedWithFish() {
     return this.state === "returningToHarbor" &&
       Math.abs(this.x - this.harbor.x) < cellSize &&
       Math.abs(this.y - this.harbor.y) < cellSize;
-  }
-}
-
-function updateFisher(npc) {
-  switch (npc.state) {
-    case "idle":
-      if (!harborsByRace[npc.race]) {
-        npc.transitionTo("buildingHarbor");
-        return;
-      }
-
-      if (fishingBoats.some(boat => boat.owner === npc)) {
-        npc.transitionTo("fishing");
-        return;
-      }
-
-      const harbor = harborsByRace[npc.race];
-      const newBoat = new FishingBoat(harbor, npc);
-      fishingBoats.push(newBoat);
-      npc.transitionTo("fishing");
-      break;
-
-    case "fishing":
-      npc.animationState = "working";
-      const myBoat = fishingBoats.find(boat => boat.owner === npc);
-      if (myBoat && myBoat.hasReturnedWithFish()) {
-        npc.animationState = "celebrating";
-        const harbor = harborsByRace[npc.race];
-        if (harbor && typeof harbor.animateEmoji === 'function') {
-          harbor.animateEmoji("collecting", "🐟", 2000);
-        }
-      }
-      break;
-
-    case "buildingHarbor":
-      if (harborsByRace[npc.race]) {
-        npc.transitionTo("idle");
-        break;
-      }
-
-      if (npc.stateData.waitingForHarbor) {
-        if (harborsByRace[npc.race]) {
-          npc.transitionTo("idle");
-          break;
-        }
-        npc.animationState = "normal";
-        npc.stateData.isWaiting = true;
-        break;
-      }
-
-      if (npc.stateData.isConstructing) {
-        if (npc.waitTime > 0) {
-          npc.waitTime--;
-          npc.animationState = "building";
-
-          if (npc.waitTime === 0) {
-            const spot = npc.stateData.harborSpot;
-            const harbor = new Harbor(spot.x, spot.y, cellSize, npc);
-            buildings.push(harbor);
-            registerHarbor(npc.race, harbor);
-            npc.transitionTo("fishing");
-          }
-        }
-        break;
-      }
-
-      const harborBeingBuilt = findHarborBeingBuilt(npc.race);
-      if (harborBeingBuilt && harborBeingBuilt.builder !== npc) {
-        npc.stateData.waitingForHarbor = true;
-        npc.stateData.isWaiting = true;
-        npc.stateData.harborSpot = { x: harborBeingBuilt.spotX, y: harborBeingBuilt.spotY };
-
-        const path = findPathTo(npc, { x: harborBeingBuilt.spotX, y: harborBeingBuilt.spotY });
-        if (path && path.length > 0) {
-          npc.currentPath = path;
-          npc.pathIndex = 0;
-        }
-        break;
-      }
-
-      if (npc.currentPath && npc.pathIndex < npc.currentPath.length) {
-        const pathCompleted = followPath(npc);
-        if (pathCompleted) {
-          npc.stateData.isConstructing = true;
-          npc.waitTime = 3;
-          npc.maxWaitTime = 3;
-          npc.animationState = "building";
-        }
-        break;
-      }
-
-      const harborSpot = findHarborLocation(npc);
-      if (harborSpot) {
-        npc.currentPath = findPathTo(npc, harborSpot);
-        npc.pathIndex = 0;
-        npc.stateData.harborSpot = harborSpot;
-        registerHarborBeingBuilt(npc.race, harborSpot.x, harborSpot.y, npc);
-      } else {
-        npc.transitionTo("idle");
-      }
-      break;
   }
 }
 
@@ -765,24 +872,54 @@ function drawFisherInfo(npc, ctx) {
   }
 }
 
+// Initialize fishing resources
 function initializeFishingResources() {
-  boatImage.src = 'assets/buildings/boat3.png';
-  boatImage.onload = () => console.log("Boat image loaded successfully");
-
+  // Set up boat image handling
+  boatImage.onload = () => {
+    console.log("Boat image loaded successfully");
+    boatImageLoaded = true;
+    boatImageFailed = false;
+  };
+  
+  boatImage.onerror = () => {
+    console.warn("Failed to load boat image, will use fallback");
+    boatImageFailed = true;
+    boatImageLoaded = false;
+  };
+  
+  boatImage.src = 'assets/buildings/boat3png'; //DO NOT TOUCH   boat4.png is ok
+  
   if (typeof waterCells !== 'undefined') {
     console.log(`Fishing initialized with ${waterCells.length} water cells`);
-
+    
+    // Run preCalculateData immediately to build all necessary caches
+    preCalculateData();
+    
+    // Pre-calculate paths for existing harbors
     setTimeout(() => {
       if (buildings && buildings.length > 0) {
         preCalculateAllPaths();
       }
     }, 1000);
+  } else {
+    console.error("ERROR: waterCells is not defined!");
   }
-
-  window.updateAndDrawFishingBoats = updateAndDrawFishingBoats;
+  
+  // Export other fisher functions that might be needed by other files
+  // Make these functions globally available
+  console.log("Fisher functions available globally");
 }
 
-window.initializeFishingResources = initializeFishingResources;
+// Make initializeFishingResources globally available
+initializeFishingResources = initializeFishingResources;
+
+// Auto-initialize fisher resources when this file loads
+// This ensures all dependencies are properly set up
+if (document.readyState === 'complete') {
+  initializeFishingResources();
+} else {
+  addEventListener('load', initializeFishingResources);
+}
 
 function onHarborBuilt(harbor) {
   const fishingSpots = generateFishingSpotsForHarbor(harbor);
@@ -790,10 +927,24 @@ function onHarborBuilt(harbor) {
   calculatePathsForHarbor(harbor);
 }
 
+// Calculate paths ONE TIME for a harbor when it's built
 function calculatePathsForHarbor(harbor) {
+  console.log(`Calculating permanent paths for harbor ${harbor.id}`);
+  
   const harborGridX = Math.floor(harbor.x / cellSize);
   const harborGridY = Math.floor(harbor.y / cellSize);
   
+  // Check if we already have paths for this harbor
+  const existingPaths = Array.from(harborToFishingSpotPaths.keys())
+    .some(key => key.startsWith(`${harbor.id}_to_`));
+  
+  // Skip calculation if we already have paths for this harbor
+  if (existingPaths) {
+    console.log(`Paths already exist for harbor ${harbor.id}, skipping calculation`);
+    return;
+  }
+  
+  // Generate fishing spots for this harbor
   let fishingSpots = fishingSpotsByHarbor.get(harbor.id);
   if (!fishingSpots || fishingSpots.length === 0) {
     fishingSpots = generateFishingSpotsForHarbor(harbor);
@@ -821,17 +972,17 @@ function calculatePathsForHarbor(harbor) {
     if (path) {
       // Store harbor to fishing spot path
       const pathKey = `${harbor.id}_to_${index}`;
-      // Add the harbor position at the beginning of the outbound path
-      // This ensures the boat leaves from the actual harbor, not just the nearest water
+      // Add the harbor position at the beginning of the path
       const outboundPath = [{ x: harbor.x, y: harbor.y }, ...path];
       harborToFishingSpotPaths.set(pathKey, outboundPath);
       
-      // Store fishing spot to harbor path (reversed)
+      // Store fishing spot to harbor path
       const reversePathKey = `${index}_to_${harbor.id}`;
       // Add the harbor position at the end of the return path
-      // This ensures the boat returns to the actual harbor, not just the nearest water
       const returnPath = [...path.reverse(), { x: harbor.x, y: harbor.y }];
       harborToFishingSpotPaths.set(reversePathKey, returnPath);
+      
+      console.log(`Created permanent path for harbor ${harbor.id}, fishing spot ${index}: ${outboundPath.length} points`);
     }
   });
 }

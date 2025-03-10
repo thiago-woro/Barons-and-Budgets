@@ -261,3 +261,59 @@ function followPath(npc) {
   
   return true; // Path completed
 } 
+
+function followWaterPath(boat) {
+  if (!boat.currentPath || boat.currentPath.length === 0) {
+    console.warn(`utils: Boat ${boat.id} has no water path`);
+    return true; // No path or empty path counts as completed
+  }
+  
+  if (boat.pathIndex < boat.currentPath.length) {
+    const nextPoint = boat.currentPath[boat.pathIndex];
+    const nextX = Math.floor(nextPoint.x / cellSize);
+    const nextY = Math.floor(nextPoint.y / cellSize);
+    
+    // Verify the next cell is still a valid water cell (or harbor for destination)
+    if (!isWaterCell(nextX, nextY) && 
+        // Allow harbor cells as valid destinations
+        !(boat.pathIndex === boat.currentPath.length - 1 && 
+          isHarborCell(nextX, nextY))) {
+      console.log(`utils: Boat ${boat.id} encountered invalid cell in path (${nextX},${nextY}), recalculating`);
+      return true; // Path is invalid, consider it completed
+    }
+    
+    // Move to the next point
+    boat.x = nextPoint.x;
+    boat.y = nextPoint.y;
+    boat.pathIndex++;
+    
+    // Check if path is completed
+    if (boat.pathIndex >= boat.currentPath.length) {
+      return true;
+    }
+    return false;
+  }
+  
+  return true; // Path completed
+}
+
+// Helper function to check if a cell is a water cell
+function isWaterCell(x, y) {
+  if (!waterCells || !Array.isArray(waterCells)) {
+    return false;
+  }
+  return waterCells.some(cell => cell && cell.x === x && cell.y === y);
+}
+
+// Helper function to check if a cell is a harbor cell
+function isHarborCell(x, y) {
+  if (!buildings || !Array.isArray(buildings)) {
+    return false;
+  }
+  return buildings.some(building => 
+    building && 
+    building.type === "Harbor" && 
+    Math.floor(building.x / cellSize) === x && 
+    Math.floor(building.y / cellSize) === y
+  );
+} 
