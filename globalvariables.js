@@ -28,6 +28,7 @@ let pathCells = [];
 
 
 //npcs
+const NPC_LIMIT = 700; // Maximum number of NPCs allowed
 let npcs = [];
 let animals = [];
 let year = 2700;
@@ -80,7 +81,7 @@ let validCells = [];
 
 
 //ui
-let hideMenu = true;
+let hideMenu = false;
 const gameNotifications = [];
 
 

@@ -3,6 +3,10 @@ class Animal {
   static PREY_BASE_SPEED = 1000;  // Base movement interval for prey
   static PREDATOR_SPEED_MULTIPLIER = 2;  // How much faster predators are
   static KILL_DISTANCE = 1;  // Distance in cells required for a kill
+  static REPRODUCTION_INTERVAL = 20000;  // Time between reproduction attempts (5 seconds)
+  static MAX_AGE = 60000;  // Time until natural death (60 seconds)
+  static PREDATOR_MAX_AGE = 30000;  // Predators die twice as fast (30 seconds)
+  static MAX_ANIMALS = Math.floor(maxLandPopulation);  // Maximum number of animals allowed based on usable land
 
   constructor(x, y, type) {
     this.x = x * cellSize;
@@ -12,6 +16,12 @@ class Animal {
     this.emoji = this.getEmoji();
     this.state = "idle";
     this.isAlive = true;
+    this.age = 0;
+    this.deathTime = 0;
+    this.isDying = false;
+    this.animation = null;
+    this.isFrozen = false;
+    this.freezeTime = 0;
     
     // Set movement speed based on predator/prey status
     this.moveInterval = this.isPredator ? 
@@ -19,6 +29,8 @@ class Animal {
       Animal.PREY_BASE_SPEED;
     
     this.timeSinceLastMove = 0;
+    // Random initial reproduction timer to prevent sync
+    this.timeSinceLastReproduction = Math.random() * Animal.REPRODUCTION_INTERVAL;
     // Direction: 0=right, 1=down, 2=left, 3=up
     this.currentDirection = Math.floor(Math.random() * 4);
     // Predators are more directed, prey more erratic
@@ -46,6 +58,56 @@ class Animal {
     return emojiMap[this.type] || '❓';
   }
 
+  checkReproduction(deltaTime) {
+    this.timeSinceLastReproduction += deltaTime;
+
+    if (this.timeSinceLastReproduction >= Animal.REPRODUCTION_INTERVAL) {
+      // Check global animal limit
+      if (animals.length >= Animal.MAX_ANIMALS) {
+        this.timeSinceLastReproduction = 0;
+        return;
+      }
+
+      // Count how many of the same species are alive
+      const sameSpecies = animals.filter(animal => 
+        animal.type === this.type && animal.isAlive
+      );
+
+      // Only reproduce if there are at least 2 animals of the same species
+      if (sameSpecies.length >= 2) {
+        // Find a valid ground cell near the parent
+        const currentX = Math.floor(this.x / cellSize);
+        const currentY = Math.floor(this.y / cellSize);
+        
+        // Check adjacent cells
+        const adjacentCells = [
+          { x: currentX + 1, y: currentY },
+          { x: currentX - 1, y: currentY },
+          { x: currentX, y: currentY + 1 },
+          { x: currentX, y: currentY - 1 }
+        ];
+
+        // Filter for valid ground cells
+        const validCells = adjacentCells.filter(cell => 
+          groundCells.some(groundCell => 
+            groundCell.x === cell.x && groundCell.y === cell.y
+          )
+        );
+
+        // If we found a valid cell, create a new animal there
+        if (validCells.length > 0) {
+          const birthCell = validCells[Math.floor(Math.random() * validCells.length)];
+          const newAnimal = new Animal(birthCell.x, birthCell.y, this.type);
+          animals.push(newAnimal);
+          // Growth animation for new birth
+          newAnimal.animateEmoji('getBig', newAnimal.emoji, 800);
+        }
+      }
+
+      this.timeSinceLastReproduction = 0;
+    }
+  }
+
   detectNearbyAnimals() {
     const currentX = Math.floor(this.x / cellSize);
     const currentY = Math.floor(this.y / cellSize);
@@ -67,14 +129,14 @@ class Animal {
   }
 
   checkForKills() {
-    if (!this.isPredator || !this.isAlive) return;
+    if (!this.isPredator || !this.isAlive || this.isFrozen) return;
 
     const currentX = Math.floor(this.x / cellSize);
     const currentY = Math.floor(this.y / cellSize);
     
     // Check for prey in kill range
     const prey = animals.filter(animal => {
-      if (animal === this || animal.isPredator || !animal.isAlive) return false;
+      if (animal === this || animal.isPredator || !animal.isAlive || animal.isFrozen) return false;
       
       const animalX = Math.floor(animal.x / cellSize);
       const animalY = Math.floor(animal.y / cellSize);
@@ -84,7 +146,7 @@ class Animal {
         Math.pow(currentY - animalY, 2)
       );
       
-      return distance <= Animal.KILL_DISTANCE;
+      return distance <= 2; // Changed to 2 cells distance
     });
 
     // Kill the first prey found
@@ -93,22 +155,82 @@ class Animal {
     }
   }
 
-  killAnimal(prey) {
-    prey.isAlive = false;
-    // Remove the dead animal from the animals array
-    const index = animals.indexOf(prey);
-    if (index > -1) {
-      animals.splice(index, 1);
+  animateEmoji(type, emoji, duration = 500) {
+    this.animation = {
+      type,
+      emoji,
+      startTime: Date.now(),
+      duration
+    };
+  }
+
+  drawAnimation(ctx) {
+    if (!this.animation) return false;
+
+    const progress = (Date.now() - this.animation.startTime) / this.animation.duration;
+    if (progress >= 1) {
+      this.animation = null;
+      return false;
     }
+
+    ctx.font = '20px Arial';
     
-    // Add notification
-    addNotification(
-      "Hunt",
-      `${this.emoji} catches ${prey.emoji}`,
-      `A ${this.type.replace('creaturesCard', '')} caught a ${prey.type.replace('creaturesCard', '')}!`,
-      [],
-      "#ff6b6b"
-    );
+    switch (this.animation.type) {
+      case 'pop':
+        const scale = 1 + Math.sin(progress * Math.PI) * 0.5; // Scale between 1 and 1.5
+        ctx.font = `${20 * scale}px Arial`;
+        ctx.fillText(this.animation.emoji, this.x, this.y);
+        break;
+      
+      case 'fade':
+        ctx.globalAlpha = 1 - progress;
+        ctx.fillText(this.animation.emoji, this.x, this.y);
+        ctx.globalAlpha = 1;
+        break;
+      
+      case 'small':
+        const size = 20 - (progress * 10); // Shrink from 20 to 10
+        ctx.font = `${size}px Arial`;
+        ctx.fillText(this.animation.emoji, this.x, this.y);
+        break;
+
+      case 'getBig':
+        const growSize = 4 + (progress * 16); // Start at 4px, grow to 20px
+        ctx.font = `${growSize}px Arial`;
+        ctx.fillText(this.animation.emoji, this.x, this.y);
+        break;
+    }
+
+    return true;
+  }
+
+  killAnimal(prey) {
+    // Freeze both animals
+    this.isFrozen = true;
+    prey.isFrozen = true;
+    this.freezeTime = Date.now();
+    prey.freezeTime = Date.now();
+
+    // Start death sequence
+    prey.isDying = true;
+    prey.deathTime = Date.now();
+    prey.animateEmoji('small', prey.emoji, 500);
+    setTimeout(() => prey.animateEmoji('fade', '🥩', 1500), 500);
+    this.animateEmoji('pop', this.emoji, 500);
+
+    // Remove prey after animations
+    setTimeout(() => {
+      prey.isAlive = false;
+      const index = animals.indexOf(prey);
+      if (index > -1) {
+        animals.splice(index, 1);
+      }
+    }, 2000);
+
+    // Unfreeze predator after 3 seconds
+    setTimeout(() => {
+      this.isFrozen = false;
+    }, 3000);
   }
 
   getDirectionTowardsOrAway(targetX, targetY, moveTowards) {
@@ -176,10 +298,35 @@ class Animal {
     return moves[this.currentDirection];
   }
 
+  ageDie() {
+    const maxAge = this.isPredator ? Animal.PREDATOR_MAX_AGE : Animal.MAX_AGE;
+    if (this.age >= maxAge) {
+      this.isAlive = false;
+      const index = animals.indexOf(this);
+      if (index > -1) {
+        animals.splice(index, 1);
+      }
+    }
+  }
+
   move(deltaTime) {
     if (!this.isAlive) return;
 
+    // Check if frozen
+    if (this.isFrozen) {
+      const timeFrozen = Date.now() - this.freezeTime;
+      if (timeFrozen >= 3000) {
+        this.isFrozen = false;
+      } else {
+        return;
+      }
+    }
+
+    this.age += deltaTime;
+    this.ageDie();
+    
     this.timeSinceLastMove += deltaTime;
+    this.checkReproduction(deltaTime);
     
     if (this.timeSinceLastMove >= this.moveInterval) {
       const currentX = Math.floor(this.x / cellSize);
@@ -222,7 +369,28 @@ class Animal {
   draw(ctx) {
     if (!this.isAlive) return;
     
-    ctx.font = '20px Arial';
-    ctx.fillText(this.emoji, this.x, this.y);
+    if (this.isDying) {
+      const timeSinceDeath = Date.now() - this.deathTime;
+      if (timeSinceDeath >= 2000) {
+        this.isAlive = false;
+        const index = animals.indexOf(this);
+        if (index > -1) {
+          animals.splice(index, 1);
+        }
+        return;
+      }
+      
+      if (!this.drawAnimation(ctx)) {
+        ctx.fillStyle = 'black';
+        ctx.font = '20px Arial';
+        ctx.fillText(this.emoji, this.x, this.y);
+      }
+    } else {
+      if (!this.drawAnimation(ctx)) {
+        ctx.fillStyle = 'black';
+        ctx.font = '20px Arial';
+        ctx.fillText(this.emoji, this.x, this.y);
+      }
+    }
   }
 } 

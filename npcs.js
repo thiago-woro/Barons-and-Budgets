@@ -665,3 +665,34 @@ function filterNpcTable() {
 
 // Call the initialization function when the document is loaded
 document.addEventListener('DOMContentLoaded', initializeRaceFiltering);
+
+document.getElementById('npc-table-animals').addEventListener('click', function() {
+    // Clear existing rows
+    const tbody = document.getElementById('npcTable').getElementsByTagName('tbody')[0];
+    tbody.innerHTML = '';
+    
+    // Add a row for each animal
+    animals.forEach(animal => {
+        const row = tbody.insertRow();
+        
+        // Type cell (emoji + type)
+        const typeCell = row.insertCell();
+        typeCell.textContent = `${animal.emoji} ${animal.type.replace('creaturesCard', '')}`;
+        
+        // Age cell
+        const ageCell = row.insertCell();
+        ageCell.textContent = Math.floor(animal.age / 1000) + 's';
+        
+        // State cell
+        const stateCell = row.insertCell();
+        stateCell.textContent = animal.isFrozen ? 'Frozen' : (animal.isDying ? 'Dying' : 'Active');
+        
+        // Position cell
+        const posCell = row.insertCell();
+        posCell.textContent = `(${Math.floor(animal.x/cellSize)}, ${Math.floor(animal.y/cellSize)})`;
+        
+        // Predator cell
+        const predCell = row.insertCell();
+        predCell.textContent = animal.isPredator ? 'Yes' : 'No';
+    });
+});

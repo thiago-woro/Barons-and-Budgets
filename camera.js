@@ -37,7 +37,7 @@ class Camera {
       const mouseY = e.clientY - rect.top;
 
       // Log mouse position before zoom
-      console.log(`Before Zoom: Mouse Position = (${mouseX}, ${mouseY})`);
+      //console.log(`Before Zoom: Mouse Position = (${mouseX}, ${mouseY})`);
 
       // Calculate new zoom with proportional speed
       const zoomDirection = -Math.sign(e.deltaY);
@@ -48,7 +48,7 @@ class Camera {
         this.zoom = newZoom;
 
         // Log mouse position after zoom
-        console.log(`After Zoom: Mouse Position = (${mouseX}, ${mouseY})`);
+       // console.log(`After Zoom: Mouse Position = (${mouseX}, ${mouseY})`);
 
         this.updateTransform();
       }

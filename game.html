@@ -14,7 +14,6 @@
     <script src="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-
 </head>
 
 <div id="infoPanel" style="position: absolute; display: block;visibility: collapse; z-index: 2000; left: 0; top: 0;">
@@ -145,6 +144,50 @@
         <h3>🐺 Coyote</h3>
     </div>
 </div> <!-- end of animals row -->
+
+<script>
+    function setActiveAnimalCard(animalName, emoji) {
+        document.querySelectorAll('#animalsRow .bottomCard').forEach(card => {
+            card.classList.remove('active');
+        });
+        const activeCard = document.querySelector(`#animalsRow .bottomCard#creaturesCard${animalName}`);
+        if (activeCard) {
+            activeCard.classList.add('active');
+            document.body.style.cursor = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><text x="0" y="24" font-size="14">${emoji}</text></svg>'), auto`;
+        }
+    }
+
+    document.querySelectorAll('#animalsRow .bottomCard').forEach(card => {
+        card.addEventListener('click', function() {
+            const animalName = this.id.replace('creaturesCard', '');
+            const emoji = this.querySelector('h3').textContent.trim();
+            setActiveAnimalCard(animalName, emoji);
+        });
+    });
+
+    document.addEventListener('mousemove', function(e) {
+
+        //return early if Active bottom tab: ${window.activeTabBottomLeft} is not Animals
+        if (window.activeTabBottomLeft !== "animals") return;
+
+        const activeCard = document.querySelector('#animalsRow .bottomCard.active');
+        if (activeCard) {
+            const emoji = activeCard.querySelector('h3').textContent.trim();
+            let trailingEmoji = document.getElementById('trailingEmoji');
+            if (!trailingEmoji) {
+                trailingEmoji = document.createElement('span');
+                trailingEmoji.id = 'trailingEmoji';
+                trailingEmoji.style.position = 'absolute';
+                trailingEmoji.style.pointerEvents = 'none';
+                trailingEmoji.style.fontSize = '24px';
+                document.body.appendChild(trailingEmoji);
+            }
+            trailingEmoji.textContent = emoji;
+            trailingEmoji.style.left = `${e.pageX + 10}px`;
+            trailingEmoji.style.top = `${e.pageY + 10}px`;
+        }
+    });
+</script>
 
     <!-- budgets row -->
     <div class="row" id="budgetsRow" style="margin: 0px;">
@@ -380,6 +423,7 @@
 <!-- filler div -->
     <div style="flex-grow: 1;"></div>
     <!-- races -->
+<span class="selectable-span" id="npc-table-animals">Animals</span>
 <span class="selectable-span" id="npc-table-purries">Purries</span>
 <span class="selectable-span" id="npc-table-kurohi">Kurohi</span>
 <span class="selectable-span" id="npc-table-elves">Elves</span>
@@ -389,11 +433,11 @@
     <table id="npcTable">
         <thead>
             <tr>
-                <th>Name</th>
+                <th>Type</th>
                 <th>Age</th>
-                <th>Salary</th>
-                <th>Profession</th>
                 <th>State</th>
+                <th>Position</th>
+                <th>Predator</th>
             </tr>
         </thead>
         <tbody>
@@ -445,15 +489,10 @@
      <script src="./npcClass.js"></script>
      <script src="./npcs.js"></script>
      <script src="./homes.js"></script>
-     <script src="./camera.js"></script> 
+     <script src="./camera.js"></script>
      <script src="./animalClass.js"></script>
      <script src="./toolManager.js"></script>
-	 <script>
-
-    </script>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
-
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
 
   <script>
     document.getElementById("toggleDebugger").addEventListener("click", function() {

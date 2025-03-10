@@ -92,7 +92,7 @@ function handleBottomTabClick(tabId) {
   document.getElementById(tabId).parentElement.classList.add('active');
   
   // Set global variable to the name of the tab
-  window.activeTabBottomLeft = tabId.replace('Tab', '');
+  window.activeTabBottomLeft = tabId.replace('Tab', '').toLowerCase();
   
   // Hide all rows first
   const rows = ['terrainRow', 'creaturesRow', 'buildingsRow', 'budgetsRow', 'animalsRow'];
@@ -109,7 +109,6 @@ function handleBottomTabClick(tabId) {
   if (targetRow) {
     targetRow.style.display = 'flex';
   }
-
 
   console.log(`Active bottom tab: ${window.activeTabBottomLeft}`);
 }
