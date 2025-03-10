@@ -206,10 +206,25 @@ const raceCards = document.querySelectorAll(".race-card");
 // Add an event listener to each "race-card" element
 raceCards.forEach((raceCard) => {
   raceCard.addEventListener("click", function (event) {
+    // Set player race based on the clicked card's ID or class
+    if (raceCard.id === "purriesWelcomeSelector") {
+      playerRace = "Purries";
+      console.log("Player selected Purries race!");
+    } else if (raceCard.id === "kurohiWelcomeSelector") {
+      playerRace = "Kurohi";
+      console.log("Player selected Kurohi race!");
+    } else {
+      playerRace = "Elf";
+      console.log("Player selected Elf race!");
+    }
+    
+    // Update the player race display
+    document.getElementById("playerRaceDisplay").textContent = playerRace;
+    
     // Your event handling code  welcomePopup.style.visibility = "collapse";
-  welcomePopup.style.display = "none";
-  welcomeScreenRaceSelector.style.visibility = 'collapse';
-  elfCounselor1.style.visibility = "collapse";
+    welcomePopup.style.display = "none";
+    welcomeScreenRaceSelector.style.visibility = 'collapse';
+    elfCounselor1.style.visibility = "collapse";
 
     startTrees(treeCtx, cellSize)
     hideWelcomeScreen();
@@ -409,9 +424,17 @@ function showNPCInfo(npc) {
 
   // Make the info panel visible
   infoPanel.style.visibility = 'visible';
+
+  centerCameraOnNPC(npc);
+  camera.updateTransform();
 }
 
+function centerCameraOnNPC(npc) {
+/* camera.worldToScreen */
 
+  camera.x = npc.x - camera.width / 2;
+  camera.y = npc.y - camera.height / 2;
+}
 
 
 
@@ -443,7 +466,6 @@ function updateUIbottomToolbar(totalSalaries) {
   currentYear.textContent = "Year: " + year;
 
 }
-
 
 
 
@@ -604,4 +626,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     requestAnimationFrame(animateZoom);
   };
+
+// Initialize player race display when the window loads
+window.addEventListener("load", function() {
+  // Update the player race display with the default value
+  const playerRaceDisplay = document.getElementById("playerRaceDisplay");
+  if (playerRaceDisplay) {
+    playerRaceDisplay.textContent = playerRace;
+  }
+});
 

@@ -1,6 +1,9 @@
 // Fisher profession behaviors
 // This file contains all the logic for fisher NPCs
 
+// Counter for total fish caught
+let fishCount = 0;
+
 // State machine for fisher behavior
 function updateFisher(npc) {
   switch (npc.state) {
@@ -83,9 +86,26 @@ function updateFisher(npc) {
           fishCount++;
           
           // Add fish to personal inventory
-          npc.addToInventory('fish');
+          if (Math.random() < 0.7) { // 70% chance to catch a fish
+            npc.addToInventory('rawFish');
+          }
           
+          // Increment appropriate race's food count
+          switch(npc.race) {
+            case "Elf":
+              elfFoodCount++;
+              break;
+            case "Kurohi":
+              kurohiFoodCount++;
+              break;
+            case "Purries":
+              purriesFoodCount++;
+              break;
+          }
+          
+          // Update display
           document.getElementById("fishCount").textContent = fishCount;
+          document.getElementById("foodCount").textContent = elfFoodCount + purriesFoodCount + kurohiFoodCount;
         }
       } else {
         npc.animationState = "normal";

@@ -5,6 +5,40 @@
 //inventory of held items 
 const treeFoundSound = new Audio('/assets/sounds/tree-down.mp3'); // Create this simple sound file
 
+// Define Item class directly in this file to avoid reference errors
+class Item {
+  constructor(type, amount = 1) {
+    this.type = type;
+    this.amount = amount;
+    
+    // Access item details if they're available
+    let itemDetails = { name: type, emoji: "❓" };
+    
+    // Try to get details from global items/foods objects if they exist
+    if (typeof items !== 'undefined' && items[type]) {
+      itemDetails = items[type];
+    } else if (typeof foods !== 'undefined' && foods[type]) {
+      itemDetails = foods[type];
+    }
+    
+    this.name = itemDetails.name || type;
+    this.emoji = itemDetails.emoji || "❓";
+  }
+  
+  add(amount) {
+    this.amount += amount;
+    return this.amount;
+  }
+  
+  remove(amount) {
+    if (this.amount >= amount) {
+      this.amount -= amount;
+      return true;
+    }
+    return false;
+  }
+}
+
 // Note: Make sure items.js is included before npcClass.js in your HTML
 
 class NPC {

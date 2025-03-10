@@ -2,7 +2,13 @@
 /ignore
 /assets
 /ignore/*
+/.cursorrules
+
 
 /ignore/
 /assets/
+
+.cursorrules
+barons.mdc
+
 

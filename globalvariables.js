@@ -1,6 +1,7 @@
 //all global variables
 
-
+// Player's selected race - will be set to "Elf", "Kurohi", or "Purries" based on player choice
+let playerRace = "Elf";
 
 //map generation - global variables
 let cellSize = 20;

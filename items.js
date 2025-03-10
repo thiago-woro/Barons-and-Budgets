@@ -27,6 +27,13 @@ const items = {
     weight: 3,
     size: "medium",
   },
+  rawFish: {
+    name: "Raw Fish",
+    emoji: "🐟",
+    price: 4,
+    weight: 0.6,
+    size: "small",
+  },
 };
 
 // Example usage:

@@ -1,7 +1,6 @@
-add water animation
 
 
-
+To do:
 fix camera zoom
 
 change "constructing" to "building"
@@ -13,5 +12,16 @@ add a check for hunter, if there is 0 animals, change professions.
 change farming spot, its going to the sea, for some reason...
 
 issue an alert when mine Ore Deposits deplete.
+stop moving animals when game is paused.
 
+
+
+
+
+Done:
 inventory item error
+
+
+
+Backlog:
+add water animation
