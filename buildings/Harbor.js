@@ -22,6 +22,12 @@ class Harbor extends Building {
   }
 
   draw(ctx) {
+    // Ensure valid coordinates and size
+    if (isNaN(this.x) || isNaN(this.y) || isNaN(this.size)) {
+      console.error(`Invalid harbor coordinates: (${this.x}, ${this.y}) with size ${this.size}`);
+      return; // Skip drawing if coordinates are invalid
+    }
+    
     // Draw the harbor image if it's loaded
     if (harborImage && harborImage.complete) {
       // Draw with proper dimensions - make it larger and centered
@@ -35,8 +41,7 @@ class Harbor extends Building {
       
       ctx.drawImage(harborImage, x, y, 99, 99);
       
-      // Debug info
-      console.log(`Harbor drawn at (${x}, ${y}) with size ${width}x${height}`);
+      // Remove the debug log that runs every frame
     } else {
       // If image is not loaded yet, draw a placeholder
       ctx.fillStyle = "blue";
@@ -46,8 +51,6 @@ class Harbor extends Building {
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(this.emoji, this.x + this.size/2, this.y + this.size/2);
-      
-      console.error("Harbor image not loaded yet, drawing placeholder");
     }
 
     const x = this.x / cellSize;
