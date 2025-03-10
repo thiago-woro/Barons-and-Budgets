@@ -10,6 +10,48 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentToolState = ToolState.SELECTING;
   let selectedTool = null;
   let lastTime = performance.now();
+  
+  // Mouse tracking variables
+  let mouseDownTime = 0;
+  let mouseDownX = 0;
+  let mouseDownY = 0;
+  let wasDragging = false;
+
+  // Track exact mouse position and timing
+  container.addEventListener('mousedown', (e) => {
+    mouseDownTime = Date.now();
+    mouseDownX = e.clientX;
+    mouseDownY = e.clientY;
+    wasDragging = false;
+  });
+
+  container.addEventListener('mousemove', (e) => {
+    if (mouseDownTime === 0) return;
+    
+    const dx = Math.abs(e.clientX - mouseDownX);
+    const dy = Math.abs(e.clientY - mouseDownY);
+    
+    // If mouse has moved more than 3 pixels, consider it a drag
+    if (dx > 3 || dy > 3) {
+      wasDragging = true;
+    }
+  });
+
+  container.addEventListener('mouseup', (e) => {
+    const mouseUpTime = Date.now();
+    const dx = Math.abs(e.clientX - mouseDownX);
+    const dy = Math.abs(e.clientY - mouseDownY);
+    
+    // Reset tracking variables
+    mouseDownTime = 0;
+    isDragging = wasDragging || (mouseUpTime - mouseDownTime > 200) || (dx > 3 || dy > 3);
+    
+    // Reset drag state after a short delay
+    setTimeout(() => {
+      isDragging = false;
+      wasDragging = false;
+    }, 50);
+  });
 
   // Add click handlers for the bottom cards
   document.querySelectorAll('.bottomCard').forEach(card => {
@@ -51,6 +93,19 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function placeAnimal(coords, toolId) {
+
+    //return if isdragging is true
+    if (isDragging) {
+      console.log("Mouse is grabbing!");
+      return;
+    }
+
+    //return early if animal limit is reached
+    if (animals.length >= Animal.MAX_ANIMALS) {
+      console.log("Animal limit reached!");
+      return;
+    }
+
     // Check if clicked on ground
     const isGround = groundCells.some(cell => 
       cell.x === coords.cellCol && cell.y === coords.cellRow
@@ -111,7 +166,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Main click handler for the container
   container.addEventListener("click", function(event) {
-    if (isDragging) return;
+    if (isDragging || wasDragging) {
+      console.log("Prevented placement - was dragging");
+      return;
+    }
     
     const coords = getClickCoordinates(event);
     

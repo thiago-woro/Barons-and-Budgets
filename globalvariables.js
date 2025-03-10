@@ -4,11 +4,11 @@
 
 //map generation - global variables
 let cellSize = 20;
-var gridSize = 20;
+var gridSize = 10; // seems to be unused
 
 let terrainGrid;
 let perlinNoiseScale = 0.03; //original number is 0.025
-rows = 250;  //maximum 300 rows recommend, mid range gpu
+rows = 150;  //maximum 300 rows recommend, mid range gpu
 
 
 let offset = 0.75; //og is 0.35

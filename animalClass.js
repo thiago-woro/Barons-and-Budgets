@@ -3,9 +3,9 @@ class Animal {
   static PREY_BASE_SPEED = 1000;  // Base movement interval for prey
   static PREDATOR_SPEED_MULTIPLIER = 2;  // How much faster predators are
   static KILL_DISTANCE = 1;  // Distance in cells required for a kill
-  static REPRODUCTION_INTERVAL = 20000;  // Time between reproduction attempts (5 seconds)
-  static MAX_AGE = 60000;  // Time until natural death (60 seconds)
-  static PREDATOR_MAX_AGE = 30000;  // Predators die twice as fast (30 seconds)
+  static REPRODUCTION_INTERVAL = 10000;  // Time between reproduction attempts (5 seconds)
+  static MAX_AGE = 30000;  // Time until natural death (60 seconds)
+  static PREDATOR_MAX_AGE = 20000;  // Predators die twice as fast (30 seconds)
   static MAX_ANIMALS = Math.floor(maxLandPopulation);  // Maximum number of animals allowed based on usable land
 
   constructor(x, y, type) {
@@ -59,6 +59,11 @@ class Animal {
   }
 
   checkReproduction(deltaTime) {
+    // Skip reproduction if moving at chase speed
+    if (this.moveInterval === this.chaseSpeed) {
+      return;
+    }
+
     this.timeSinceLastReproduction += deltaTime;
 
     if (this.timeSinceLastReproduction >= Animal.REPRODUCTION_INTERVAL) {
@@ -253,6 +258,20 @@ class Animal {
     }
   }
 
+  evaluateCellDesirability(cell) {
+    if (!cell || !cell.noise) return 0;
+    const noiseValue = parseFloat(cell.noise);
+    
+    if (this.type === 'creaturesCardCoyote') {
+      // Coyotes prefer low noise (beach/sand) cells
+      return noiseValue < 0.09 ? 1 : 0.2;
+    } else if (this.type === 'creaturesCardBear') {
+      // Bears prefer high noise (elevated) cells
+      return noiseValue > 0.24 ? 1 : 0.2;
+    }
+    return 0.5; // Neutral for non-predators
+  }
+
   getNextCell(currentX, currentY) {
     // Check for nearby animals
     const nearbyAnimals = this.detectNearbyAnimals();
@@ -279,7 +298,7 @@ class Animal {
     // Use chase speed if pursuing/fleeing, otherwise normal speed
     this.moveInterval = isChasing ? this.chaseSpeed : this.normalSpeed;
 
-    // Define movement based on direction
+    // Define possible moves
     const moves = [
       { x: currentX + 1, y: currentY },     // right
       { x: currentX, y: currentY + 1 },     // down
@@ -287,12 +306,37 @@ class Animal {
       { x: currentX, y: currentY - 1 }      // up
     ];
 
-    // Maybe change direction if not chasing/fleeing
-    if (!isChasing && Math.random() < this.directionChangeChance) {
-      // 70% chance to turn 90 degrees, 30% chance to turn 180
-      const turnAmount = Math.random() < 0.7 ? 1 : 2;
-      // Randomly decide to turn left or right for 90-degree turns
-      this.currentDirection = (this.currentDirection + (turnAmount * (Math.random() < 0.5 ? 1 : -1)) + 4) % 4;
+    if (!isChasing && this.isPredator) {
+      // For predators not in chase mode, evaluate cell desirability
+      const cellDesirability = moves.map(move => {
+        const cell = groundCells.find(c => c.x === move.x && c.y === move.y);
+        return {
+          move,
+          desirability: this.evaluateCellDesirability(cell)
+        };
+      });
+
+      // Choose direction based on desirability (with some randomness)
+      if (Math.random() < 0.85) { // 70% chance to choose based on desirability
+        const bestMoves = cellDesirability.filter(m => 
+          m.desirability === Math.max(...cellDesirability.map(c => c.desirability))
+        );
+        if (bestMoves.length > 0) {
+          const chosen = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+          this.currentDirection = moves.findIndex(m => 
+            m.x === chosen.move.x && m.y === chosen.move.y
+          );
+        }
+      } else {
+        // Random direction change for variety
+        this.currentDirection = (this.currentDirection + (Math.random() < 0.5 ? 1 : -1) + 4) % 4;
+      }
+    } else if (!isChasing) {
+      // Original random direction change logic for non-predators or chasing predators
+      if (Math.random() < this.directionChangeChance) {
+        const turnAmount = Math.random() < 0.7 ? 1 : 2;
+        this.currentDirection = (this.currentDirection + (turnAmount * (Math.random() < 0.5 ? 1 : -1)) + 4) % 4;
+      }
     }
 
     return moves[this.currentDirection];
