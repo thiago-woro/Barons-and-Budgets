@@ -691,8 +691,6 @@ document.getElementById('npc-table-animals').addEventListener('click', function(
         const posCell = row.insertCell();
         posCell.textContent = `(${Math.floor(animal.x/cellSize)}, ${Math.floor(animal.y/cellSize)})`;
         
-        // Predator cell
-        const predCell = row.insertCell();
-        predCell.textContent = animal.isPredator ? 'Yes' : 'No';
+       
     });
 });

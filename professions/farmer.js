@@ -42,6 +42,13 @@ function updateFarmer(npc) {
         // Place farm when construction is complete
         if (npc.waitTime === 0) {
           const spot = npc.stateData.farmSpot;
+          // Check if Farm class exists
+          if (typeof Farm === 'undefined') {
+            console.error("Farm class is not defined. Ensure buildings/farm.js is loaded before farmer.js");
+            npc.transitionTo("idle");
+            return;
+          }
+          
           const farm = new Farm(spot.x, spot.y, cellSize, npc);
           buildings.push(farm);
           npc.stateData.currentFarm = farm;
@@ -74,6 +81,12 @@ function updateFarmer(npc) {
 function findNearestFarm(npc) {
   let nearestFarm = null;
   let minDistance = Infinity;
+  
+  // Ensure buildings array exists
+  if (!window.buildings) {
+    window.buildings = [];
+    console.warn("Created missing buildings array");
+  }
   
   buildings.forEach(building => {
     if (building instanceof Farm) {

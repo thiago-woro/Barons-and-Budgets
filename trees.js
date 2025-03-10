@@ -70,7 +70,7 @@ function startTrees(ctx, cellSize) {
         // Very strict noise ranges for each tree type
         if (noise > 0.01 && noise <= 0.03) {
             selectedEmoji = "🌴";  // Palm trees only in very specific low range (0.05-0.06)
-        } else if (noise > 0.06 && noise <= 0.13) {
+        } else if (noise > 0.06 && noise <= 0.08) {
             selectedEmoji = "🌵";  // Cactus in low-medium range (0.06-0.13)
         } else if (noise > 0.13 && noise < 0.45) {
             selectedEmoji = "🌳";  // Deciduous trees in medium range (0.13-0.45)
@@ -266,7 +266,11 @@ function distributeOreDeposits(ctx) {
         return noiseValue >= 0.42;
 
     });
-
+    // Return early if there are no suitable cells for ore deposits
+    if (betterOreCellsDistribution.length === 0) {
+    startTrees(treeCtx, cellSize);
+        return;
+    }
 
     const clusterCount = 5; // Number of ore deposit clusters
     const depositsPerCluster = 3;

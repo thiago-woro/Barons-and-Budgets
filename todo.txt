@@ -1,9 +1,17 @@
 add water animation
 
 
-add wood counter, and animations
 
 fix camera zoom
 
-bottom menu
+change "constructing" to "building"
 
+do not move npcs, when they are building, construting, mining.
+
+add a check for hunter, if there is 0 animals, change professions.
+
+change farming spot, its going to the sea, for some reason...
+
+issue an alert when mine Ore Deposits deplete.
+
+inventory item error

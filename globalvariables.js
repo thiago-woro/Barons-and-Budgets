@@ -31,6 +31,7 @@ let pathCells = [];
 const NPC_LIMIT = 700; // Maximum number of NPCs allowed
 let npcs = [];
 let animals = [];
+let huntedAnimalsCount = 0; // Track number of animals hunted by Hunter NPCs
 let year = 2700;
 const startingPopulation = 25;
 const populationIncreaseSpeed = 0.15;
@@ -75,7 +76,7 @@ const container = document.getElementById("container");
 
 // Global array to store houses
 let houses = [];
-let building = []
+let buildings = []; // Array to store all buildings (farms, harbors, etc.)
 let lastHouseCoords = []
 let validCells = [];
 
