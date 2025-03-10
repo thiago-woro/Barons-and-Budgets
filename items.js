@@ -20,6 +20,13 @@ const items = {
     weight: 0.1,
     size: "small",
   },
+  ore: {
+    name: "Ore",
+    emoji: "💎",
+    price: 8,
+    weight: 3,
+    size: "medium",
+  },
 };
 
 // Example usage:
@@ -111,3 +118,39 @@ const foods = {
 // Example usage:
 console.log(foods.bread); // Accessing the properties of the "Bread" food
 console.log(foods.roastedMeat); // Accessing the properties of the "Roasted Meat" food
+
+// Item class for use in inventory system
+class Item {
+  constructor(type, amount = 1) {
+    this.type = type;
+    this.amount = amount;
+    
+    // Get item details from the items or foods objects
+    const itemDetails = items[type] || foods[type] || { name: type, emoji: "❓" };
+    this.name = itemDetails.name || type;
+    this.emoji = itemDetails.emoji || "❓";
+  }
+  
+  add(amount) {
+    this.amount += amount;
+    return this.amount;
+  }
+  
+  remove(amount) {
+    if (this.amount >= amount) {
+      this.amount -= amount;
+      return true;
+    }
+    return false;
+  }
+}
+
+// Make it available globally if we're in a browser
+if (typeof window !== 'undefined') {
+  window.Item = Item;
+}
+
+// Export for module systems (if used)
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { items, foods, Item };
+}

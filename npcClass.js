@@ -5,6 +5,8 @@
 //inventory of held items 
 const treeFoundSound = new Audio('/assets/sounds/tree-down.mp3'); // Create this simple sound file
 
+// Note: Make sure items.js is included before npcClass.js in your HTML
+
 class NPC {
   constructor(x, y, myNumber, parents, age) {
     this.x = x * cellSize;
