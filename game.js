@@ -36,12 +36,7 @@ startButton.addEventListener("click", function () {
 
 startColony.addEventListener("click", function () {
   startNPCs(npcCtx, cellSize);
-  
-  // Initialize fishing functionality if available
-  if (typeof initializeFishingResources === 'function') {
     initializeFishingResources();
-  }
-  
   startButton.removeAttribute("disabled");
 });
 
@@ -194,34 +189,260 @@ function updateDebuggerOverlay() {
 ///ground work for save/load game
 // Save game state
 function saveGame() {
+    // Create a deep copy and replace circular references with IDs
+    const prepareNPCsForSave = (npcs) => {
+      return npcs.map(npc => {
+        const npcCopy = { ...npc };
+        
+        // Replace parent references with their IDs
+        if (npcCopy.parents) {
+          npcCopy.parentIds = npcCopy.parents.map(parent => 
+            typeof parent === 'object' && parent !== null ? parent.myNumber : parent
+          );
+          delete npcCopy.parents; // Remove the circular reference
+        }
+        
+        // Replace children references with their IDs
+        if (npcCopy.children && Array.isArray(npcCopy.children)) {
+          npcCopy.childrenIds = npcCopy.children.map(child => 
+            typeof child === 'object' && child !== null ? child.myNumber : child
+          );
+          delete npcCopy.children; // Remove the circular reference
+        }
+        
+        // Replace spouse reference with ID
+        if (npcCopy.spouse && typeof npcCopy.spouse === 'object') {
+          npcCopy.spouseId = npcCopy.spouse.myNumber;
+          delete npcCopy.spouse; // Remove the circular reference
+        }
+        
+        return npcCopy;
+      });
+    };
+
+    // Handle fishing boats circular references
+    const prepareBoatsForSave = (boats) => {
+      if (!boats || !Array.isArray(boats)) return [];
+      
+      return boats.map(boat => {
+        const boatCopy = { ...boat };
+        
+        // Replace owner reference with ID
+        if (boatCopy.owner && typeof boatCopy.owner === 'object') {
+          boatCopy.ownerId = boatCopy.owner.myNumber;
+          delete boatCopy.owner;
+        }
+        
+        return boatCopy;
+      });
+    };
+
     const gameState = {
+      // Game state
       year,
+      isPaused,
+      gameLoopSpeed,
+      
+      // Population
       startingPopulation,
       populationIncreaseSpeed,
-      // ... other variables
-      npcs, // Save the entire NPCs array
-      // ... other arrays or state that needs to be saved
+      npcs: prepareNPCsForSave(npcs),
+      
+      // World map data
+      terrainMap,
+      groundCells,
+      waterCells,
+      availableHouseCells,
+      flatLandCells,
+      sandCells,
+      pathCells,
+      
+      // Resources
+      trees,
+      treePositions,
+      oreDeposits: typeof oreDeposits !== 'undefined' ? oreDeposits : [],
+      
+      // Buildings
+      houses,
+      buildings,
+      
+      // Fishing
+      fishingBoats: typeof fishingBoats !== 'undefined' ? 
+        prepareBoatsForSave(fishingBoats) : [],
+      fishingSpotsByHarbor: typeof fishingSpotsByHarbor !== 'undefined' ? 
+        Array.from(fishingSpotsByHarbor.entries()) : [],
+      harborToFishingSpotPaths: typeof harborToFishingSpotPaths !== 'undefined' ? 
+        Array.from(harborToFishingSpotPaths.entries()) : [],
+      
+      // Timestamp
+      savedAt: new Date().toISOString()
     };
   
-    const gameStateString = JSON.stringify(gameState);
-    localStorage.setItem("savedGameState", gameStateString);
+    try {
+      const gameStateString = JSON.stringify(gameState);
+      localStorage.setItem("savedGameState", gameStateString);
+      console.log("Game saved successfully!");
+      addNotification("Game", "Game saved successfully!", new Date().toLocaleString(), null, "#4a7ba8");
+    } catch (error) {
+      console.warn("Failed to save game:", error);
+      addNotification("Game", "Failed to save game", error.message, null, "#a84a4a");
+    }
   }
   
   // Load game state
   function loadGame() {
-    const savedGameStateString = localStorage.getItem("savedGameState");
-    if (savedGameStateString) {
+    try {
+      const savedGameStateString = localStorage.getItem("savedGameState");
+      if (!savedGameStateString) {
+        console.warn("No saved game found.");
+        addNotification("Game", "No saved game found", "", null, "#a84a4a");
+        return false;
+      }
+  
       const savedGameState = JSON.parse(savedGameStateString);
   
+      // Game state
       year = savedGameState.year;
+      isPaused = savedGameState.isPaused;
+      gameLoopSpeed = savedGameState.gameLoopSpeed;
+      
+      // Population
       startingPopulation = savedGameState.startingPopulation;
       populationIncreaseSpeed = savedGameState.populationIncreaseSpeed;
-      // ... update other variables
-  
-      npcs = savedGameState.npcs; // Load the NPCs array
-      // ... update other arrays or state that needs to be loaded
-  
-      // Update UI or game logic to reflect the loaded state
+      
+      // Load NPCs with proper prototype methods
+      npcs = savedGameState.npcs.map(npcData => {
+        // Create a new NPC with position and other basic properties
+        const npc = new NPC(
+          Math.floor(npcData.x / cellSize), 
+          Math.floor(npcData.y / cellSize), 
+          npcData.myNumber, 
+          null, // Set parents later to avoid circular reference
+          npcData.age
+        );
+        
+        // Copy all properties from saved NPC to the new instance
+        Object.assign(npc, npcData);
+        
+        // Clear these fields to set them properly after all NPCs are created
+        npc.parents = null;
+        npc.children = [];
+        npc.spouse = null;
+        
+        return npc;
+      });
+      
+      // Second pass: restore relationship references
+      savedGameState.npcs.forEach((npcData, index) => {
+        const npc = npcs[index];
+        
+        // Restore parents
+        if (npcData.parentIds && Array.isArray(npcData.parentIds)) {
+          npc.parents = npcData.parentIds.map(id => 
+            npcs.find(n => n.myNumber === id) || id
+          ).filter(parent => parent !== undefined);
+        }
+        
+        // Restore children
+        if (npcData.childrenIds && Array.isArray(npcData.childrenIds)) {
+          npc.children = npcData.childrenIds.map(id => 
+            npcs.find(n => n.myNumber === id) || id
+          ).filter(child => child !== undefined);
+        }
+        
+        // Restore spouse
+        if (npcData.spouseId !== undefined) {
+          npc.spouse = npcs.find(n => n.myNumber === npcData.spouseId);
+        }
+      });
+      
+      // World map data
+      terrainMap = savedGameState.terrainMap;
+      groundCells = savedGameState.groundCells;
+      waterCells = savedGameState.waterCells;
+      availableHouseCells = savedGameState.availableHouseCells;
+      flatLandCells = savedGameState.flatLandCells;
+      sandCells = savedGameState.sandCells || [];
+      pathCells = savedGameState.pathCells;
+      
+      // Resources
+      trees = savedGameState.trees;
+      treePositions = savedGameState.treePositions;
+      
+      if (typeof distributeOreDeposits === 'function' && savedGameState.oreDeposits) {
+        oreDeposits = savedGameState.oreDeposits;
+      }
+      
+      // Buildings
+      houses = savedGameState.houses;
+      buildings = savedGameState.buildings;
+      
+      // Fishing - only if the fisher module is loaded
+      if (typeof FishingBoat === 'function' && savedGameState.fishingBoats) {
+        // Restore Maps from array entries
+        fishingSpotsByHarbor = new Map(savedGameState.fishingSpotsByHarbor);
+        harborToFishingSpotPaths = new Map(savedGameState.harborToFishingSpotPaths);
+        
+        // Restore fishing boats with proper prototypes
+        fishingBoats = savedGameState.fishingBoats.map(boatData => {
+          const harbor = buildings.find(b => b.id === boatData.harborId);
+          const owner = npcs.find(n => n.myNumber === boatData.ownerId);
+          
+          if (!harbor || !owner) {
+            console.warn("Could not find harbor or owner for boat:", boatData);
+            return null;
+          }
+          
+          const boat = new FishingBoat(harbor, owner);
+          Object.assign(boat, boatData);
+          boat.owner = owner; // Set owner reference properly
+          return boat;
+        }).filter(boat => boat !== null);
+      }
+      
+      // Redraw everything
+      if (typeof drawTerrainLayer === 'function') {
+        clearCanvas(groundCtx);
+        clearCanvas(waterCtx);
+        
+        drawTerrainLayer(groundCtx, groundCells, cellSize);
+        drawTerrainLayer(waterCtx, waterCells, cellSize);
+        
+        if (typeof drawSandTexture === 'function') {
+          drawSandTexture(groundCtx);
+        }
+        
+        if (typeof drawMountainTexture === 'function') {
+          drawMountainTexture(groundCtx);
+        }
+      }
+      
+      // Redraw trees
+      if (typeof drawTrees === 'function' && treeCtx) {
+        clearCanvas(treeCtx);
+        drawTrees(treeCtx, cellSize, treePositions, []);
+      }
+      
+      // Redraw buildings
+      buildings.forEach(building => {
+        if (typeof building.draw === 'function') {
+          building.draw(npcCtx);
+        }
+      });
+      
+      // Update UI
+      currentPopulation.textContent = npcs.length;
+      gameSpeed.textContent = "x " + gameLoopSpeed.toFixed(0);
+      gameSpeedValue.textContent = `Game Speed: ${10000 / gameLoopSpeed}`;
+      
+      console.log("Game loaded successfully! Year:", year, "Population:", npcs.length);
+      addNotification("Game", "Game loaded successfully!", `Year: ${year}, Population: ${npcs.length}`, null, "#4a7ba8");
+      
+      return true;
+    } catch (error) {
+      console.warn("Failed to load game:", error);
+      addNotification("Game", "Failed to load game", error.message, null, "#a84a4a");
+      return false;
     }
   }
   

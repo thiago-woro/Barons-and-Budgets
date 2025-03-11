@@ -93,10 +93,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function placeAnimal(coords, toolId) {
+    // Return early if active tab is not Animals
+    if (window.activeTabBottomLeft !== "animals") {
+      return;
+    }
 
     //return if isdragging is true
     if (isDragging) {
-      console.log("Mouse is grabbing!");
+      console.warn("Mouse is grabbing!");
       return;
     }
 
@@ -166,8 +170,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Main click handler for the container
   container.addEventListener("click", function(event) {
-    if (isDragging || wasDragging) {
-      console.log("Prevented placement - was dragging");
+    // Only check for dragging when animals tab is active
+    if ((window.activeTabBottomLeft === "animals") && (isDragging || wasDragging)) {
+      console.warn("Prevented placement - was dragging");
       return;
     }
     

@@ -1,11 +1,5 @@
-// Initialize zoomLevel and other related variables
-let zoomLevel = 1.0;
-let canvasX = 0;
-let canvasY = 0;
-let mouseX = 0;
-let mouseY = 0;
-let cameraX = 0;
-let cameraY = 0;
+let highlightedCellX = null;
+let highlightedCellY = null;
 
 class Camera {
   constructor(container) {
@@ -16,48 +10,21 @@ class Camera {
     this.lastMousePos = { x: 0, y: 0 };
     this.minZoom = 0.1;
     this.maxZoom = 5;
-    this.zoomSpeed = 0.1;
-    this.zoomFactor = 0.05; // New property for proportional zoom
+    this.zoomFactor = 0.025;
     this.setupEventListeners();
   }
 
-  /* html structure - dont delete
-  	<body>
-        <div class="canvas-container" id="container" style="visibility: collapse;">
-            <canvas id="groundCanvas"  style="z-index: 10;"></canvas>
-            <canvas id="waterCanvas"  style="z-index: 0;"></canvas>
-   */
+   centerOnHighlightedCell() {
+    if (highlightedCellX !== null && highlightedCellY !== null) {
+      this.centerOnCell(highlightedCellX, highlightedCellY);
+    }
+  }
 
   setupEventListeners() {
-    // Mouse wheel for zooming
-    this.container.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      const rect = this.container.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
+  
 
-      // Log mouse position before zoom
-      //console.log(`Before Zoom: Mouse Position = (${mouseX}, ${mouseY})`);
-
-      // Calculate new zoom with proportional speed
-      const zoomDirection = -Math.sign(e.deltaY);
-      const zoomChange = this.zoom * this.zoomFactor * zoomDirection;
-      const newZoom = Math.min(Math.max(this.zoom + zoomChange, this.minZoom), this.maxZoom);
-      if (newZoom !== this.zoom) {
-        // Apply zoom without translation effect
-        this.zoom = newZoom;
-
-        // Log mouse position after zoom
-       // console.log(`After Zoom: Mouse Position = (${mouseX}, ${mouseY})`);
-
-        this.updateTransform();
-      }
-    });
-
-    // Mouse drag for panning
     this.container.addEventListener('mousedown', (e) => {
       this.isDragging = true;
-      isDragging = true; // Update global variable
       this.lastMousePos = { x: e.clientX, y: e.clientY };
       this.container.style.cursor = 'grabbing';
     });
@@ -66,14 +33,8 @@ class Camera {
       if (this.isDragging) {
         const deltaX = (e.clientX - this.lastMousePos.x) / this.zoom;
         const deltaY = (e.clientY - this.lastMousePos.y) / this.zoom;
-
         this.position.x -= deltaX;
         this.position.y -= deltaY;
-
-        // Update global canvasX and canvasY
-        canvasX = -this.position.x * this.zoom;
-        canvasY = -this.position.y * this.zoom;
-
         this.lastMousePos = { x: e.clientX, y: e.clientY };
         this.updateTransform();
       }
@@ -82,79 +43,67 @@ class Camera {
 
     window.addEventListener('mouseup', () => {
       this.isDragging = false;
-      isDragging = false; // Update global variable
       this.container.style.cursor = 'default';
     });
   }
 
-  screenToWorld(screenX, screenY) {
-    const rect = this.container.getBoundingClientRect();
-    const mouseX = screenX - rect.left;
-    const mouseY = screenY - rect.top;
-    // Convert to world coordinates
-    const worldX = (mouseX - this.position.x * this.zoom) / this.zoom;
-    const worldY = (mouseY - this.position.y * this.zoom) / this.zoom;
-    return { x: worldX, y: worldY };
-  }
+centerOnHighlightedCell() {
+    if (highlightedCellX !== null && highlightedCellY !== null) {
+        this.centerOnCell(highlightedCellX, highlightedCellY);
+    }
+}
 
-  // Convert world coordinates to screen coordinates
-  worldToScreen(worldX, worldY) {
-    const rect = this.container.getBoundingClientRect();
-    // Convert to screen coordinates
-    const screenX = worldX * this.zoom + this.position.x * this.zoom + rect.left;
-    const screenY = worldY * this.zoom + this.position.y * this.zoom + rect.top;
-    return { x: screenX, y: screenY };
-  }
+ screenToWorld(screenX, screenY) {
+  const rect = this.container.getBoundingClientRect();
+  const worldX = (screenX - rect.left) / this.zoom + this.position.x;
+  const worldY = (screenY - rect.top) / this.zoom + this.position.y;
+  return { x: worldX, y: worldY };
+}
 
-  
+worldToScreen(worldX, worldY) {
+  const rect = this.container.getBoundingClientRect();
+  const screenX = (worldX - this.position.x) * this.zoom + rect.left;
+  const screenY = (worldY - this.position.y) * this.zoom + rect.top;
+  return { x: screenX, y: screenY };
+}
 
   updateHoveredCell(event) {
-    // Use offsetX/offsetY for mouse coordinates relative to the container
+    let cellX, cellY; // Declare cellX and cellY at the top of the function
+
     const mouseX = event.offsetX;
     const mouseY = event.offsetY;
-    // Convert screen coordinates to world coordinates
     const worldX = mouseX / this.zoom + this.position.x;
     const worldY = mouseY / this.zoom + this.position.y;
-    // Calculate cell index based on world coordinates
-    const cellX = Math.floor(worldX / cellSize);
-    const cellY = Math.floor(worldY / cellSize);
-    // Calculate the screen position of the cell highlight
+
+    cellX = Math.floor(worldX / cellSize);
+    cellY = Math.floor(worldY / cellSize);
+
     const cellScreenX = (cellX * cellSize - this.position.x) * this.zoom;
     const cellScreenY = (cellY * cellSize - this.position.y) * this.zoom;
-    // Clear previous highlight
     boatCtx.clearRect(0, 0, boatCanvas.width, boatCanvas.height);
-    // Draw the highlight
     boatCtx.fillStyle = 'rgba(128, 0, 128, 0.5)';
-    boatCtx.fillRect(cellScreenX, cellScreenY, cellSize * this.zoom, cellSize * this.zoom);
-    // Update camera zoom info with additional cell info
+    boatCtx.strokeStyle = 'rgba(128, 0, 128, 0.5)';
+    boatCtx.strokeRect(cellScreenX, cellScreenY, cellSize * this.zoom, cellSize * this.zoom);
     const cameraZoomInfo = document.getElementById('cameraZoomInfo');
     if (cameraZoomInfo) {
-      cameraZoomInfo.innerHTML = `updateHoveredCell: Zoom: ${this.zoom.toFixed(2)} | Position: (${this.position.x.toFixed(2)}, ${this.position.y.toFixed(2)}) | Cell: (${cellX}, ${cellY}) | Screen: (${cellScreenX.toFixed(2)}, ${cellScreenY.toFixed(2)})`;
+      cameraZoomInfo.innerHTML = `Zoom: ${this.zoom.toFixed(2)} | Position: (${this.position.x.toFixed(2)}, ${this.position.y.toFixed(2)}) | Cell: (${cellX}, ${cellY}) | Screen: (${cellScreenX.toFixed(2)}, ${cellScreenY.toFixed(2)})`;
     }
-    
+
+    highlightedCellX = cellX;
+    highlightedCellY = cellY;
   }
 
-  updateTransform() {
-    // Apply transform to the container
+
+   updateTransform() {
     this.container.style.transform = `translate(${-this.position.x * this.zoom}px, ${-this.position.y * this.zoom}px) scale(${this.zoom})`;
-
-    // Update global values
-    canvasX = -this.position.x * this.zoom;
-    canvasY = -this.position.y * this.zoom;
-    zoomLevel = this.zoom;
-
-    // Don't call updateCanvasPosition() since we're applying the transform directly
     this.updateCameraZoomInfo();
-
-    // Update the highlighted cell if the mouse is over the container
     const event = new MouseEvent('mousemove', {
       clientX: this.lastMousePos.x,
-      clientY: this.lastMousePos.y
+      clientY: this.lastMousePos.y,
     });
     this.updateHoveredCell(event);
+    updateContainerSize();
   }
-
- 
 
   updateCameraZoomInfo() {
     const cameraZoomInfoElement = document.getElementById('cameraZoomInfo');
@@ -166,53 +115,142 @@ class Camera {
   reset() {
     this.position = { x: 0, y: 0 };
     this.zoom = 1.0;
-
-    // Update global variables
-    canvasX = 0;
-    canvasY = 0;
-    zoomLevel = 1.0;
-
     this.updateTransform();
+    updateContainerSize();
+  }
+
+
+
+centerOnCell(cellX, cellY) {
+  // Target cell center in world coordinates
+  const worldX = (cellX * cellSize) + (cellSize / 2);
+  const worldY = (cellY * cellSize) + (cellSize / 2);
+
+  // Container center in screen coordinates (relative to container's top-left)
+  const containerRect = this.container.getBoundingClientRect();
+  const containerCenterX = containerRect.width / 2;
+  const containerCenterY = containerRect.height / 2;
+
+  // Set position so worldX, worldY map to container center
+  this.position.x = worldX - containerCenterX / this.zoom;
+  this.position.y = worldY - containerCenterY / this.zoom;
+
+  // Apply bounds and update
+  this.applyWorldBounds();
+  this.updateTransform();
+
+  // Debugging
+  const screenPos = this.worldToScreen(worldX, worldY);
+  console.log(`Centered on (${cellX}, ${cellY}) - World: (${worldX}, ${worldY}), Pos: (${this.position.x}, ${this.position.y})`);
+  console.log(`Screen Pos: (${screenPos.x}, ${screenPos.y}) vs Container Center: (${containerCenterX}, ${containerCenterY})`);
+}
+
+applyWorldBounds() {
+    // World Bounds (example)
+    const minX = 0;
+    const maxX = 200 * cellSize; // Replace with your world's dimensions
+    const minY = 0;
+    const maxY = 200 * cellSize;
+
+    // Viewport Dimensions
+    const viewportWidth = this.container.getBoundingClientRect().width;
+    const viewportHeight = this.container.getBoundingClientRect().height;
+
+    // Bounds Checking
+    const minCameraX = minX - (viewportWidth / this.zoom / 2);
+    const maxCameraX = maxX - (viewportWidth / this.zoom / 2);
+    const minCameraY = minY - (viewportHeight / this.zoom / 2);
+    const maxCameraY = maxY - (viewportHeight / this.zoom / 2);
+
+    this.position.x = Math.max(minCameraX, Math.min(this.position.x, maxCameraX));
+    this.position.y = Math.max(minCameraY, Math.min(this.position.y, maxCameraY));
+}
+
+
+  centerCanvasOnMap() {
+    let totalX = 0;
+    let totalY = 0;
+    for (const cell of groundCells) {
+      totalX += cell.x;
+      totalY += cell.y;
+    }
+    const centerX = totalX / groundCells.length;
+    const centerY = totalY / groundCells.length;
+    this.centerOnCell(Math.floor(centerX), Math.floor(centerY));
   }
 }
 
 // Initialize camera
 const camera = new Camera(container);
+// Remove keyboard translate
+// Remove direct position updates
+// Remove global canvasX, canvasY, zoomLevel
+// Remove resetCanvasPosition
+// Remove direct canvas translate
 
-const canvases = container.querySelectorAll("canvas");
-        let translateX = 0;
-        let translateY = 0;
+// Mouse clicks canvas map
+let isDragging = false;
+function logCellOnClick(container, ctx, cellSize, npcCtx, treeCtx, pathCtx) {
+  container.addEventListener("click", function(event) {
+    if (isDragging === false) {
+      const rect = container.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      const { x: worldX, y: worldY } = camera.screenToWorld(x, y);
+      const cellRow = Math.floor(worldY / cellSize);
+      const cellCol = Math.floor(worldX / cellSize);
+      console.info(`Click at (${x.toFixed(2)}, ${y.toFixed(2)}), Cell: (${cellCol}, ${cellRow}), tab: ${window.activeTabBottomLeft}`);
 
-        // Adjust the translation values based on your desired speed
-        const translateSpeed = 50;
+      if (event.shiftKey) {
+        camera.centerOnCell(cellCol, cellRow);
+        return;
+      }
 
-        window.addEventListener("keydown", (event) => {
-            const key = event.key.toLowerCase();
+      ctx.strokeStyle = 'orange';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(cellCol * cellSize, cellRow * cellSize, cellSize, cellSize);
+    }
+  });
+}
 
-            switch (key) {
-                case "a":
-                    translateX += translateSpeed;
-                    break;
-                case "d":
-                    translateX -= translateSpeed;
-                    break;
-                case "w":
-                    translateY += translateSpeed;
-                    break;
-                case "s":
-                    translateY -= translateSpeed;
-                    break;
-            }
+logCellOnClick(container, boatCtx, cellSize, npcCtx, treeCtx, pathCtx);
 
-            // Apply the translation to all canvas elements
-            canvases.forEach((canvas) => {
-                canvas.style.transform = `translate(${translateX}px, ${translateY}px)`;
-            });
-        });
+// Listen for click on the 'recenterCanvas' icon
+document.getElementById("recenterCanvas").addEventListener("click", () => {
+  camera.centerCanvasOnMap();
+});
 
-// Add event listener for the reset camera button
-document.getElementById("resetCameraButton").addEventListener("click", function() {
-  camera.reset();
+document.addEventListener('keydown', (event) => {
+  if (event.key.toLowerCase() === 'c') {
+    camera.centerCanvasOnMap();
+  }
+});
+
+// Function to show dialog and center on user-provided coordinates
+function promptAndCenterOnCell() {
+  const input = prompt("Enter cell coordinates (format: x,y)", "");
+  if (input === null || input.trim() === "") return;
+
+  try {
+    const coords = input.split(',').map(coord => parseInt(coord.trim(), 10));
+
+    if (coords.length !== 2 || isNaN(coords[0]) || isNaN(coords[1])) {
+      console.warn("Invalid coordinate format. Please use: x,y");
+      return;
+    }
+
+    const [cellX, cellY] = coords;
+    camera.centerOnCell(cellX, cellY);
+  } catch (error) {
+    console.warn("Error parsing coordinates:", error);
+  }
+}
+
+// Add a keypress handler for 'g' key to go to coordinates
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'g') {
+    promptAndCenterOnCell();
+  }
 });
 
 // Listen for 'Esc' key
@@ -224,112 +262,229 @@ document.addEventListener("keydown", (event) => {
     chartTab.style.display = "none";
     npcTab.style.display = "none";
     minimizeTabButton.textContent = "Show";
-    resetCanvasPosition();
-    camera.reset(); // Reset the camera too
+    camera.reset();
   }
 });
 
-///this works - do not delete
-function getAdjacentCells(targetCell) {
-  const { row: targetRow, col: targetCol } = targetCell;
-  // Define the offsets for adjacent cells
-  const offsets = [
-    { row: -1, col: -1 },
-    { row: -1, col: 0 },
-    { row: -1, col: 1 },
-    { row: 0, col: -1 },
-    { row: 0, col: 0 }, // Target cell
-    { row: 0, col: 1 },
-    { row: 1, col: -1 },
-    { row: 1, col: 0 },
-    { row: 1, col: 1 },
-  ];
-  const adjacentCells = [];
-  // Calculate and store the positions of adjacent cells relative to the target cell
-  for (const offset of offsets) {
-    const adjacentRow = targetRow + offset.row;
-    const adjacentCol = targetCol + offset.col;
-    adjacentCells.push({ row: adjacentRow, col: adjacentCol });
+document.addEventListener('keydown', (event) => {
+  if (event.key.toLowerCase() === 'h') {
+    camera.centerOnHighlightedCell();
   }
-  return adjacentCells;
-}
-
-// Mouse clicks canvas map
-let isDragging = false; // Define a global isDragging variable
-function logCellOnClick(container, ctx, cellSize, npcCtx, treeCtx, pathCtx) {
-  container.addEventListener("click", function(event) {
-    if (isDragging === false) {
-      // Calculate the mouse position within the container.
-      const rect = container.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
-      // Convert screen coordinates to world coordinates
-      const { x: worldX, y: worldY } = camera.screenToWorld(x, y);
-      // Calculate cell indices (row and column) based on world position.
-      const cellRow = Math.floor(worldY / cellSize);
-      const cellCol = Math.floor(worldX / cellSize);
-      console.log(`Cell clicked: X = ${cellCol}, Y = ${cellRow}`);
-      // Draw a purple rectangle at the clicked cell
-      ctx.fillStyle = 'green';
-      ctx.fillRect(cellCol * cellSize, cellRow * cellSize, cellSize, cellSize);
-
-      //leftClickAction(cellCol, cellRow, npcCtx, cellSize, treeCtx, pathCtx);
-    }
-  });
-}
-
-logCellOnClick(container, boatCtx, cellSize, npcCtx, treeCtx, pathCtx);
-
-
-
-// Reset camera controls - DO NOT DELETE
-function resetCanvasPosition() {
-  // Update camera object instead of directly setting values
-  camera.reset();
-}
-
-// Listen for click on the 'recenterCanvas' icon
-document.getElementById("recenterCanvas").addEventListener("click", () => {
-  resetCanvasPosition();
-  centerCanvasOnMap();
+  // ... (existing key event handlers) ...
 });
 
-// Function to center the canvas on the map
-function centerCanvasOnMap() {
-  // Calculate the center of the landCells array
-  let totalX = 0;
-  let totalY = 0;
-  for (const cell of groundCells) {
-    totalX += cell.x;
-    totalY += cell.y;
-  }
-  const centerX = totalX / groundCells.length;
-  const centerY = totalY / groundCells.length;
-
-  /* paint the center cells in green */
-  // Draw a green rectangle at the center cell
-  const cellCol = Math.floor(centerX / cellSize);
-  const cellRow = Math.floor(centerY / cellSize);
-  boatCtx.fillStyle = 'purple'; // Set the fill color to bright purple
-  boatCtx.fillRect(cellCol * cellSize, cellRow * cellSize, cellSize, cellSize); // Draw a green rectangle at the center cell
-
-
-  // Set camera position to center on this point
-  camera.position.x = centerX - (groundCanvas.width / 2) / camera.zoom;
-  camera.position.y = centerY - (groundCanvas.height / 2) / camera.zoom;
-
-  // Update global variables
-  canvasX = -camera.position.x * camera.zoom;
-  canvasY = -camera.position.y * camera.zoom;
-
-  camera.updateTransform();
+function updateContainerSize() {
+  const container = document.getElementById('container');
+  container.style.width = `${window.innerWidth}px`;
+  container.style.height = `${window.innerHeight}px`;
 }
+
+
+// Call updateContainerSize when the window is resized
+window.addEventListener('resize', updateContainerSize);
+
+// Call updateContainerSize after the camera is initialized
+document.addEventListener('DOMContentLoaded', () => {
+    updateContainerSize();
+})
+
+
+document.addEventListener('keydown', (event) => {
+  if (event.key.toLowerCase() === 'p') {
+    logAllCenters();
+  }
+});
+
+function logAllCenters() {
+  const screenWidth = window.innerWidth;
+  const screenHeight = window.innerHeight;
+  const screenCenterX = screenWidth / 2;
+  const screenCenterY = screenHeight / 2;
+
+  const containerRect = camera.container.getBoundingClientRect();
+  const containerCenterX = containerRect.width / 2;
+  const containerCenterY = containerRect.height / 2;
+
+  const worldCenter = camera.screenToWorld(containerCenterX, containerCenterY);
+  const worldCenterX = worldCenter.x;
+  const worldCenterY = worldCenter.y;
+
+  console.log(`--- Centers ---`);
+  console.info(`Container Center (Relative to Container): (${containerCenterX.toFixed(0)}, ${containerCenterY.toFixed(0)})`);
+  console.warn(`World Center (World Coordinates): (${worldCenterX.toFixed(0)}, ${worldCenterY.toFixed(0)})`);
+  console.log(`Camera Position: (${camera.position.x.toFixed(0)}, ${camera.position.y.toFixed(0)})`);
+}
+
+
+
+
 
 
 
 document.addEventListener('keydown', (event) => {
-  if (event.key.toLowerCase() === 'c') {
+  const panAmount = 10; // Adjust panning speed as needed
 
-    centerCanvasOnMap();
+  switch (event.key.toLowerCase()) {
+    case 'w':
+      camera.position.y -= panAmount;
+      break;
+    case 'a':
+      camera.position.x -= panAmount;
+      break;
+    case 's':
+      camera.position.y += panAmount;
+      break;
+    case 'd':
+      camera.position.x += panAmount;
+      break;
+    default:
+      return; // Exit if not a WASD key
   }
+
+  camera.updateTransform(); // Update the camera's transform after panning
+});
+
+/* ///THIS ACTUALLY FINALLY WORKS
+container.addEventListener('click', (event) => {
+  const rect = container.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  const { x: worldX, y: worldY } = camera.screenToWorld(x, y);
+  const cellX = Math.floor(worldX / cellSize);
+  const cellY = Math.floor(worldY / cellSize);
+
+  // Calculate viewport center in world coordinates
+  const containerRect = camera.container.getBoundingClientRect();
+  const containerCenterX = containerRect.width / 2;
+  const containerCenterY = containerRect.height / 2;
+  const worldCenter = camera.screenToWorld(containerCenterX, containerCenterY);
+  const viewportWorldX = worldCenter.x;
+  const viewportWorldY = worldCenter.y;
+
+  // Calculate desired camera position
+  const cellWorldX = worldX;
+  const cellWorldY = worldY;
+  const desiredCameraPositionX = cellWorldX - viewportWorldX;
+  const desiredCameraPositionY = cellWorldY - viewportWorldY;
+
+  // Update camera position
+  camera.position.x = desiredCameraPositionX;
+  camera.position.y = desiredCameraPositionY;
+
+  // Increase zoom by 10%
+  camera.zoom *= 1.1; // Increase zoom by 10%
+  camera.zoom = Math.min(camera.zoom, camera.maxZoom); // Ensure zoom doesn't exceed maximum
+
+  camera.updateTransform();
+
+  // Log for debugging
+  console.log(`Clicked Cell: (${cellX}, ${cellY}) | Camera Position: (${camera.position.x.toFixed(2)}, ${camera.position.y.toFixed(2)}) | Desired Camera Position: (${desiredCameraPositionX.toFixed(2)}, ${desiredCameraPositionY.toFixed(2)}) | Zoom: ${camera.zoom.toFixed(2)}`);
+});
+ */
+
+
+
+let lockedCellX = null;
+let lockedCellY = null;
+let scrollTimeout = null;
+let initialWorldX = null;
+let initialWorldY = null;
+let isZooming = false;
+let previousDesiredX = null;
+let previousDesiredY = null;
+
+container.addEventListener('wheel', (e) => {
+  e.preventDefault();
+
+  // Get the mouse position relative to the container
+  const rect = container.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
+
+  // Convert mouse position to world coordinates
+  const worldMouse = camera.screenToWorld(mouseX, mouseY);
+  
+  // Calculate current cell under mouse
+  const currentCellX = Math.floor(worldMouse.x / cellSize);
+  const currentCellY = Math.floor(worldMouse.y / cellSize);
+
+  // Store current position for transition calculation
+  const oldCameraX = camera.position.x;
+  const oldCameraY = camera.position.y;
+
+  // Start of zoom sequence - lock onto this cell
+  if (!isZooming) {
+    isZooming = true;
+    lockedCellX = currentCellX;
+    lockedCellY = currentCellY;
+    
+    // Use cell center for more stable zooming
+    initialWorldX = (lockedCellX * cellSize) + (cellSize / 2);
+    initialWorldY = (lockedCellY * cellSize) + (cellSize / 2);
+    
+    previousDesiredX = camera.position.x;
+    previousDesiredY = camera.position.y;
+    
+    console.warn(`Locked onto cell: (${lockedCellX}, ${lockedCellY})`);
+  }
+
+  // Calculate zoom change with gentle easing
+  const zoomDirection = -Math.sign(e.deltaY);
+  // Smaller zoom step for smoother zooming
+  const zoomStep = camera.zoom * camera.zoomFactor * zoomDirection * 0.7; 
+  const newZoom = Math.min(Math.max(camera.zoom + zoomStep, camera.minZoom), camera.maxZoom);
+  
+  // Update zoom
+  camera.zoom = newZoom;
+
+  // Calculate viewport center in world coordinates after zoom change
+  const containerRect = camera.container.getBoundingClientRect();
+  const containerCenterX = containerRect.width / 2;
+  const containerCenterY = containerRect.height / 2;
+  const worldCenter = camera.screenToWorld(containerCenterX, containerCenterY);
+
+  // Calculate where the locked cell should be
+  const targetCameraX = initialWorldX - worldCenter.x;
+  const targetCameraY = initialWorldY - worldCenter.y;
+
+  // Determine new desired position with smooth transition from previous desired position
+  // This helps prevent sudden jumps between frames
+  const transitionSpeed = 0.5; // Lower = smoother but more lag
+  
+  // If we have a previous position, smoothly transition to the new one
+  if (previousDesiredX !== null) {
+    const desiredCameraX = previousDesiredX + (targetCameraX - previousDesiredX) * transitionSpeed;
+    const desiredCameraY = previousDesiredY + (targetCameraY - previousDesiredY) * transitionSpeed;
+    
+    // Update camera position
+    camera.position.x = desiredCameraX;
+    camera.position.y = desiredCameraY;
+    
+    // Store these as the previous desired positions for next frame
+    previousDesiredX = desiredCameraX;
+    previousDesiredY = desiredCameraY;
+  } else {
+    // First frame, just use the target position
+    camera.position.x = targetCameraX;
+    camera.position.y = targetCameraY;
+    previousDesiredX = targetCameraX;
+    previousDesiredY = targetCameraY;
+  }
+
+  camera.updateTransform();
+
+  console.log(`Zoomed Cell: (${lockedCellX}, ${lockedCellY}) | Zoom: ${camera.zoom.toFixed(2)} | Camera: (${camera.position.x.toFixed(2)}, ${camera.position.y.toFixed(2)})`);
+
+  // Reset zoom sequence detection after a delay
+  clearTimeout(scrollTimeout);
+  scrollTimeout = setTimeout(() => {
+    isZooming = false;
+    lockedCellX = null;
+    lockedCellY = null;
+    initialWorldX = null;
+    initialWorldY = null;
+    previousDesiredX = null;
+    previousDesiredY = null;
+    console.warn("Zoom sequence ended");
+  }, 300);
 });

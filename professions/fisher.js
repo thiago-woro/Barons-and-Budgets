@@ -154,6 +154,7 @@ const fishingBoats = [];
 // Store fishing spots for each harbor and pre-calculated paths
 const fishingSpotsByHarbor = new Map();
 const harborToFishingSpotPaths = new Map();
+const harborWaterPortCell = new Map(); // Map to store water cells for harbors (harborId -> {x, y})
 
 // Create a fast lookup map for water cells
 const waterCellsMap = new Map();
@@ -163,9 +164,6 @@ const nearestWaterCache = new Map();
 
 // Pre-calculated data for performance
 const preCalc = {
-  waterNeighbors: new Map(),
-  groundNeighbors: new Map(),
-  groundToNearestWater: new Map(),
   harborFishingSpots: new Map(),
 };
 
@@ -173,116 +171,6 @@ const preCalc = {
 const boatImage = new Image();
 let boatImageLoaded = false;
 let boatImageFailed = false;
-
-// Pre-calculate data for pathfinding
-function preCalculateData() {
-
-  // Build the water cells lookup map for O(1) access
-  waterCellsMap.clear();
-  waterCells.forEach(cell => {
-    if (!cell) return;
-    const key = `${cell.x},${cell.y}`;
-    waterCellsMap.set(key, cell);
-  });
-  console.log(`Built water cells lookup map with ${waterCellsMap.size} entries`);
-
-  const dirs = [{ x: 0, y: -1 }, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: -1, y: 0 }];
-
-  // Pre-calculate water neighbors
-  waterCells.forEach(cell => {
-    if (!cell) return; // Skip invalid cells
-    
-    const neighbors = dirs.map(dir => ({ x: cell.x + dir.x, y: cell.y + dir.y }))
-      .filter(neighbor => isWaterCell(neighbor.x, neighbor.y));
-    preCalc.waterNeighbors.set(`${cell.x},${cell.y}`, neighbors);
-  });
-
-  // Pre-calculate ground neighbors
-  groundCells.forEach(cell => {
-    if (!cell) return; // Skip invalid cells
-    
-    const neighbors = dirs.map(dir => ({ x: cell.x + dir.x, y: cell.y + dir.y }))
-      .filter(neighbor => groundCells.some(c => c && c.x === neighbor.x && c.y === neighbor.y));
-    preCalc.groundNeighbors.set(`${cell.x},${cell.y}`, neighbors);
-  });
-
-  // Pre-calculate nearest water cell for each ground cell
-  groundCells.forEach(ground => {
-    if (!ground) return; // Skip invalid cells
-    
-    let nearestWater = null;
-    let minDistance = Infinity;
-    
-    waterCells.forEach(water => {
-      if (!water) return; // Skip invalid cells
-      
-      const dist = Math.sqrt(Math.pow(ground.x - water.x, 2) + Math.pow(ground.y - water.y, 2));
-      if (dist < minDistance) {
-        minDistance = dist;
-        nearestWater = water;
-      }
-    });
-    
-    if (nearestWater) {
-      preCalc.groundToNearestWater.set(`${ground.x},${ground.y}`, nearestWater);
-    }
-  });
-  
-  console.log(`Pre-calculated data: ${preCalc.waterNeighbors.size} water neighbors, ${preCalc.groundNeighbors.size} ground neighbors`);
-}
-
-// Safe version of getNeighbors that won't fail if data isn't pre-calculated
-function getNeighbors(x, y, isWater) {
-  if (x === undefined || y === undefined) {
-    return [];
-  }
-  
-  const key = `${x},${y}`;
-  let neighbors;
-  
-  // Try to get from pre-calculated data first
-  if (isWater) {
-    neighbors = preCalc.waterNeighbors.get(key);
-  } else {
-    neighbors = preCalc.groundNeighbors.get(key);
-  }
-  
-  // If we have pre-calculated neighbors, return them
-  if (neighbors && Array.isArray(neighbors)) {
-    return neighbors;
-  }
-  
-  // Fallback: calculate on the fly if pre-calculation failed
-  const dirs = [{ x: 0, y: -1 }, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: -1, y: 0 }];
-  
-  if (isWater) {
-    // Check if we have water cells
-    if (!waterCells || !Array.isArray(waterCells)) {
-      return [];
-    }
-    
-    return dirs.map(dir => ({ x: x + dir.x, y: y + dir.y }))
-      .filter(neighbor => isWaterCell(neighbor.x, neighbor.y));
-  } else {
-    // Check if we have ground cells
-    if (!groundCells || !Array.isArray(groundCells)) {
-      return [];
-    }
-    
-    return dirs.map(dir => ({ x: x + dir.x, y: y + dir.y }))
-      .filter(neighbor => groundCells.some(c => c && c.x === neighbor.x && c.y === neighbor.y));
-  }
-}
-
-// Optimized function to check if a cell is water using the lookup map
-function isWaterCell(x, y) {
-  if (x === undefined || y === undefined) {
-    return false;
-  }
-  
-  // Use the map for O(1) lookup instead of O(n) array scan
-  return waterCellsMap.has(`${x},${y}`);
-}
 
 function findNearestWaterCell(gridX, gridY) {
   if (gridX === undefined || gridY === undefined) {
@@ -297,21 +185,11 @@ function findNearestWaterCell(gridX, gridY) {
     return cachedResult;
   }
   
-  // Then try to get from pre-calculated data
-  const preCalcWater = preCalc.groundToNearestWater.get(key);
-  if (preCalcWater) {
-    // Store in the global cache too
-    nearestWaterCache.set(key, preCalcWater);
-    return preCalcWater;
-  }
-  
-  // Fallback: calculate on the fly if pre-calculation failed
+  // Calculate on the fly
   let nearestWater = null;
   let minDistance = Infinity;
   
   if (waterCells && Array.isArray(waterCells)) {
-    console.warn(`Calculating nearest water cell on the fly for (${gridX}, ${gridY})`);
-    
     for (const cell of waterCells) {
       if (!cell) continue;
       
@@ -325,10 +203,9 @@ function findNearestWaterCell(gridX, gridY) {
       }
     }
     
-    // Save the result in both caches for future use
+    // Save the result in cache for future use
     if (nearestWater) {
       nearestWaterCache.set(key, nearestWater);
-      preCalc.groundToNearestWater.set(key, nearestWater);
     }
   }
   
@@ -341,31 +218,80 @@ function generateFishingSpotsForHarbor(harbor) {
 
   const fishingSpots = [];
   const spotsToGenerate = 3;
+  const maximumCellDistance = 30; // Maximum cell distance to search
+  
   const harborGridX = Math.floor(harbor.x / cellSize);
   const harborGridY = Math.floor(harbor.y / cellSize);
-
-  const sortedWater = [...waterCells].sort((a, b) => {
-    const distA = Math.sqrt(Math.pow(a.x - harborGridX, 2) + Math.pow(a.y - harborGridY, 2));
-    const distB = Math.sqrt(Math.pow(b.x - harborGridX, 2) + Math.pow(b.y - harborGridY, 2));
-    return distA - distB;
+  
+  // Filter water cells within the maximum distance
+  const nearbyWaterCells = waterCells.filter(cell => {
+    if (!cell) return false;
+    
+    const distanceSquared = 
+      Math.pow(cell.x - harborGridX, 2) + 
+      Math.pow(cell.y - harborGridY, 2);
+    
+    return distanceSquared <= maximumCellDistance * maximumCellDistance;
   });
-
-  const middleIndex = Math.floor(sortedWater.length / 2);
-  const fishingArea = sortedWater.slice(middleIndex, middleIndex + 100);
-
-  for (let i = 0; i < spotsToGenerate && i < fishingArea.length; i++) {
-    const cell = fishingArea[i % fishingArea.length];
+  
+  if (nearbyWaterCells.length === 0) {
+    console.warn(`No water cells found within ${maximumCellDistance} cells of harbor at (${harborGridX}, ${harborGridY})`);
+    return [];
+  }
+  
+  // Sort by noise value (lower = deeper water)
+  const sortedByDepth = [...nearbyWaterCells].sort((a, b) => {
+    // If noise property exists, use it (lower is deeper)
+    if (a.noise !== undefined && b.noise !== undefined) {
+      return a.noise - b.noise;
+    }
+    
+    // Fallback: use distance from shore as approximation of depth
+    // Cells further from shore are likely deeper
+    const aShoreDistance = getDistanceFromShore(a);
+    const bShoreDistance = getDistanceFromShore(b);
+    return bShoreDistance - aShoreDistance; // Higher distance = deeper
+  });
+  
+  // Select the deepest spots
+  for (let i = 0; i < spotsToGenerate && i < sortedByDepth.length; i++) {
+    const cell = sortedByDepth[i];
     fishingSpots.push({ x: cell.x, y: cell.y });
   }
-
+  
   preCalc.harborFishingSpots.set(key, fishingSpots);
   return fishingSpots;
+}
+
+// Helper function to estimate cell depth by distance from shore
+function getDistanceFromShore(waterCell) {
+  let minDistance = Infinity;
+  
+  // Check all cardinal directions to find nearest non-water cell
+  for (let dx = -10; dx <= 10; dx++) {
+    for (let dy = -10; dy <= 10; dy++) {
+      if (dx === 0 && dy === 0) continue;
+      
+      const checkX = waterCell.x + dx;
+      const checkY = waterCell.y + dy;
+      const checkKey = `${checkX},${checkY}`;
+      
+      if (!waterCellsMap.has(checkKey)) {
+        const distance = Math.sqrt(dx*dx + dy*dy);
+        if (distance < minDistance) {
+          minDistance = distance;
+        }
+      }
+    }
+  }
+  
+  return minDistance;
 }
 
 function findWaterPath(start, target) {
   // Ensure start and target are valid
   if (!start || !target) {
-    console.error("Invalid start or target position for water path");
+    console.warn("Invalid start or target position for water path");
     return null;
   }
   
@@ -376,7 +302,7 @@ function findWaterPath(start, target) {
   
   // Check if waterCells is defined
   if (typeof waterCells === 'undefined' || !Array.isArray(waterCells) || waterCells.length === 0) {
-    console.error("No water cells defined for pathfinding");
+    console.warn("No water cells defined for pathfinding");
     return null;
   }
   
@@ -421,11 +347,8 @@ function findWaterPath(start, target) {
     // Add current node to closed set
     closedSet.add(currentKey);
     
-    // Check all neighboring nodes - using our safer getNeighbors function
-    const neighbors = getNeighbors(current.x, current.y, true);
-    if (!neighbors || !Array.isArray(neighbors)) {
-      continue; // Skip this iteration if neighbors isn't valid
-    }
+    // Check all neighboring water cells
+    const neighbors = getWaterNeighbors(current.x, current.y);
     
     for (const neighbor of neighbors) {
       if (!neighbor) continue; // Skip if neighbor is undefined
@@ -455,6 +378,16 @@ function findWaterPath(start, target) {
   
   // No path found
   return null;
+}
+
+// Get neighbors that are water cells
+function getWaterNeighbors(x, y) {
+  const dirs = [{ x: 0, y: -1 }, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: -1, y: 0 }];
+  return dirs.map(dir => ({ x: x + dir.x, y: y + dir.y }))
+    .filter(pos => {
+      const key = `${pos.x},${pos.y}`;
+      return waterCellsMap.has(key);
+    });
 }
 
 // Pathfinding helper functions
@@ -489,8 +422,41 @@ class FishingBoat {
     this.owner = owner;
     this.id = fishingBoats.length;
     
-    this.x = harbor.x;
-    this.y = harbor.y;
+    // Get the water port cell for this harbor
+    const portCell = harborWaterPortCell.get(this.harborId);
+    if (portCell) {
+      this.portCellX = portCell.x;
+      this.portCellY = portCell.y;
+      // Set initial position to the water port cell, not the harbor
+      this.x = this.portCellX * cellSize;
+      this.y = this.portCellY * cellSize;
+    } else {
+      // Fallback if not found
+      const harborGridX = Math.floor(harbor.x / cellSize);
+      const harborGridY = Math.floor(harbor.y / cellSize);
+      const nearestWater = findNearestWaterCell(harborGridX, harborGridY);
+      if (nearestWater) {
+        this.portCellX = nearestWater.x;
+        this.portCellY = nearestWater.y;
+        // Set initial position to the water port cell
+        this.x = this.portCellX * cellSize;
+        this.y = this.portCellY * cellSize;
+        // Save it for future use
+        harborWaterPortCell.set(this.harborId, {
+          x: nearestWater.x,
+          y: nearestWater.y
+        });
+      } else {
+        // Last resort fallback
+        console.warn(`No water port cell found for harbor at (${harborGridX}, ${harborGridY})`);
+        this.portCellX = harborGridX;
+        this.portCellY = harborGridY;
+        // Use harbor location as fallback
+        this.x = harbor.x;
+        this.y = harbor.y;
+      }
+    }
+    
     this.path = null;
     this.pathIndex = 0;
     this.pathReversed = false;
@@ -529,18 +495,18 @@ class FishingBoat {
     
     this.pathIndex = 0;
     
-    // If no path exists, create a direct one (fallback)
+    // If no path exists, create a direct one (fallback) that stays in water
     if (!this.path) {
       console.warn(`No saved path found for boat ${this.id}. Creating direct path.`);
       if (this.state === "goingToFishSpot" || this.state === "idle") {
         this.path = [
-          { x: this.harbor.x, y: this.harbor.y },
+          { x: this.portCellX * cellSize, y: this.portCellY * cellSize },
           { x: this.fishingSpotX * cellSize, y: this.fishingSpotY * cellSize }
         ];
       } else {
         this.path = [
           { x: this.fishingSpotX * cellSize, y: this.fishingSpotY * cellSize },
-          { x: this.harbor.x, y: this.harbor.y }
+          { x: this.portCellX * cellSize, y: this.portCellY * cellSize }
         ];
       }
     }
@@ -710,8 +676,8 @@ class FishingBoat {
 
   hasReturnedWithFish() {
     return this.state === "returningToHarbor" &&
-      Math.abs(this.x - this.harbor.x) < cellSize &&
-      Math.abs(this.y - this.harbor.y) < cellSize;
+      Math.abs(this.x - this.portCellX * cellSize) < cellSize &&
+      Math.abs(this.y - this.portCellY * cellSize) < cellSize;
   }
 }
 
@@ -869,52 +835,48 @@ function drawFisherInfo(npc, ctx) {
 
 // Initialize fishing resources
 function initializeFishingResources() {
-  // Set up boat image handling
-  boatImage.onload = () => {
-    console.log("Boat image loaded successfully");
-    boatImageLoaded = true;
-    boatImageFailed = false;
-  };
-  
-  boatImage.onerror = () => {
-    console.warn("Failed to load boat image, will use fallback");
-    boatImageFailed = true;
-    boatImageLoaded = false;
-  };
-  
-  boatImage.src = 'assets/buildings/boat3png'; //DO NOT TOUCH   boat4.png is ok
+  boatImage.src = '/assets/buildings/boat3.png'; //DO NOT TOUCH   boat4.png is ok
+
+
+  // Build the water cells lookup map for O(1) access
+  waterCellsMap.clear();
+  waterCells.forEach(cell => {
+    if (!cell) return;
+    const key = `${cell.x},${cell.y}`;
+    waterCellsMap.set(key, cell);
+  });
   
   if (typeof waterCells !== 'undefined') {
     console.log(`Fishing initialized with ${waterCells.length} water cells`);
     
-    // Run preCalculateData immediately to build all necessary caches
-    preCalculateData();
-    
-    // Pre-calculate paths for existing harbors
-    setTimeout(() => {
-      if (buildings && buildings.length > 0) {
+    // Initialize water port cells for existing harbors
+    if (buildings && Array.isArray(buildings)) {
+      const harbors = buildings.filter(building => building.type === "Harbor");
+      harbors.forEach(harbor => {
+        // Make sure we have a harbor ID
+        harbor.id = harbor.id || `${harbor.x}_${harbor.y}`;
+        
+        // Only initialize if we don't already have it
+        if (!harborWaterPortCell.has(harbor.id)) {
+          const harborGridX = Math.floor(harbor.x / cellSize);
+          const harborGridY = Math.floor(harbor.y / cellSize);
+          const nearestWater = findNearestWaterCell(harborGridX, harborGridY);
+          
+          if (nearestWater) {
+            harborWaterPortCell.set(harbor.id, {
+              x: nearestWater.x,
+              y: nearestWater.y
+            });
+          }
+        }
+      });
+    }
         preCalculateAllPaths();
-      }
-    }, 1000);
-  } else {
-    console.error("ERROR: waterCells is not defined!");
-  }
   
-  // Export other fisher functions that might be needed by other files
   // Make these functions globally available
   console.log("Fisher functions available globally");
 }
 
-// Make initializeFishingResources globally available
-initializeFishingResources = initializeFishingResources;
-
-// Auto-initialize fisher resources when this file loads
-// This ensures all dependencies are properly set up
-if (document.readyState === 'complete') {
-  initializeFishingResources();
-} else {
-  addEventListener('load', initializeFishingResources);
-}
 
 function onHarborBuilt(harbor) {
   const fishingSpots = generateFishingSpotsForHarbor(harbor);
@@ -949,9 +911,15 @@ function calculatePathsForHarbor(harbor) {
   // Find nearest water cell to the harbor
   let nearestWaterCell = findNearestWaterCell(harborGridX, harborGridY);
   if (!nearestWaterCell) {
-    console.error(`No water cell found near harbor at (${harborGridX}, ${harborGridY})`);
+    console.warn(`No water cell found near harbor at (${harborGridX}, ${harborGridY})`);
     return;
   }
+  
+  // Store the water port cell for this harbor
+  harborWaterPortCell.set(harbor.id, {
+    x: nearestWaterCell.x,
+    y: nearestWaterCell.y
+  });
   
   // The starting point for all paths will be the nearest water cell
   const start = { 
@@ -965,19 +933,15 @@ function calculatePathsForHarbor(harbor) {
     const path = findWaterPath(start, target);
     
     if (path) {
-      // Store harbor to fishing spot path
+      // Store harbor to fishing spot path (water only)
       const pathKey = `${harbor.id}_to_${index}`;
-      // Add the harbor position at the beginning of the path
-      const outboundPath = [{ x: harbor.x, y: harbor.y }, ...path];
-      harborToFishingSpotPaths.set(pathKey, outboundPath);
+      harborToFishingSpotPaths.set(pathKey, path);
       
-      // Store fishing spot to harbor path
+      // Store fishing spot to harbor path (water only)
       const reversePathKey = `${index}_to_${harbor.id}`;
-      // Add the harbor position at the end of the return path
-      const returnPath = [...path.reverse(), { x: harbor.x, y: harbor.y }];
-      harborToFishingSpotPaths.set(reversePathKey, returnPath);
+      harborToFishingSpotPaths.set(reversePathKey, path.slice().reverse());
       
-      console.log(`Created permanent path for harbor ${harbor.id}, fishing spot ${index}: ${outboundPath.length} points`);
+      console.log(`Created permanent path for harbor ${harbor.id}, fishing spot ${index}: ${path.length} points`);
     }
   });
 }
@@ -994,6 +958,22 @@ function preCalculateAllPaths() {
 function registerHarbor(race, harbor) {
   harborsByRace[race] = harbor;
   clearHarborBeingBuilt(race);
+  
+  // Make sure we have a harbor ID
+  harbor.id = harbor.id || `${harbor.x}_${harbor.y}`;
+  
+  // Find and register the water port cell for this harbor
+  const harborGridX = Math.floor(harbor.x / cellSize);
+  const harborGridY = Math.floor(harbor.y / cellSize);
+  const nearestWater = findNearestWaterCell(harborGridX, harborGridY);
+  
+  if (nearestWater) {
+    harborWaterPortCell.set(harbor.id, {
+      x: nearestWater.x,
+      y: nearestWater.y
+    });
+  }
+  
   onHarborBuilt(harbor);
   return harbor;
 }
@@ -1004,4 +984,58 @@ function updateAndDrawFishingBoats(ctx) {
   drawFishingBoats(ctx);
 }
 
-preCalculateData();
+function followWaterPath(boat) {
+  if (!boat.currentPath || boat.currentPath.length === 0) {
+    console.warn(`function followWaterPath: Boat ${boat.id} has no water path`);
+    return true; // No path or empty path counts as completed
+  }
+  
+  if (boat.pathIndex < boat.currentPath.length) {
+    const nextPoint = boat.currentPath[boat.pathIndex];
+    const nextX = Math.floor(nextPoint.x / cellSize);
+    const nextY = Math.floor(nextPoint.y / cellSize);
+    
+    // Verify the next cell is still a valid water cell (or harbor for destination)
+    if (!isWaterCell(nextX, nextY) && 
+        // Allow harbor cells as valid destinations
+        !(boat.pathIndex === boat.currentPath.length - 1 && 
+          isHarborCell(nextX, nextY))) {
+      console.log(`!isWaterCell: Boat ${boat.id} encountered invalid cell in path (${nextX},${nextY}), recalculating`);
+      return true; // Path is invalid, consider it completed
+    }
+    
+    // Move to the next point
+    boat.x = nextPoint.x;
+    boat.y = nextPoint.y;
+    boat.pathIndex++;
+    
+    // Check if path is completed
+    if (boat.pathIndex >= boat.currentPath.length) {
+      return true;
+    }
+    return false;
+  }
+  
+  return true; // Path completed
+}
+
+// Helper function to check if a cell is a water cell
+function isWaterCell(x, y) {
+  if (!waterCells || !Array.isArray(waterCells)) {
+    return false;
+  }
+  return waterCells.some(cell => cell && cell.x === x && cell.y === y);
+}
+
+// Helper function to check if a cell is a harbor cell
+function isHarborCell(x, y) {
+  if (!buildings || !Array.isArray(buildings)) {
+    return false;
+  }
+  return buildings.some(building => 
+    building && 
+    building.type === "Harbor" && 
+    Math.floor(building.x / cellSize) === x && 
+    Math.floor(building.y / cellSize) === y
+  );
+} }

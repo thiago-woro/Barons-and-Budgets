@@ -128,6 +128,18 @@ document.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('creaturesTab')) {
     handleBottomTabClick('creaturesTab');
   }
+  
+  // Add event listener for resetCameraButton
+  const resetCameraButton = document.getElementById('resetCameraButton');
+  if (resetCameraButton) {
+    resetCameraButton.addEventListener('click', () => {
+      // Reset camera position using existing function
+      resetCanvasPosition();
+      console.warn('Camera position reset');
+    });
+  }
+  setupKeyboardZoom();
+
 });
 
 // Function to toggle the visibility of a tab and show the most recent clicked tab
@@ -327,8 +339,6 @@ npcCanvas.addEventListener("click", function(event) {
   const x = event.clientX - rect.left;
   const y = event.clientY - rect.top;
   
-  console.log(`Click at (${x}, ${y}), Active tab: ${window.activeTabBottomLeft}`);
-  
   for (const npc of npcs) {
     const distance = Math.sqrt((x - npc.x) ** 2 + (y - npc.y) ** 2);
     if (distance < 20) { // Larger hit area for clicking
@@ -336,6 +346,15 @@ npcCanvas.addEventListener("click", function(event) {
       showNPCInfo(npc);
       foundNPC = true;
       infoPanel.style.visibility = 'visible';
+      
+      // If shift key is pressed, center on the NPC's cell
+      if (event.shiftKey && typeof centerOnCell === 'function') {
+        // Convert NPC world position to cell coordinates
+        const cellX = Math.floor(npc.x / cellSize);
+        const cellY = Math.floor(npc.y / cellSize);
+        centerOnCell(cellX, cellY);
+      }
+      
       break;
     }
   }
@@ -425,7 +444,6 @@ function showNPCInfo(npc) {
   // Make the info panel visible
   infoPanel.style.visibility = 'visible';
 
-  centerCameraOnNPC(npc);
   camera.updateTransform();
 }
 
@@ -584,14 +602,7 @@ function setupKeyboardZoom() {
       }
     }
   });
-  
-  console.log('Keyboard zoom controls initialized: Q to zoom in, E to zoom out');
 }
-
-// Initialize keyboard zoom controls when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-  setupKeyboardZoom();
-});
 
 
   const zoomOutAnimation = () => {

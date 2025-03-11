@@ -1,12 +1,6 @@
 // Harbor building class
-// Load the harbor image once globally
 const harborImage = new Image();
 harborImage.src = "assets/buildings/harbor.png";
-console.log("Loading harbor image from: assets/buildings/harbor.png");
-
-// Add an onload handler to log when the image is loaded
-harborImage.onload = function() {
-};
 
 class Harbor extends Building {
   constructor(x, y, size, owner) {

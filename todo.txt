@@ -20,7 +20,6 @@ move coyotes on sandCells only.
 
 
 
-
 Done:
 inventory item error
 
