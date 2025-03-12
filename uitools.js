@@ -134,12 +134,15 @@ document.addEventListener('DOMContentLoaded', () => {
   if (resetCameraButton) {
     resetCameraButton.addEventListener('click', () => {
       // Reset camera position using existing function
-      resetCanvasPosition();
-      console.warn('Camera position reset');
+      camera.centerCanvasOnMap();
     });
   }
   setupKeyboardZoom();
 
+});
+
+document.getElementById("recenterCanvas").addEventListener("click", () => {
+  camera.centerCanvasOnMap();
 });
 
 // Function to toggle the visibility of a tab and show the most recent clicked tab
@@ -178,6 +181,26 @@ window.addEventListener("load", function () {
     }
   }
 });
+//esc escape key pressed.
+let canvasCentered = false;
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+
+      camera.centerCanvasOnMap();
+      canvasCentered = true;
+    
+      if (hideMenu) {
+        gameTab.style.display = "none";
+        statsTab.style.display = "none";
+        chartTab.style.display = "none";
+        npcTab.style.display = "none";
+        minimizeTabButton.textContent = "Show";
+        hideMenu = false; // or hideMenu = !hideMenu;
+      }
+      canvasCentered = false; // Reset for the next cycle
+    
+  }
+});
 
 function updateVariables() {
   gridSize = parseFloat(document.getElementById("gridSizeSlider").value);
@@ -210,7 +233,7 @@ newGameWelcomeScreen.addEventListener("click", function () {
   
   hideWelcomeScreen();
   generateTerrainMap(gridSize, gridSize, perlinNoiseScale);
-  zoomOutAnimation();
+  camera.centerCanvasOnMap();
 });
 
 const raceCards = document.querySelectorAll(".race-card");
@@ -536,50 +559,6 @@ function drawCircle(ctx, x, y, diameter, fillColor) {
 
 
 
-
-
-
-
- 
-
-// Function to draw an X across the entire canvas when R key is pressed
-function drawXOnCanvas() {
-  // Get the main canvas to draw on
-  const canvas = npcInfoOverlayCanvas;
-  const ctx = npcInfoOverlayCtx;
-  
-  // Make the canvas visible
-  canvas.style.visibility = 'visible';
-  
-  // Clear the canvas first
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
-  // Set line style
-  ctx.strokeStyle = 'magenta';
-  ctx.lineWidth = 3;
-  
-  // Draw first diagonal line (bottom-left to top-right)
-  ctx.beginPath();
-  ctx.moveTo(0, canvas.height);
-  ctx.lineTo(canvas.width, 0);
-  ctx.stroke();
-  
-  // Draw second diagonal line (top-left to bottom-right)
-  ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.lineTo(canvas.width, canvas.height);
-  ctx.stroke();
-  
-  console.log("X print intersection 0,0 value: " + ctx.getImageData(0, 0, 1, 1).data[0]);
-}
-
-// Add event listener for the R key
-window.addEventListener("keydown", (event) => {
-  if (event.key.toLowerCase() === 'r') {
-    drawXOnCanvas();
-  }
-});
-
 // Function to handle zoom with Q and E keys
 function setupKeyboardZoom() {
   const zoomSpeed = 0.05; // Adjust this value to control zoom speed
@@ -605,38 +584,6 @@ function setupKeyboardZoom() {
 }
 
 
-  const zoomOutAnimation = () => {
-    const duration = 1000; 
-    const start = performance.now();
-    const initialZoom = camera.zoom; // Start from current camera zoom
-    const targetZoom = 0.3; 
-
-    const animateZoom = (currentTime) => {
-      const elapsed = currentTime - start;
-      const progress = Math.min(elapsed / duration, 1); // Ensure progress doesn't exceed 1
-
-      // Use a smooth easing function (easeInOutQuad)
-      const easedProgress = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
-
-      // Calculate new zoom level and apply to camera
-      camera.zoom = initialZoom + (targetZoom - initialZoom) * easedProgress;
-      
-      // Update camera transform
-      camera.updateTransform();
-
-      if (progress < 1) {
-        requestAnimationFrame(animateZoom);
-      } else {
-        // Animation complete
-        camera.zoom = targetZoom; // Ensure final zoom level is exactly targetZoom
-        
-        
-        camera.updateTransform();
-      }
-    };
-
-    requestAnimationFrame(animateZoom);
-  };
 
 // Initialize player race display when the window loads
 window.addEventListener("load", function() {
@@ -647,3 +594,14 @@ window.addEventListener("load", function() {
   }
 });
 
+
+
+// Add event listener for the R key
+window.addEventListener("keydown", (event) => {
+  if (event.key.toLowerCase() === 'r') {
+//
+console.log("r key pressed - no function yet. file: uitools.js");
+
+
+  }
+});
