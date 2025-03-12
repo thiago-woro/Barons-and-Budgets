@@ -440,7 +440,7 @@ class Animal {
 } 
 
 
-function starterAnimalPopulations(amount = 43) {
+function starterAnimalPopulations(amount = 20) {
   // Clear existing animals
   animals = [];
 
@@ -492,6 +492,10 @@ function starterAnimalPopulations(amount = 43) {
     `${sheepCount} sheep,`,
     `${chickenCount} chickens`
   );
+  //camera.centerCanvasOnMap();
+ // camera.centerCanvasOnMap();
+
+
 } 
 
 

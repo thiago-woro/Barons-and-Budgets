@@ -1020,7 +1020,6 @@ function initializeFishingResources() {
   // Build the water cells lookup map for O(1) access
   waterCellsMap.clear();
 
-  console.log(`Found ${waterCells.length} water cells`);
   waterCells.forEach(cell => {
     if (!cell) return;
     const key = `${cell.x},${cell.y}`;

@@ -284,7 +284,7 @@ function distributeOreDeposits(ctx) {
         const randomClusterY = randomGroundCell.y;
 
         let color = 'rgba(127, 115, 121, 0.4)';
-        drawCircle(groundCtx, randomClusterX * cellSize, randomClusterY * cellSize, 70, color);
+        drawCircle(groundCtx, randomClusterX * cellSize, randomClusterY * cellSize, 40, color);
 
         // Draw the first ore deposit in the random cluster X, Y
         drawOreDeposit(ctx, randomClusterX, randomClusterY);

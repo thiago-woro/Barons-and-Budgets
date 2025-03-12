@@ -452,16 +452,16 @@ class NPC {
     
     // Draw text shadow first
     ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-    ctx.fillText(infoText, this.x + 1, this.y - 9);
+    ctx.fillText(infoText, this.x + 2, this.y - 24);
     
     // Draw main text on top
     ctx.fillStyle = "white";
-    ctx.fillText(infoText, this.x, this.y - 10);
+    ctx.fillText(infoText, this.x, this.y - 25);
     
     // Draw additional info if provided
     if (additionalInfo && additionalInfo.text) {
       ctx.fillStyle = additionalInfo.color;
-      ctx.fillText(additionalInfo.text, this.x, this.y - 25);
+      ctx.fillText(additionalInfo.text, this.x, this.y - 45);
     }
     
     // Draw progress bar if provided

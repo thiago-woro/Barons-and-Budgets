@@ -78,7 +78,7 @@ worldToScreen(worldX, worldY) {
     boatCtx.strokeRect(cellScreenX, cellScreenY, cellSize * this.zoom, cellSize * this.zoom);
     const cameraZoomInfo = document.getElementById('cameraZoomInfo');
     if (cameraZoomInfo) {
-      cameraZoomInfo.innerHTML = `Zoom: ${this.zoom.toFixed(2)} | Position: (${this.position.x.toFixed(2)}, ${this.position.y.toFixed(2)}) | Cell: (${cellX}, ${cellY}) | Screen: (${cellScreenX.toFixed(2)}, ${cellScreenY.toFixed(2)})`;
+     // cameraZoomInfo.innerHTML = `Zoom: ${this.zoom.toFixed(2)} | Position: (${this.position.x.toFixed(2)}, ${this.position.y.toFixed(2)}) | Cell: (${cellX}, ${cellY}) | Screen: (${cellScreenX.toFixed(2)}, ${cellScreenY.toFixed(2)})`;
     }
 
     highlightedCellX = cellX;
@@ -88,7 +88,6 @@ worldToScreen(worldX, worldY) {
 
    updateTransform() {
     this.container.style.transform = `translate(${-this.position.x * this.zoom}px, ${-this.position.y * this.zoom}px) scale(${this.zoom})`;
-    this.updateCameraZoomInfo();
     const event = new MouseEvent('mousemove', {
       clientX: this.lastMousePos.x,
       clientY: this.lastMousePos.y,
@@ -97,12 +96,7 @@ worldToScreen(worldX, worldY) {
     updateContainerSize();
   }
 
-  updateCameraZoomInfo() {
-    const cameraZoomInfoElement = document.getElementById('cameraZoomInfo');
-    if (cameraZoomInfoElement) {
-      cameraZoomInfoElement.innerHTML = `Camera: Zoom: ${this.zoom.toFixed(2)} | Position: (${this.position.x.toFixed(2)}, ${this.position.y.toFixed(2)})`;
-    }
-  }
+
 
 
 centerOnCell(cellX, cellY) {
@@ -128,6 +122,8 @@ centerOnCell(cellX, cellY) {
 }
 
   centerCanvasOnMap() {  // RESETCAMERA BUTTON
+    //log
+    console.warn(`--- Reset Camera ---`);
     let totalX = 0;
     let totalY = 0;
     for (const cell of groundCells) {

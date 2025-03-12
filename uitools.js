@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (resetCameraButton) {
     resetCameraButton.addEventListener('click', () => {
       // Reset camera position using existing function
-      camera.centerCanvasOnMap();
+      camera.centerCanvasOnMap(); //1
     });
   }
   setupKeyboardZoom();
@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 document.getElementById("recenterCanvas").addEventListener("click", () => {
-  camera.centerCanvasOnMap();
+  camera.centerCanvasOnMap(); //2
 });
 
 // Function to toggle the visibility of a tab and show the most recent clicked tab
@@ -186,7 +186,7 @@ let canvasCentered = false;
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
 
-      camera.centerCanvasOnMap();
+      camera.centerCanvasOnMap();//esc
       canvasCentered = true;
     
       if (hideMenu) {
@@ -233,7 +233,6 @@ newGameWelcomeScreen.addEventListener("click", function () {
   
   hideWelcomeScreen();
   generateTerrainMap(gridSize, gridSize, perlinNoiseScale);
-  camera.centerCanvasOnMap();
 });
 
 const raceCards = document.querySelectorAll(".race-card");
