@@ -1,9 +1,15 @@
 
 
 To do:
-fix camera zoom
 
-change "constructing" to "building"
+tech tree per npc race.
+
+government tree: monarchy, bicameral republic, nomad, others
+
+New profession: Bar owner.  and New feature, clicking a bar, will show the bar interior, drawing a whole new game map for the interior.
+
+when any fisher is sailing, just and only show the counter #Fishers at sea, on top of the Harbor (should be a harbor method)
+
 
 do not move npcs, when they are building, construting, mining.
 
@@ -24,6 +30,7 @@ Done:
 inventory item error
 distributes "good" ore deposits places by geography.
 
+fix camera zoom
 
 
 Backlog:

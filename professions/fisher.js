@@ -874,12 +874,12 @@ class FishingBoat {
 }
 
 function updateFishingBoats(deltaTime) {
-  console.log(`Updating ${fishingBoats.length} fishing boats`);
+  //console.log(`Updating ${fishingBoats.length} fishing boats`);
   fishingBoats.forEach(boat => boat.update(deltaTime));
 }
 
 function drawFishingBoats(ctx) {
-  console.log(`Drawing ${fishingBoats.length} fishing boats`);
+  //console.log(`Drawing ${fishingBoats.length} fishing boats`);
   fishingBoats.forEach(boat => boat.draw(ctx));
 }
 
@@ -980,46 +980,39 @@ function findHarborLocation(npc) {
 }
 
 function drawFisherInfo(npc, ctx) {
-  let text = "Fisher";
+  let infoText = "Fisher";
   if (npc.state === "fishing") {
-    text = "Fishing";
+    infoText = "Fishing";
   } else if (npc.state === "buildingHarbor" && !npc.stateData.isWaiting) {
-    text = "Building Harbor";
+    infoText = "Building Harbor";
   }
 
-  ctx.font = "10px Arial";
-
-  const textWidth = ctx.measureText(text).width;
-  const textX = npc.x - textWidth / 2;
-
-
-  ctx.fillStyle = "black";
-  ctx.fillText(text, textX, npc.y - 10);
-
+  // Get fish count for additional info
   const myBoat = fishingBoats.find(boat => boat.owner === npc);
+  let additionalInfo = null;
+  
   if (myBoat) {
-    let fillColor = "black";
-    if (npc.race === "Elf") fillColor = "#88ff88";
-    else if (npc.race === "Kurohi") fillColor = "#ff8888";
-    else if (npc.race === "Purries") fillColor = "#8888ff";
-
-    text = `🐟: ${npc.inventory.filter(item => item === 'rawFish').length}`;
-
-    ctx.fillStyle = fillColor;
-    ctx.fillText(text, npc.x, npc.y - 25);
+    additionalInfo = {
+      text: `🐟: ${npc.inventory.filter(item => item === 'rawFish').length}`,
+      color: npc.race === "Elf" ? "#88ff88" : 
+             npc.race === "Kurohi" ? "#ff8888" : 
+             npc.race === "Purries" ? "#8888ff" : "black"
+    };
   }
 
+  // Progress bar data for building harbor
+  let progressBar = null;
   if ((npc.state === "buildingHarbor") && npc.waitTime > 0) {
-    const maxWidth = 20;
-    const progress = npc.waitTime / npc.maxWaitTime;
-    const barWidth = maxWidth * progress;
-
-    ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
-    ctx.fillRect(npc.x - maxWidth / 2, npc.y - 15, maxWidth, 3);
-
-    ctx.fillStyle = "orange";
-    ctx.fillRect(npc.x - maxWidth / 2, npc.y - 15, barWidth, 3);
+    progressBar = {
+      progress: npc.waitTime / npc.maxWaitTime,
+      width: 20,
+      color: "orange",
+      bgColor: "rgba(0, 0, 0, 0.3)"
+    };
   }
+
+  // Call the common NPC method for displaying info
+  npc.drawInfoText(ctx, infoText, additionalInfo, progressBar);
 }
 
 // Initialize fishing resources

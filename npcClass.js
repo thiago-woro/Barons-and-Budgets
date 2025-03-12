@@ -444,6 +444,35 @@ class NPC {
     }
   }
 
+  // Common method for drawing information text above NPCs
+  drawInfoText(ctx, infoText, additionalInfo, progressBar) {
+    // Draw main info text
+    ctx.font = "10px Arial";
+    ctx.fillStyle = "black";
+    ctx.textAlign = "center";
+    ctx.fillText(infoText, this.x, this.y - 10);
+    
+    // Draw additional info if provided
+    if (additionalInfo && additionalInfo.text) {
+      ctx.fillStyle = additionalInfo.color || "black";
+      ctx.fillText(additionalInfo.text, this.x, this.y - 25);
+    }
+    
+    // Draw progress bar if provided
+    if (progressBar && progressBar.progress !== undefined) {
+      const maxWidth = progressBar.width || 20;
+      const barWidth = maxWidth * progressBar.progress;
+      
+      // Draw background
+      ctx.fillStyle = progressBar.bgColor || "rgba(0, 0, 0, 0.3)";
+      ctx.fillRect(this.x - maxWidth / 2, this.y - 15, maxWidth, 3);
+      
+      // Draw progress
+      ctx.fillStyle = progressBar.color || "orange";
+      ctx.fillRect(this.x - maxWidth / 2, this.y - 15, barWidth, 3);
+    }
+  }
+
   // Method to update the info panel with the NPC's current cell position
   updateInfoPanel() {
     const infoPanel = document.getElementById("infoPanel");
