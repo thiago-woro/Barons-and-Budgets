@@ -22,6 +22,7 @@ move coyotes on sandCells only.
 
 Done:
 inventory item error
+distributes "good" ore deposits places by geography.
 
 
 

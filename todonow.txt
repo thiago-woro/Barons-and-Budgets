@@ -9,23 +9,8 @@ num certo raio X de distancia
 
 4 - jogador seleciona uma área do mapa para inserir prédio da prefeitura
 
-5 - mover nomes dos npcs para outro canvas - FEITO 🆗
-
 6 - splice availabe cells from groundCells - melhor desenhar as coisas diminuindo dos arrays necessarios, 
 por exemplo, para desenhar os ores, diminuir as posições dos ores, e mandar redesenhar as arvores diminuindo os occupiedCells
 
 
 
-
-/// adjust generateMap() to draw sand cells, 
-
-//adjust drawTrees to draw in x1,x2,x3,x4 order, meaning, 
-it distributes 
-
-
-
-game notifications table should only show the last 50 notications, add a button to "show all",
-refactor function of notifications to add the new and remove the older notification.
-
-
-//check why boat pathfinding is running at start of page, should only run after drawing terrain.

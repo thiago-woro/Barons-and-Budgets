@@ -821,24 +821,14 @@ class FishingBoat {
   }
 
   draw(ctx) {
-    // Always draw a fallback boat first to ensure something is visible
-    this.drawFallbackBoat(ctx);
+   
+      const boatScale = 1.5;
+      const boatWidth = cellSize * boatScale;
+      const boatHeight = cellSize * boatScale;
+      const boatX = this.x - (boatWidth - cellSize) / 2;
+      const boatY = this.y - (boatHeight - cellSize) / 2;
+      ctx.drawImage(boatImage, boatX, boatY, boatWidth, boatHeight);
     
-    // Then try to draw the boat image if available
-    if (boatImageLoaded && !boatImageFailed && boatImage.complete) {
-      try {
-        const boatScale = 1.5;
-        const boatWidth = cellSize * boatScale;
-        const boatHeight = cellSize * boatScale;
-        const boatX = this.x - (boatWidth - cellSize) / 2;
-        const boatY = this.y - (boatHeight - cellSize) / 2;
-        ctx.drawImage(boatImage, boatX, boatY, boatWidth, boatHeight);
-      } catch(e) {
-        console.warn("Error drawing boat image:", e);
-        // If we get an error, mark the image as failed so we use the fallback in future
-        boatImageFailed = true;
-      }
-    }
 
     // Draw orange circle at harbor starting point
     ctx.strokeStyle = "orange";
@@ -856,7 +846,7 @@ class FishingBoat {
 
     // Draw path (unchanged)
     if (this.path && this.path.length > 0) {
-      ctx.strokeStyle = "rgba(255, 0, 0, 0.5)";
+      ctx.strokeStyle = "rgba(61, 37, 147, 0.34)";
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(this.x + cellSize/2, this.y + cellSize/2);
@@ -866,37 +856,14 @@ class FishingBoat {
       }
       ctx.stroke();
       
-      const targetPoint = this.path[this.path.length - 1];
-      ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
-      ctx.beginPath();
-      ctx.arc(targetPoint.x + cellSize/2, targetPoint.y + cellSize/2, 5, 0, Math.PI * 2);
-      ctx.fill();
+    
     }
     
     // Draw state text above boat
     ctx.font = "10px Arial";
-    ctx.fillStyle = "white";
+    ctx.fillStyle = "black";
     ctx.textAlign = "center";
     ctx.fillText(this.state, this.x + cellSize/2, this.y - 5);
-  }
-
-  // Add a fallback method for drawing boats
-  drawFallbackBoat(ctx) {
-    // Draw a simple colored rectangle with a triangle sail
-    ctx.fillStyle = "#8B4513"; // Brown boat hull
-    ctx.fillRect(this.x, this.y + cellSize/2, cellSize, cellSize/2);
-    
-    // Draw a sail
-    ctx.fillStyle = "#FFFFFF"; // White sail
-    ctx.beginPath();
-    ctx.moveTo(this.x + cellSize/2, this.y);
-    ctx.lineTo(this.x + cellSize/2, this.y + cellSize/2);
-    ctx.lineTo(this.x + cellSize * 0.8, this.y + cellSize/2);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = "#000";
-    ctx.lineWidth = 1;
-    ctx.stroke();
   }
 
   hasReturnedWithFish() {
@@ -1025,23 +992,18 @@ function drawFisherInfo(npc, ctx) {
   const textWidth = ctx.measureText(text).width;
   const textX = npc.x - textWidth / 2;
 
-  ctx.fillStyle = "#000";
-  ctx.fillText(text, textX + 1, npc.y - 10 + 1);
 
-  ctx.fillStyle = "white";
+  ctx.fillStyle = "black";
   ctx.fillText(text, textX, npc.y - 10);
 
   const myBoat = fishingBoats.find(boat => boat.owner === npc);
   if (myBoat) {
-    let fillColor = "white";
+    let fillColor = "black";
     if (npc.race === "Elf") fillColor = "#88ff88";
     else if (npc.race === "Kurohi") fillColor = "#ff8888";
     else if (npc.race === "Purries") fillColor = "#8888ff";
 
     text = `🐟: ${npc.inventory.filter(item => item === 'rawFish').length}`;
-
-    ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-    ctx.fillText(text, npc.x + 1, npc.y - 25 + 1);
 
     ctx.fillStyle = fillColor;
     ctx.fillText(text, npc.x, npc.y - 25);
@@ -1062,25 +1024,11 @@ function drawFisherInfo(npc, ctx) {
 
 // Initialize fishing resources
 function initializeFishingResources() {
-  console.log("Initializing fishing resources...");
   boatImage.src = '/assets/buildings/boat3.png'; //DO NOT TOUCH   boat4.png is ok
-  boatImage.onload = function() {
-    boatImageLoaded = true;
-    console.log("Boat image loaded successfully");
-  };
-  boatImage.onerror = function() {
-    boatImageFailed = true;
-    console.warn("Failed to load boat image");
-  };
 
   // Build the water cells lookup map for O(1) access
   waterCellsMap.clear();
-  
-  if (!waterCells || !Array.isArray(waterCells)) {
-    console.warn("waterCells is not defined or not an array during initialization");
-    return;
-  }
-  
+
   console.log(`Found ${waterCells.length} water cells`);
   waterCells.forEach(cell => {
     if (!cell) return;

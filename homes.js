@@ -211,7 +211,7 @@ function drawPaths(houses, ctx) {
           lineHeight,
           lineHeight,
           9,
-          randomColor
+          "red"
         );
         //log color
         console.log( "drew house color: ",randomColor);
