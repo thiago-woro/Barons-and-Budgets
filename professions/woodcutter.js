@@ -1,6 +1,47 @@
 // Woodcutter profession behaviors
 // This file contains all the logic for woodcutter NPCs
 
+
+/**
+ * Finds the nearest tree to an NPC
+ * @param {Object} npc - The NPC object
+ * @returns {Object|null} - The nearest tree or null if none found
+ */
+function findNearestTree(npc) {
+  let nearestTree = null;
+  let minDistance = Infinity;
+  
+  // Check if treePositions exists and has elements
+  if (typeof treePositions === 'undefined' || !treePositions || treePositions.length === 0) {
+    return null;
+  }
+  
+  treePositions.forEach(tree => {
+    // Convert tree coordinates to grid coordinates
+    const treeX = Math.floor(tree.x / cellSize);
+    const treeY = Math.floor(tree.y / cellSize);
+    
+    const npcX = Math.floor(npc.x / cellSize);
+    const npcY = Math.floor(npc.y / cellSize);
+    
+    const distance = Math.sqrt(
+      Math.pow(treeX - npcX, 2) + 
+      Math.pow(treeY - npcY, 2)
+    );
+    
+    if (distance < minDistance) {
+      minDistance = distance;
+      nearestTree = {
+        x: treeX,
+        y: treeY,
+        originalTree: tree
+      };
+    }
+  });
+  
+  return nearestTree;
+}
+
 // State machine for woodcutter behavior
 function updateWoodcutter(npc) {
  
@@ -24,8 +65,25 @@ function updateWoodcutter(npc) {
       break;
       
     case "movingToTree":
-      if (followPath(npc)) {
-        // Path completed
+      // Check if we have a valid path
+      if (!npc.currentPath) {
+        // If path is invalid, try to find a new one
+        const tree = findNearestTree(npc);
+        if (tree) {
+          npc.currentPath = findPathTo(npc, tree);
+          npc.pathIndex = 0;
+          npc.stateData.targetTree = tree;
+        } else {
+          npc.transitionTo("idle");
+          break;
+        }
+      }
+      
+      // Follow the path for one step
+      const pathCompleted = followPath(npc);
+      
+      // Only transition when path is actually completed
+      if (pathCompleted) {
         npc.transitionTo("cuttingTree");
         npc.waitTime = npc.maxWaitTime;
         // Store the tree index for animation later
@@ -87,8 +145,25 @@ function updateWoodcutter(npc) {
       break;
       
     case "movingToHome":
-      if (followPath(npc)) {
-        // Path completed
+      // Check if we have a valid path
+      if (!npc.currentPath) {
+        // If path is invalid, try to find a new one
+        const home = findNearestHome(npc);
+        if (home) {
+          npc.currentPath = findPathTo(npc, home);
+          npc.pathIndex = 0;
+          npc.stateData.targetHome = home;
+        } else {
+          npc.transitionTo("idle");
+          break;
+        }
+      }
+      
+      // Follow the path for one step
+      const homePathCompleted = followPath(npc);
+      
+      // Only transition when path is actually completed
+      if (homePathCompleted) {
         npc.transitionTo("restingAtHome");
         npc.waitTime = npc.maxWaitTime;
       }

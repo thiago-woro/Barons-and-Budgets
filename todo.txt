@@ -2,6 +2,16 @@
 
 To do:
 
+
+    if (pathCompleted) {
+      if (this.state === "goingToFishSpot") {
+        this.state = "fishing";
+        this.waitTime = 5; // Time to fish
+        //set fishing boat animation
+
+        //fishing, after coming back to harbor, has to reverse route to Harbor > Spot again, right now its redoing the Route Spot > Harbor twice.
+
+
 tech tree per npc race.
 
 government tree: monarchy, bicameral republic, nomad, others

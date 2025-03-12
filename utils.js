@@ -1,44 +1,5 @@
 // utils.js - Common utility functions for NPCs and professions
 
-/**
- * Finds the nearest tree to an NPC
- * @param {Object} npc - The NPC object
- * @returns {Object|null} - The nearest tree or null if none found
- */
-function findNearestTree(npc) {
-  let nearestTree = null;
-  let minDistance = Infinity;
-  
-  // Check if treePositions exists and has elements
-  if (typeof treePositions === 'undefined' || !treePositions || treePositions.length === 0) {
-    return null;
-  }
-  
-  treePositions.forEach(tree => {
-    // Convert tree coordinates to grid coordinates
-    const treeX = Math.floor(tree.x / cellSize);
-    const treeY = Math.floor(tree.y / cellSize);
-    
-    const npcX = Math.floor(npc.x / cellSize);
-    const npcY = Math.floor(npc.y / cellSize);
-    
-    const distance = Math.sqrt(
-      Math.pow(treeX - npcX, 2) + 
-      Math.pow(treeY - npcY, 2)
-    );
-    
-    if (distance < minDistance) {
-      minDistance = distance;
-      nearestTree = {
-        x: treeX,
-        y: treeY,
-        originalTree: tree
-      };
-    }
-  });
-  
-  return nearestTree;
-}
 
 /**
  * Finds the nearest home to an NPC

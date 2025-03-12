@@ -709,7 +709,7 @@ class FishingBoat {
         break;
 
       case "goingToFishSpot":
-        console.log(`Boat ${this.id}: Going to fishing spot, path: ${this.path ? this.path.length : 'none'}, index: ${this.pathIndex}`);
+        //console.log(`Boat ${this.id}: Going to fishing spot, path: ${this.path ? this.path.length : 'none'}, index: ${this.pathIndex}`);
         if (this.path && this.path.length > 0) {
           this.moveAlongPath();
         } else {
@@ -732,7 +732,7 @@ class FishingBoat {
           
           // Force a path to be created if none exists
           if (!this.path || this.path.length === 0) {
-            console.warn(`Boat ${this.id}: No path after createPathToHarbor, forcing path creation`);
+            console.error(`Boat ${this.id}: No path after createPathToHarbor, forcing path creation`);
             
             // Create a direct path as fallback
             const start = { 
@@ -749,11 +749,8 @@ class FishingBoat {
               console.log(`Boat ${this.id}: Created direct water path with ${waterPath.length} points`);
               this.path = waterPath;
             } else {
-              console.warn(`Boat ${this.id}: Could not find water path, using simple direct path`);
-              this.path = [
-                { x: this.x, y: this.y },
-                { x: this.portCellX * cellSize, y: this.portCellY * cellSize }
-              ];
+              console.error(`Boat ${this.id}: Could not find water path after createPathToHarbor!!!`);
+             
             }
             
             this.pathIndex = 0;
@@ -784,6 +781,7 @@ class FishingBoat {
       if (this.state === "goingToFishSpot") {
         this.state = "fishing";
         this.waitTime = 5; // Time to fish
+        //set fishing boat animation
       } else if (this.state === "returningToHarbor") {
         // Process the catch
         this.processCatch();
@@ -805,6 +803,7 @@ class FishingBoat {
     fishCount++;
     if (Math.random() < 0.7) {
       this.owner.addToInventory('rawFish');
+      //TODO: add more catch rates for different kinds of fish/seafood, also add items to item library.
     }
 
     switch (this.owner.race) {

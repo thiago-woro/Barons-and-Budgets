@@ -17,7 +17,8 @@ function findNearestTree(startX, startY) {
     let nearest = null;
     let minDistance = Infinity;
 
-    treePositions.forEach(tree => {
+    // Filter for pine trees only (🌲)
+    treePositions.filter(tree => tree.emoji === "🌲").forEach(tree => {
         const distance = manhattan(
             { x: Math.floor(startX/cellSize), y: Math.floor(startY/cellSize) },
             { x: Math.floor(tree.x/cellSize), y: Math.floor(tree.y/cellSize) }

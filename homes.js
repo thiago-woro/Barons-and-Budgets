@@ -213,8 +213,7 @@ function drawPaths(houses, ctx) {
           9,
           "red"
         );
-        //log color
-        console.log( "drew house color: ",randomColor);
+       // console.log( "drew house color: ",randomColor);
       }
     }
   }
