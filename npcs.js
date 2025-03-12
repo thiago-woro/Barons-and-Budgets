@@ -490,8 +490,7 @@ function startNPCs(ctx, cellSize) {
     camera.position.x = Math.max(minBoundX, Math.min(targetX, maxCameraX));
     camera.position.y = Math.max(minBoundY, Math.min(targetY, maxCameraY));
     
-    // Update the camera transform to apply changes
-    camera.updateTransform();
+   // camera.updateTransform();camera.updateTransform();
   }
 }
 

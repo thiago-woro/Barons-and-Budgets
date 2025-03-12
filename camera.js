@@ -8,8 +8,8 @@ class Camera {
     this.zoom = 0.30;
     this.isDragging = false;
     this.lastMousePos = { x: 0, y: 0 };
-    this.minZoom = 0.1;
-    this.maxZoom = 2;
+    this.minZoom = 0.35;
+    this.maxZoom = 2.3;
     this.zoomFactor = 0.25;
     this.setupEventListeners();
   }
@@ -217,32 +217,7 @@ container.addEventListener('wheel', (e) => {
 
 /* major camera functions ends here */
 
-// Mouse clicks canvas map
-let isDragging = false;
-function logCellOnClick(container, ctx, cellSize, npcCtx, treeCtx, pathCtx) {
-  container.addEventListener("click", function(event) {
-    if (isDragging === false) {
-      const rect = container.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
-      const { x: worldX, y: worldY } = camera.screenToWorld(x, y);
-      const cellRow = Math.floor(worldY / cellSize);
-      const cellCol = Math.floor(worldX / cellSize);
-      console.info(`Click at (${x.toFixed(2)}, ${y.toFixed(2)}), Cell: (${cellCol}, ${cellRow}), tab: ${window.activeTabBottomLeft}`);
 
-      if (event.shiftKey) {
-        camera.centerOnCell(cellCol, cellRow);
-        return;
-      }
-
-      ctx.strokeStyle = 'orange';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(cellCol * cellSize, cellRow * cellSize, cellSize, cellSize);
-    }
-  });
-}
-
-logCellOnClick(container, boatCtx, cellSize, npcCtx, treeCtx, pathCtx);
 
 
 
@@ -424,3 +399,32 @@ window.addEventListener('resize', updateContainerSize);
 document.addEventListener('DOMContentLoaded', () => {
     updateContainerSize();
 })
+
+
+
+// Mouse clicks canvas map
+let isDragging = false;
+function logCellOnClick(container, ctx, cellSize, npcCtx, treeCtx, pathCtx) {
+  container.addEventListener("click", function(event) {
+   
+      const rect = container.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      const { x: worldX, y: worldY } = camera.screenToWorld(x, y);
+      const cellRow = Math.floor(worldY / cellSize);
+      const cellCol = Math.floor(worldX / cellSize);
+      console.info(`Click at (${x.toFixed(2)}, ${y.toFixed(2)}), Cell: (${cellCol}, ${cellRow}), tab: ${window.activeTabBottomLeft} - zoom level: ${camera.zoom}`);
+
+      if (event.shiftKey) {
+        camera.centerOnCell(cellCol, cellRow);
+        return;
+      }
+
+      ctx.strokeStyle = 'orange';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(cellCol * cellSize, cellRow * cellSize, cellSize, cellSize);
+    
+  });
+}
+
+//logCellOnClick(container, boatCtx, cellSize, npcCtx, treeCtx, pathCtx);

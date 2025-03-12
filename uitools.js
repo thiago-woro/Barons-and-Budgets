@@ -466,8 +466,6 @@ function showNPCInfo(npc) {
 
   // Make the info panel visible
   infoPanel.style.visibility = 'visible';
-
-  camera.updateTransform();
 }
 
 function centerCameraOnNPC(npc) {

@@ -144,7 +144,7 @@ class House {
     ctx.drawImage(selectedHouseImage, this.x, this.y, cellSize * 2, cellSize * 2);
 
     // draw house shadow
-    drawCircle(pathCtx,  this.x,  this.y, 20, "rgba(227, 204, 162, 0.3)");
+    drawCircle(pathCtx,  this.x,  this.y, 10, "rgba(227, 204, 162, 0.3)");
 
      //drawRectanglesBetweenHouses(houses, pathCtx);
      drawPaths(houses, pathCtx);
@@ -159,6 +159,9 @@ class House {
 
 
 function drawPaths(houses, ctx) {
+  //log
+  console.log("drawPaths");
+
   const lineHeight = Math.floor(Math.random() * 7) + 1;
   const verticalSpacing = Math.floor(Math.random() * 50) + 1;
 
@@ -187,12 +190,16 @@ function drawPaths(houses, ctx) {
 
         // Select a random color for the path
         const colorOptions = [
-          "#9ac558", // Muddy brown with low opacity
+         /*  
+         "#9ac558", // Muddy brown with low opacity
           "rgba(92, 128, 0, 0.5)",
           "rgba(240, 230, 140, 0.5)", // Yellowish sand with low opacity
           "rgba(208, 225, 208, 0.34)",
+          
           "rgba(208, 225, 208, 0.34)",
           "rgba(208, 225, 208, 0.34)",
+          */
+"red",
         ];
         const randomColor =
           colorOptions[Math.floor(Math.random() * colorOptions.length)];
@@ -203,9 +210,11 @@ function drawPaths(houses, ctx) {
           yCoord,
           lineHeight,
           lineHeight,
-          5,
+          9,
           randomColor
         );
+        //log color
+        console.log( "drew house color: ",randomColor);
       }
     }
   }
@@ -215,6 +224,8 @@ function drawPaths(houses, ctx) {
 
 
 function drawRectanglesBetweenHouses(houses, ctx) {
+  //log
+  console.log("drawRectanglesBetweenHouses");
   const lineHeight = Math.floor(Math.random() * 7) + 1;
   const verticalSpacing = Math.floor(Math.random() * 50) + 1;
 
