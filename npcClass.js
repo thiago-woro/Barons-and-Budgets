@@ -446,15 +446,21 @@ class NPC {
 
   // Common method for drawing information text above NPCs
   drawInfoText(ctx, infoText, additionalInfo, progressBar) {
-    // Draw main info text
+    // Draw main info text with shadow
     ctx.font = "10px Arial";
-    ctx.fillStyle = "black";
     ctx.textAlign = "center";
+    
+    // Draw text shadow first
+    ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+    ctx.fillText(infoText, this.x + 1, this.y - 9);
+    
+    // Draw main text on top
+    ctx.fillStyle = "white";
     ctx.fillText(infoText, this.x, this.y - 10);
     
     // Draw additional info if provided
     if (additionalInfo && additionalInfo.text) {
-      ctx.fillStyle = additionalInfo.color || "black";
+      ctx.fillStyle = additionalInfo.color;
       ctx.fillText(additionalInfo.text, this.x, this.y - 25);
     }
     
@@ -471,6 +477,13 @@ class NPC {
       ctx.fillStyle = progressBar.color || "orange";
       ctx.fillRect(this.x - maxWidth / 2, this.y - 15, barWidth, 3);
     }
+  }
+  
+  // Helper method to get race-specific color
+  getRaceColor() {
+    return this.race === "Elf" ? "#88ff88" : 
+           this.race === "Kurohi" ? "#ff8888" : 
+           this.race === "Purries" ? "#8888ff" : "black";
   }
 
   // Method to update the info panel with the NPC's current cell position

@@ -993,10 +993,8 @@ function drawFisherInfo(npc, ctx) {
   
   if (myBoat) {
     additionalInfo = {
-      text: `🐟: ${npc.inventory.filter(item => item === 'rawFish').length}`,
-      color: npc.race === "Elf" ? "#88ff88" : 
-             npc.race === "Kurohi" ? "#ff8888" : 
-             npc.race === "Purries" ? "#8888ff" : "black"
+      text: `🐟: ${npc.inventory.filter(item => item === 'rawFish').length}`
+      // No need to specify color - NPC class will handle it
     };
   }
 

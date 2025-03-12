@@ -160,60 +160,45 @@ function colorAdjacentCells(x, y, color) {
 
 // Draw farmer info based on state
 function drawFarmerInfo(npc, ctx) {
-  const font = "12px Arial";
-  const fillColor = "black";
-  
-  ctx.font = font;
-  ctx.fillStyle = fillColor;
-  ctx.textAlign = "center";
-  
-  let text = "";
-  let bgColor = "rgba(255, 255, 255, 0.7)";
+  let infoText = "";
   
   switch (npc.state) {
     case "idle": 
-      text = "🔍 Idle"; 
-      bgColor = "rgba(200, 200, 200, 0.7)";
+      infoText = "🔍 Idle"; 
       break;
     case "buildingFarm": 
-      text = "🏗️ Building farm"; 
-      bgColor = "rgba(152, 251, 152, 0.7)";
+      infoText = "🏗️ Building farm"; 
       break;
     case "movingToFarmSpot": 
-      text = "To farm spot"; 
-      bgColor = "rgba(135, 206, 250, 0.7)";
+      infoText = "To farm spot"; 
       break;
     case "constructingFarm": 
-      text = "🏗️ Constructing"; 
-      bgColor = "rgba(255, 165, 0, 0.7)";
+      infoText = "🏗️ Constructing"; 
       break;
     case "farming": 
-      text = "🌾 Farming"; 
-      bgColor = "rgba(255, 255, 0, 0.7)";
+      infoText = "🌾 Farming"; 
       break;
     default: 
-      text = npc.state;
+      infoText = npc.state;
   }
   
-  const textWidth = ctx.measureText(text).width;
-  const padding = 4;
-  ctx.fillStyle = bgColor;
-  ctx.fillRect(npc.x - textWidth/2 - padding, npc.y - 35, textWidth + padding*2, 16);
+  // Additional info - rice count
+  const additionalInfo = {
+    text: `🌾: ${npc.inventory.filter(item => item === 'rice').length}`
+    // No need to specify color - NPC class will handle it
+  };
   
-  ctx.fillStyle = "white";
-  ctx.fillText(text, npc.x, npc.y - 25);
-  ctx.fillStyle = fillColor;
-  ctx.fillText(text, npc.x, npc.y - 24);
-  
+  // Progress bar for constructing farm
+  let progressBar = null;
   if (npc.state === "constructingFarm" && npc.waitTime > 0) {
-    const maxWidth = 20;
-    const progress = npc.waitTime / npc.maxWaitTime;
-    const barWidth = maxWidth * progress;
-    
-    ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
-    ctx.fillRect(npc.x - maxWidth/2, npc.y - 15, maxWidth, 3);
-    
-    ctx.fillStyle = "orange";
-    ctx.fillRect(npc.x - maxWidth/2, npc.y - 15, barWidth, 3);
+    progressBar = {
+      progress: npc.waitTime / npc.maxWaitTime,
+      width: 20,
+      color: "orange",
+      bgColor: "rgba(0, 0, 0, 0.3)"
+    };
   }
+  
+  // Call the common NPC method for displaying info
+  npc.drawInfoText(ctx, infoText, additionalInfo, progressBar);
 } 

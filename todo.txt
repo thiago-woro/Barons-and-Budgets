@@ -10,6 +10,8 @@ New profession: Bar owner.  and New feature, clicking a bar, will show the bar i
 
 when any fisher is sailing, just and only show the counter #Fishers at sea, on top of the Harbor (should be a harbor method)
 
+woodcutters should start by cutting the tall log wood trees, skip cactus and others. berries fruits should be picked by harvesters.
+
 
 do not move npcs, when they are building, construting, mining.
 

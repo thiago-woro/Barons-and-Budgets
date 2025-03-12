@@ -144,68 +144,52 @@ function findNearestOre(npc) {
 
 // Draw miner info based on state
 function drawMinerInfo(npc, ctx) {
-  const font = "12px Arial";
-  const fillColor = "black";
-  
-  ctx.font = font;
-  ctx.fillStyle = fillColor;
-  ctx.textAlign = "center";
-  
-  let text = "";
-  let bgColor = "rgba(255, 255, 255, 0.7)";
+  let infoText = "";
+  let bgColor = null;
   
   switch (npc.state) {
     case "idle": 
-      text = "🔍 Idle"; 
-      bgColor = "rgba(200, 200, 200, 0.7)";
+      infoText = "🔍 Idle"; 
       break;
     case "findingOre": 
-      text = "🔍 Finding ore"; 
-      bgColor = "rgba(152, 251, 152, 0.7)";
+      infoText = "🔍 Finding ore"; 
       break;
     case "movingToOre": 
-      text = "To ore"; 
-      bgColor = "rgba(135, 206, 250, 0.7)";
+      infoText = "To ore"; 
       break;
     case "mining": 
-      text = "⛏️ Mining"; 
-      bgColor = "rgba(255, 165, 0, 0.7)";
+      infoText = "⛏️ Mining"; 
       break;
     case "findingHome": 
-      text = "🔍 Finding home"; 
-      bgColor = "rgba(152, 251, 152, 0.7)";
+      infoText = "🔍 Finding home"; 
       break;
     case "movingToHome": 
-      text = "To home"; 
-      bgColor = "rgba(135, 206, 250, 0.7)";
+      infoText = "To home"; 
       break;
     case "restingAtHome": 
-      text = "🏠 Resting"; 
-      bgColor = "rgba(221, 160, 221, 0.7)";
+      infoText = "Resting"; 
       break;
     default: 
-      text = npc.state;
+      infoText = npc.state;
   }
   
-  const textWidth = ctx.measureText(text).width;
-  const padding = 4;
-  ctx.fillStyle = bgColor;
-  ctx.fillRect(npc.x - textWidth/2 - padding, npc.y - 35, textWidth + padding*2, 16);
+  // Additional info - ore count
+  const additionalInfo = {
+    text: `💎: ${npc.inventory.filter(item => item === 'ore').length}`
+    // No need to specify color - NPC class will handle it
+  };
   
-  ctx.fillStyle = "white";
-  ctx.fillText(text, npc.x, npc.y - 25);
-  ctx.fillStyle = fillColor;
-  ctx.fillText(text, npc.x, npc.y - 24);
-  
+  // Progress bar for mining or resting
+  let progressBar = null;
   if ((npc.state === "mining" || npc.state === "restingAtHome") && npc.waitTime > 0) {
-    const maxWidth = 20;
-    const progress = npc.waitTime / npc.maxWaitTime;
-    const barWidth = maxWidth * progress;
-    
-    ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
-    ctx.fillRect(npc.x - maxWidth/2, npc.y - 15, maxWidth, 3);
-    
-    ctx.fillStyle = npc.state === "mining" ? "brown" : "purple";
-    ctx.fillRect(npc.x - maxWidth/2, npc.y - 15, barWidth, 3);
+    progressBar = {
+      progress: npc.waitTime / npc.maxWaitTime,
+      width: 20,
+      color: npc.state === "mining" ? "brown" : "purple",
+      bgColor: "rgba(0, 0, 0, 0.3)"
+    };
   }
+  
+  // Call the common NPC method for displaying info
+  npc.drawInfoText(ctx, infoText, additionalInfo, progressBar);
 } 
