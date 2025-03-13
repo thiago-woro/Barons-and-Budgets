@@ -189,105 +189,267 @@ function updateDebuggerOverlay() {
 ///ground work for save/load game
 // Save game state
 function saveGame() {
-    // Create a deep copy and replace circular references with IDs
-    const prepareNPCsForSave = (npcs) => {
-      return npcs.map(npc => {
-        const npcCopy = { ...npc };
-        
-        // Replace parent references with their IDs
-        if (npcCopy.parents) {
-          npcCopy.parentIds = npcCopy.parents.map(parent => 
-            typeof parent === 'object' && parent !== null ? parent.myNumber : parent
-          );
-          delete npcCopy.parents; // Remove the circular reference
-        }
-        
-        // Replace children references with their IDs
-        if (npcCopy.children && Array.isArray(npcCopy.children)) {
-          npcCopy.childrenIds = npcCopy.children.map(child => 
-            typeof child === 'object' && child !== null ? child.myNumber : child
-          );
-          delete npcCopy.children; // Remove the circular reference
-        }
-        
-        // Replace spouse reference with ID
-        if (npcCopy.spouse && typeof npcCopy.spouse === 'object') {
-          npcCopy.spouseId = npcCopy.spouse.myNumber;
-          delete npcCopy.spouse; // Remove the circular reference
-        }
-        
-        return npcCopy;
-      });
-    };
-
-    // Handle fishing boats circular references
-    const prepareBoatsForSave = (boats) => {
-      if (!boats || !Array.isArray(boats)) return [];
-      
-      return boats.map(boat => {
-        const boatCopy = { ...boat };
-        
-        // Replace owner reference with ID
-        if (boatCopy.owner && typeof boatCopy.owner === 'object') {
-          boatCopy.ownerId = boatCopy.owner.myNumber;
-          delete boatCopy.owner;
-        }
-        
-        return boatCopy;
-      });
-    };
-
-    const gameState = {
-      // Game state
-      year,
-      isPaused,
-      gameLoopSpeed,
-      
-      // Population
-      startingPopulation,
-      populationIncreaseSpeed,
-      npcs: prepareNPCsForSave(npcs),
-      
-      // World map data
-      terrainMap,
-      groundCells,
-      waterCells,
-      availableHouseCells,
-      flatLandCells,
-      sandCells,
-      pathCells,
-      
-      // Resources
-      trees,
-      treePositions,
-      oreDeposits: typeof oreDeposits !== 'undefined' ? oreDeposits : [],
-      
-      // Buildings
-      houses,
-      buildings,
-      
-      // Fishing
-      fishingBoats: typeof fishingBoats !== 'undefined' ? 
-        prepareBoatsForSave(fishingBoats) : [],
-      fishingSpotsByHarbor: typeof fishingSpotsByHarbor !== 'undefined' ? 
-        Array.from(fishingSpotsByHarbor.entries()) : [],
-      harborToFishingSpotPaths: typeof harborToFishingSpotPaths !== 'undefined' ? 
-        Array.from(harborToFishingSpotPaths.entries()) : [],
-      
-      // Timestamp
-      savedAt: new Date().toISOString()
-    };
-  
     try {
-      const gameStateString = JSON.stringify(gameState);
-      localStorage.setItem("savedGameState", gameStateString);
-      console.log("Game saved successfully!");
-      addNotification("Game", "Game saved successfully!", new Date().toLocaleString(), null, "#4a7ba8");
+        // Create a deep copy and replace circular references with IDs
+        const prepareNPCsForSave = (npcs) => {
+          // First create a clean array of NPCs with only the essential properties
+          return npcs.map(npc => {
+            // Create a new object with only the properties we want to save
+            // This avoids any potential circular references from spread operator
+            const cleanNPC = {
+              // Basic properties
+              myNumber: npc.myNumber,
+              x: npc.x,
+              y: npc.y,
+              race: npc.race,
+              age: npc.age,
+              sex: npc.sex,
+              gender: npc.gender,
+              color: npc.color,
+              isAlive: npc.isAlive,
+              deathAge: npc.deathAge,
+              name: npc.name,
+              profession: npc.profession,
+              salary: npc.salary,
+              movementSpeed: npc.movementSpeed,
+              state: npc.state,
+              
+              // Store IDs instead of object references
+              parentIds: [],
+              childrenIds: [],
+              spouseId: null
+            };
+            
+            // Add any other scalar properties that should be saved
+            if (npc.waitTime !== undefined) cleanNPC.waitTime = npc.waitTime;
+            if (npc.maxWaitTime !== undefined) cleanNPC.maxWaitTime = npc.maxWaitTime;
+            if (npc.pathIndex !== undefined) cleanNPC.pathIndex = npc.pathIndex;
+            if (npc.stateData !== undefined) cleanNPC.stateData = { ...npc.stateData };
+            if (npc.animationState !== undefined) cleanNPC.animationState = npc.animationState;
+            
+            // Handle inventory if it exists
+            if (npc.inventory && typeof npc.inventory === 'object') {
+              cleanNPC.inventory = {};
+              // Only copy the data, not methods
+              Object.keys(npc.inventory).forEach(key => {
+                if (typeof npc.inventory[key] !== 'function') {
+                  cleanNPC.inventory[key] = npc.inventory[key];
+                }
+              });
+            }
+            
+            // Convert parent references to IDs
+            if (npc.parents) {
+              if (Array.isArray(npc.parents)) {
+                cleanNPC.parentIds = npc.parents.map(parent => 
+                  typeof parent === 'object' && parent !== null ? parent.myNumber : parent
+                ).filter(id => id !== undefined && id !== null);
+              } else if (npc.parents !== null && typeof npc.parents === 'object') {
+                cleanNPC.parentIds = [npc.parents.myNumber];
+              }
+            }
+            
+            // Convert children references to IDs
+            if (npc.children && Array.isArray(npc.children)) {
+              cleanNPC.childrenIds = npc.children.map(child => 
+                typeof child === 'object' && child !== null ? child.myNumber : child
+              ).filter(id => id !== undefined && id !== null);
+            }
+            
+            // Convert spouse reference to ID
+            if (npc.spouse) {
+              if (typeof npc.spouse === 'object' && npc.spouse !== null) {
+                cleanNPC.spouseId = npc.spouse.myNumber;
+              } else if (typeof npc.spouse === 'number') {
+                cleanNPC.spouseId = npc.spouse;
+              } else if (typeof npc.spouse === 'string' && !isNaN(parseInt(npc.spouse))) {
+                cleanNPC.spouseId = parseInt(npc.spouse);
+              }
+            }
+            
+            return cleanNPC;
+          });
+        };
+
+        // Handle fishing boats circular references
+        const prepareBoatsForSave = (boats) => {
+          if (!boats || !Array.isArray(boats)) return [];
+          
+          return boats.map(boat => {
+            // Create a new clean object instead of spreading
+            const cleanBoat = {
+              id: boat.id,
+              x: boat.x,
+              y: boat.y,
+              harborId: boat.harborId,
+              state: boat.state,
+              fishCaught: boat.fishCaught,
+              capacity: boat.capacity,
+              speed: boat.speed
+            };
+            
+            // Replace owner reference with ID
+            if (boat.owner && typeof boat.owner === 'object') {
+              cleanBoat.ownerId = boat.owner.myNumber;
+            } else if (typeof boat.owner === 'number') {
+              cleanBoat.ownerId = boat.owner;
+            }
+            
+            // Add any other important properties
+            if (boat.targetX !== undefined) cleanBoat.targetX = boat.targetX;
+            if (boat.targetY !== undefined) cleanBoat.targetY = boat.targetY;
+            if (boat.fishingSpotId !== undefined) cleanBoat.fishingSpotId = boat.fishingSpotId;
+            
+            return cleanBoat;
+          });
+        };
+
+        // Prepare buildings for save by removing circular references
+        const prepareBuildingsForSave = (buildings) => {
+          if (!buildings || !Array.isArray(buildings)) return [];
+          
+          return buildings.map(building => {
+            // Create a new clean object instead of spreading
+            const cleanBuilding = {
+              id: building.id,
+              x: building.x,
+              y: building.y,
+              type: building.type,
+              size: building.size,
+              width: building.width,
+              height: building.height
+            };
+            
+            // Copy any other scalar properties
+            if (building.color !== undefined) cleanBuilding.color = building.color;
+            if (building.completed !== undefined) cleanBuilding.completed = building.completed;
+            if (building.constructionProgress !== undefined) 
+              cleanBuilding.constructionProgress = building.constructionProgress;
+            if (building.maxHealth !== undefined) cleanBuilding.maxHealth = building.maxHealth;
+            if (building.health !== undefined) cleanBuilding.health = building.health;
+            if (building.race !== undefined) cleanBuilding.race = building.race;
+            
+            // Replace owner reference with ID if it exists
+            if (building.owner && typeof building.owner === 'object') {
+              cleanBuilding.ownerId = building.owner.myNumber;
+            } else if (typeof building.owner === 'number') {
+              cleanBuilding.ownerId = building.owner;
+            } else if (typeof building.owner === 'string') {
+              cleanBuilding.owner = building.owner; // Keep string owners (like "Town")
+            }
+            
+            // Replace occupants with IDs if they exist
+            if (building.occupants && Array.isArray(building.occupants)) {
+              cleanBuilding.occupantIds = building.occupants.map(occupant => 
+                typeof occupant === 'object' && occupant !== null ? occupant.myNumber : occupant
+              ).filter(id => id !== undefined && id !== null);
+            }
+            
+            return cleanBuilding;
+          });
+        };
+
+        // Prepare animals for save
+        const prepareAnimalsForSave = (animals) => {
+          if (!animals || !Array.isArray(animals)) return [];
+          
+          return animals.map(animal => {
+            // Create a new clean object instead of spreading
+            const cleanAnimal = {
+              id: animal.id,
+              x: animal.x,
+              y: animal.y,
+              type: animal.type,
+              emoji: animal.emoji,
+              speed: animal.speed,
+              isPredator: animal.isPredator
+            };
+            
+            // Copy any other important properties
+            if (animal.health !== undefined) cleanAnimal.health = animal.health;
+            if (animal.maxHealth !== undefined) cleanAnimal.maxHealth = animal.maxHealth;
+            if (animal.targetX !== undefined) cleanAnimal.targetX = animal.targetX;
+            if (animal.targetY !== undefined) cleanAnimal.targetY = animal.targetY;
+            if (animal.state !== undefined) cleanAnimal.state = animal.state;
+            if (animal.moveTimer !== undefined) cleanAnimal.moveTimer = animal.moveTimer;
+            
+            return cleanAnimal;
+          });
+        };
+
+        // Prepare Map objects for serialization
+        const prepareMapForSave = (map) => {
+          if (!map || typeof map.entries !== 'function') return [];
+          try {
+            return Array.from(map.entries());
+          } catch (error) {
+            console.warn("Error converting Map to array:", error);
+            return [];
+          }
+        };
+
+        const gameState = {
+          // Game state
+          year,
+          isPaused,
+          gameLoopSpeed,
+          
+          // Player info
+          playerRace: window.playerRace || "Elf",
+          kingdomName: window.kingdomName || "Elven Kingdom",
+          playerName: window.playerName || "OrcXSlayer777",
+          playedHours: window.playedHours || 0,
+          
+          // Population
+          startingPopulation,
+          populationIncreaseSpeed,
+          npcs: prepareNPCsForSave(npcs),
+          
+          // World map data
+          terrainMap,
+          groundCells,
+          waterCells,
+          availableHouseCells,
+          flatLandCells,
+          sandCells,
+          pathCells,
+          
+          // Resources
+          trees,
+          treePositions,
+          oreDeposits: typeof oreDeposits !== 'undefined' ? oreDeposits : [],
+          
+          // Buildings
+          houses: prepareBuildingsForSave(houses),
+          buildings: prepareBuildingsForSave(buildings),
+          
+          // Animals
+          animals: typeof animals !== 'undefined' && Array.isArray(animals) ? 
+            prepareAnimalsForSave(animals) : [],
+          
+          // Fishing
+          fishingBoats: typeof fishingBoats !== 'undefined' ? 
+            prepareBoatsForSave(fishingBoats) : [],
+          fishingSpotsByHarbor: typeof fishingSpotsByHarbor !== 'undefined' ? 
+            prepareMapForSave(fishingSpotsByHarbor) : [],
+          harborToFishingSpotPaths: typeof harborToFishingSpotPaths !== 'undefined' ? 
+            prepareMapForSave(harborToFishingSpotPaths) : [],
+          
+          // Timestamp
+          savedAt: new Date().toISOString()
+        };
+      
+        const gameStateString = JSON.stringify(gameState);
+        localStorage.setItem("savedGameState", gameStateString);
+        console.log("Game saved successfully!");
+        addNotification("Game", "Game saved successfully!", new Date().toLocaleString(), null, "#4a7ba8");
+        return true;
     } catch (error) {
-      console.warn("Failed to save game:", error);
-      addNotification("Game", "Failed to save game", error.message, null, "#a84a4a");
+        console.error("Failed to save game:", error);
+        addNotification("Game", "Failed to save game", error.message, null, "#a84a4a");
+        return false;
     }
-  }
+}
   
   // Load game state
   function loadGame() {
@@ -325,7 +487,7 @@ function saveGame() {
         Object.assign(npc, npcData);
         
         // Clear these fields to set them properly after all NPCs are created
-        npc.parents = null;
+        npc.parents = [];  // Initialize as empty array instead of null
         npc.children = [];
         npc.spouse = null;
         
@@ -400,11 +562,15 @@ function saveGame() {
         }).filter(boat => boat !== null);
       }
       
+      // Clear all canvases before redrawing
+      clearCanvas(npcCtx);
+      clearCanvas(npcInfoOverlayCtx);
+      clearCanvas(groundCtx);
+      clearCanvas(waterCtx);
+      clearCanvas(treeCtx);
+      
       // Redraw everything
       if (typeof drawTerrainLayer === 'function') {
-        clearCanvas(groundCtx);
-        clearCanvas(waterCtx);
-        
         drawTerrainLayer(groundCtx, groundCells, cellSize);
         drawTerrainLayer(waterCtx, waterCells, cellSize);
         
@@ -419,21 +585,86 @@ function saveGame() {
       
       // Redraw trees
       if (typeof drawTrees === 'function' && treeCtx) {
-        clearCanvas(treeCtx);
         drawTrees(treeCtx, cellSize, treePositions, []);
       }
       
       // Redraw buildings
-      buildings.forEach(building => {
-        if (typeof building.draw === 'function') {
-          building.draw(npcCtx);
+      if (buildings && buildings.length > 0) {
+        buildings.forEach(building => {
+          if (typeof building.draw === 'function') {
+            building.draw(npcCtx);
+          }
+        });
+      }
+      
+      // Redraw NPCs
+      if (npcs && npcs.length > 0) {
+        console.log(`Drawing ${npcs.length} NPCs after loading`);
+        npcs.forEach(npc => {
+          if (typeof drawNPC === 'function') {
+            drawNPC(npc, npcCtx);
+          }
+        });
+      }
+      
+      // Rebuild NPC table
+      const npcTable = document.getElementById("npcTable");
+      if (npcTable) {
+        // Clear existing table
+        const tbody = npcTable.querySelector("tbody");
+        if (tbody) {
+          tbody.innerHTML = "";
+          
+          // Rebuild table with loaded NPCs
+          npcs.forEach(npc => {
+            if (typeof addNPCToTable === 'function') {
+              addNPCToTable(npc);
+            } else {
+              // Fallback if addNPCToTable is not available
+              const row = document.createElement("tr");
+              row.innerHTML = `
+                <td>${npc.name}</td>
+                <td>${npc.race}</td>
+                <td>${npc.age}</td>
+                <td>${npc.profession || "None"}</td>
+              `;
+              tbody.appendChild(row);
+            }
+          });
         }
-      });
+      }
       
       // Update UI
       currentPopulation.textContent = npcs.length;
       gameSpeed.textContent = "x " + gameLoopSpeed.toFixed(0);
       gameSpeedValue.textContent = `Game Speed: ${10000 / gameLoopSpeed}`;
+      npcTableHeader.textContent = `Total Population ${npcs.length}`;
+      
+      // Update player info if available
+      if (savedGameState.playerRace) {
+        window.playerRace = savedGameState.playerRace;
+        const playerRaceDisplay = document.getElementById("playerRaceDisplay");
+        if (playerRaceDisplay) {
+          playerRaceDisplay.textContent = savedGameState.playerRace;
+        }
+      }
+      
+      if (savedGameState.kingdomName) {
+        window.kingdomName = savedGameState.kingdomName;
+      }
+      
+      if (savedGameState.playerName) {
+        window.playerName = savedGameState.playerName;
+      }
+      
+      if (savedGameState.playedHours !== undefined) {
+        window.playedHours = savedGameState.playedHours;
+      }
+      
+      // Force a redraw of the world
+      if (typeof redrawWorld === 'function') {
+        redrawWorld();
+      }
       
       console.log("Game loaded successfully! Year:", year, "Population:", npcs.length);
       addNotification("Game", "Game loaded successfully!", `Year: ${year}, Population: ${npcs.length}`, null, "#4a7ba8");

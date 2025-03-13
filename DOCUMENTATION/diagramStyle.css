@@ -1,0 +1,31 @@
+body { 
+    background-color: black;
+    font-family: Arial, sans-serif; 
+    color: white; 
+}
+.row { 
+    display: flex; 
+    flex-wrap: wrap;
+    flex-direction: row;  
+}
+.function { 
+    border: 1px solid rgba(90, 123, 166, 0.597); 
+    background-color: rgb(80, 146, 189); 
+    padding: 5px; 
+    margin: 5px; 
+    border-radius: 5px; 
+}
+
+.variable { 
+    border: 1px solid rgba(90, 123, 166, 0.597); 
+    background-color: rgb(215, 176, 59); 
+    padding: 5px; 
+    margin: 5px; 
+    border-radius: 5px;
+    font-size: 9px; 
+}
+
+.col { 
+    flex: 1; 
+    flex-direction: column; 
+}

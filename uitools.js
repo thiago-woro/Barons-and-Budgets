@@ -518,7 +518,12 @@ function showNPCInfo(npc) {
 
   // Check if parents exist before adding parent information
   if (npc.parents && npc.parents.length > 0) {
-    infoHtml += `<br/>Parent: ${npc.parents[0].name}, ${npc.parents[0].race}`;
+    const parent = npc.parents[0];
+    if (typeof parent === 'object' && parent !== null && parent.name && parent.race) {
+      infoHtml += `<br/>Parent: ${parent.name}, ${parent.race}`;
+    } else {
+      infoHtml += `<br/>Parent: #${parent}`;
+    }
   }
   if (npc.spouse) {
     infoHtml += `<br/>Married to: <strong> ${npc.spouse} 💍</strong><br/> `;
@@ -526,11 +531,12 @@ function showNPCInfo(npc) {
   infoHtml += `<br/>Profession:<br/>${npc.profession}       
   <span style="color: green;">$ ${npc.salary}</span><br/> `;
 
-   // Get random conversation line based on npc's profession
-   const conversationLines = purryNPCConversations[npc.profession];
+   // Get random conversation line based on npc's race and profession
+   const raceConversations = npcConversations[npc.race];
    let randomLine = "";
    
-   if (conversationLines && conversationLines.length > 0) {
+   if (raceConversations && raceConversations[npc.profession] && raceConversations[npc.profession].length > 0) {
+     const conversationLines = raceConversations[npc.profession];
      const randomIndex = Math.floor(Math.random() * conversationLines.length);
      randomLine = conversationLines[randomIndex];
    }

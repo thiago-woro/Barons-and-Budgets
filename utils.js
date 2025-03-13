@@ -118,6 +118,7 @@ function isLandCell(x, y) {
     }
 
     // Check if the cell is in the groundCells array
+   // console.log(`Checking cell (${x}, ${y}) in groundCells (size: ${groundCells.length})`);
     return groundCells.some(cell => cell && cell.x === x && cell.y === y);
 }
 
@@ -133,6 +134,12 @@ function findPathTo(npc, target) {
     if (npc.profession !== 'Woodcutter') {
         return null;
     }
+
+    if (typeof target.x !== 'number' || typeof target.y !== 'number') {
+        console.error("Invalid target coordinates:", target);
+        return null;
+    }
+    console.log(`Target grid coordinates: (${target.x}, ${target.y})`);
 
     const startX = Math.floor(npc.x / cellSize);
     const startY = Math.floor(npc.y / cellSize);
@@ -266,7 +273,7 @@ function getNeighbors(x, y) {
  * Reconstruct path from A* result
  */
 function reconstructPath(cameFrom, current) {
-    const path = [{ x: current.x, y, y: current.y }];
+    const path = [{ x: current.x, y: current.y }];
     let currentKey = current.key;
 
     while (cameFrom.has(currentKey)) {

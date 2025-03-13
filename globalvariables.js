@@ -2,6 +2,9 @@
 
 // Player's selected race - will be set to "Elf", "Kurohi", or "Purries" based on player choice
 let playerRace = "Elf";
+let kingdomName = "Elven Kingdom";
+let playerName = "OrcXSlayer777";
+let playedHours = 0;
 
 //map generation - global variables
 let cellSize = 20;

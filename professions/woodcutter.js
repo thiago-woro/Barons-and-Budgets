@@ -44,6 +44,9 @@ function findNearestTree(npc) {
 
 // Simplified state machine for woodcutter behavior
 function updateWoodcutter(npc) {
+  // Set canMove flag based on state - woodcutters can't move while actively cutting
+  npc.canMove = npc.state !== "activelyCutting";
+  
   switch (npc.state) {
     case "idle":
       npc.setState("cuttingTrees");
@@ -81,10 +84,15 @@ function updateWoodcutter(npc) {
         
         // Start the cutting process
         npc.setState("activelyCutting");
+        // Explicitly set canMove to false when cutting starts
+        npc.canMove = false;
       }
       break;
       
     case "activelyCutting":
+      // Ensure NPC doesn't move while cutting
+      npc.canMove = false;
+      
       if (npc.waitTime > 0) {
         npc.waitTime--;
         
@@ -114,6 +122,8 @@ function updateWoodcutter(npc) {
         // Clear the current path and target tree
         npc.currentPath = null;
         npc.stateData.targetTree = null;
+        // Allow movement again
+        npc.canMove = true;
       }
       break;
       
@@ -127,7 +137,9 @@ function updateWoodcutter(npc) {
           npc.stateData.targetHome = home;
         } else {
           // No homes found, go back to cutting trees
-          npc.setState("cuttingTrees");
+
+          console.warn("No homes found, going back to cutting trees");
+          npc.setState("idle");
           break;
         }
       }
