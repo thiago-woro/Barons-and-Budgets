@@ -400,7 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Mouse clicks canvas map
 let isDragging = false;
-function logCellOnClick(container, ctx, cellSize, npcCtx, treeCtx, pathCtx) {
+function logCellOnClick(container, ctx, cellSize) {
   container.addEventListener("click", function(event) {
    
       const rect = container.getBoundingClientRect();
@@ -409,7 +409,7 @@ function logCellOnClick(container, ctx, cellSize, npcCtx, treeCtx, pathCtx) {
       const { x: worldX, y: worldY } = camera.screenToWorld(x, y);
       const cellRow = Math.floor(worldY / cellSize);
       const cellCol = Math.floor(worldX / cellSize);
-      console.info(`Click at (${x.toFixed(2)}, ${y.toFixed(2)}), Cell: (${cellCol}, ${cellRow}), tab: ${window.activeTabBottomLeft} - zoom level: ${camera.zoom}`);
+      console.info(`1 logCellOnClick: ${x.toFixed(2)}, ${y.toFixed(2)}), Cell: (${cellCol}, ${cellRow}), tab: ${window.activeTabBottomLeft} - zoom level: ${camera.zoom}`);
 
       if (event.shiftKey) {
         camera.centerOnCell(cellCol, cellRow);
@@ -419,7 +419,7 @@ function logCellOnClick(container, ctx, cellSize, npcCtx, treeCtx, pathCtx) {
       ctx.strokeStyle = 'orange';
       ctx.lineWidth = 2;
       ctx.strokeRect(cellCol * cellSize, cellRow * cellSize, cellSize, cellSize);
-    
+    return { x, y, cellCol, cellRow, activeTab: window.activeTabBottomLeft, zoomLevel: camera.zoom };
   });
 }
 

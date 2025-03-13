@@ -20,25 +20,24 @@
 <img src="./assets/Races/purries/female/catgirl (4).png" style="height: 200px; width: 200px;">
 </div>
 
-<div id="welcomeScreen" class="">
+<div id="insideBuilding" style="width: 100vw; height: 100vh; position: absolute; display: block;visibility: collapse; z-index: 2000; left: 0; top: 0;">
+<button id="closeBuildingButton" style="position: absolute; top: 10px; right: 10px;">Close</button>   
+</div>
+
+<div id="welcomeScreen" class=""> <!-- Start: welcome screen -->
 <div id="welcomePopup">
     <h1 id="titleWelcomeScreen" style="margin-top: 50px;" >Barons & Budgets</h1>
     <img id="logoWelcomeScreen" src="./assets/Favicon/logo.png">
     <div class="row col" style="margin-bottom: 50px; gap: 10px; padding: 10px; border-radius: 10px;">
-        <button id="newGameWelcomeScreen">New Game</button>
-        <button id="newGameCustomWelcomeScreen">New Game Custom</button>
+        <button id="newGameCustomWelcomeScreen">New Game</button>
+        <button id="newGameWelcomeScreen">New Game Random</button>
         <button class="blueButton" id="loadGameWelcomeScreen">Load Game</button>
         <button id="uiTesterWelcomeScreen">UI tester</button>
-
     </div>
-
     <span id="mobileAlert" style="color: rgb(255, 190, 13);">Game not ready for mobile 🙇‍♂️</span>
 </div>
-
 <img id="elfCounselor1" src="./assets/Races/elfs/female-elf-1-no-bg.png">
-
-
-</div>
+</div> <!-- end welcome screeen -->
 
 
 	<body>
@@ -52,7 +51,7 @@
             <canvas id="npcInfoOverlay"  style="z-index: 42; visibility: hidden;"></canvas>
             <canvas id="boatCanvas"  style="z-index: 50;"></canvas>
             <canvas id="animalCanvas"  style="z-index: 51;"></canvas>
-            <canvas id="npcCanvas"  style="z-index: 99;"></canvas>
+            <canvas id="npcCanvas"  style="z-index: 90;"></canvas>
             <canvas id="homes"  style="z-index: 98;"></canvas>
         </div>
 

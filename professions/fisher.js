@@ -1030,7 +1030,7 @@ function initializeFishingResources() {
   // Initialize water port cells for existing harbors
   if (buildings && Array.isArray(buildings)) {
     const harbors = buildings.filter(building => building.type === "Harbor");
-    console.log(`Found ${harbors.length} existing harbors`);
+   // console.log(`Found ${harbors.length} existing harbors`);
     
     harbors.forEach(harbor => {
       // Make sure we have a harbor ID
@@ -1047,7 +1047,7 @@ function initializeFishingResources() {
             x: nearestWater.x,
             y: nearestWater.y
           });
-          console.log(`Set water port cell for harbor ${harbor.id}: (${nearestWater.x}, ${nearestWater.y})`);
+         // console.log(`Set water port cell for harbor ${harbor.id}: (${nearestWater.x}, ${nearestWater.y})`);
         }
       }
     });
@@ -1056,8 +1056,7 @@ function initializeFishingResources() {
   // Initialize paths for harbors
   preCalculateAllPaths();
   
-  // Make these functions globally available
-  console.log("Fisher functions available globally");
+
 }
 
 function preCalculateAllPaths() {

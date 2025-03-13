@@ -8,7 +8,7 @@ function drawStartandTarget(ctx, cellSize, start, target, closedSet) {
 
     // Save current context state
     ctx.save();
-    
+/*     
     // Draw closed set cells in purple
     if (closedSet && closedSet.size > 0) {
         ctx.fillStyle = "rgba(128, 0, 128, 0.5)"; // Purple with transparency
@@ -28,7 +28,7 @@ function drawStartandTarget(ctx, cellSize, start, target, closedSet) {
                 console.warn(`Could not parse closedSet key: ${key}`);
             }
         });
-    }
+    } */
     
     // Draw neighbor cells in orange
     ctx.fillStyle = "rgba(255, 165, 0, 0.7)"; // Orange with transparency

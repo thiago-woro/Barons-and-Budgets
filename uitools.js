@@ -17,7 +17,7 @@ function setupCanvas(canvasId, width, height) {
 }
 
 
-const canvasElements = [
+const canvasElements = [ //all canvas
   "npcCanvas",
   "groundCanvas",
   "waterCanvas",
@@ -139,6 +139,21 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   setupKeyboardZoom();
 
+  // Add event listener for close building button
+  const closeBuildingButton = document.getElementById('closeBuildingButton');
+  if (closeBuildingButton) {
+    closeBuildingButton.addEventListener('click', closeInsideBuilding);
+  }
+  
+  // Add event listener for Escape key to close building view
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      const insideBuilding = document.getElementById('insideBuilding');
+      if (insideBuilding && insideBuilding.style.visibility === 'visible') {
+        closeInsideBuilding();
+      }
+    }
+  });
 });
 
 document.getElementById("recenterCanvas").addEventListener("click", () => {
@@ -381,6 +396,94 @@ npcCanvas.addEventListener("click", function(event) {
     }
   }
 });
+// Update the building click handler to use the populate function
+homesCanvas.addEventListener("click", function(event) {
+
+  const rect = homesCanvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  logCellOnClick(homesCanvas, homesCtx, cellSize);
+  
+  // Debug log regardless of active tab
+  console.log("Homes canvas clicked, x: " + event.clientX + " y: " + event.clientY);
+  console.log("Current active tab: " + window.activeTabBottomLeft);
+  
+  // Check if the active tab is "buildings" (case insensitive)
+  if (window.activeTabBottomLeft && window.activeTabBottomLeft.toLowerCase() !== "buildings") {
+    console.log("Not on buildings tab, ignoring click");
+    return;
+  }
+  
+  console.log("Checking for houses near click point:", x, y);
+  
+  // Check if houses array exists and has items
+  if (!houses || !houses.length) {
+    return;
+  }
+  
+  let foundHouse = false;
+  for (const house of houses) {
+    
+    const distance = Math.sqrt((x - house.x) ** 2 + (y - house.y) ** 2);
+    console.log(`home x: ${house.x.toFixed(0)}, y: ${house.y.toFixed(0)}, Distance: ${distance.toFixed(0)}`);
+    console.log(`House is at cell: (${Math.floor(house.x / cellSize)}, ${Math.floor(house.y / cellSize)})`);
+    if (distance < 50) { // Larger hit area for clicking
+      console.log(`Clicked building: ${house.id || 'unknown'}`);
+      foundHouse = true;
+      
+      // Show the inside building view
+      const insideBuilding = document.getElementById('insideBuilding');
+      if (insideBuilding) {
+        insideBuilding.style.visibility = 'visible';
+        
+        // Populate building details
+        populateBuildingDetails(house);
+      } else {
+        console.warn('insideBuilding element not found in the DOM');
+      }
+      
+      break;
+    }
+  }
+  
+  if (!foundHouse) {
+    console.log("No house found at click position");
+  }
+});
+
+// Function to populate building details
+function populateBuildingDetails(house) {
+  const buildingTitle = document.getElementById('buildingTitle');
+  const buildingDetails = document.getElementById('buildingDetails');
+  
+  if (buildingTitle) {
+    buildingTitle.textContent = house.type || 'Building';
+  }
+  
+  if (buildingDetails) {
+    let detailsHtml = '';
+    
+    // Add building ID or name
+    detailsHtml += `<p>ID: ${house.id || 'Unknown'}</p>`;
+    
+    // Add building position
+    detailsHtml += `<p>Position: (${Math.floor(house.x / cellSize)}, ${Math.floor(house.y / cellSize)})</p>`;
+    
+    // Add owner information if available
+    if (house.owner) {
+      detailsHtml += `<p>Owner: ${house.owner}</p>`;
+    }
+    
+    // Add any other relevant building information
+    if (house.size) {
+      detailsHtml += `<p>Size: ${house.size}</p>`;
+    }
+    
+    buildingDetails.innerHTML = detailsHtml;
+  }
+}
+
+
 
 // Keep the existing mousemove handler with simplified functionality
 npcCanvas.addEventListener("mousemove", function (event) {
@@ -602,3 +705,12 @@ console.log("r key pressed - no function yet. file: uitools.js");
 
   }
 });
+
+// Function to close the inside building view
+function closeInsideBuilding() {
+  const insideBuilding = document.getElementById('insideBuilding');
+  if (insideBuilding) {
+    insideBuilding.style.visibility = 'collapse';
+    console.log("Closed inside building view");
+  }
+}
