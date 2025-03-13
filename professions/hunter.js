@@ -5,7 +5,7 @@
 function updateHunter(npc) {
   switch (npc.state) {
     case "idle":
-      npc.transitionTo("findingPrey");
+      npc.setState("findingPrey");
       break;
       
     case "findingPrey":
@@ -14,16 +14,16 @@ function updateHunter(npc) {
         npc.currentPath = findPathTo(npc, prey);
         npc.pathIndex = 0;
         npc.stateData.targetPrey = prey;
-        npc.transitionTo("huntingPrey");
+        npc.setState("huntingPrey");
       } else {
-        npc.transitionTo("idle");
+        npc.setState("idle");
       }
       break;
       
     case "huntingPrey":
       if (followPath(npc)) {
         // Path completed, we're close enough to kill
-        npc.transitionTo("killing");
+        npc.setState("killing");
         npc.waitTime = npc.maxWaitTime;
         if (npc.stateData.targetPrey) {
           npc.stateData.targetPreyIndex = animals.indexOf(npc.stateData.targetPrey);
@@ -58,7 +58,7 @@ function updateHunter(npc) {
         }
       } else {
         npc.animationState = "normal";
-        npc.transitionTo("findingHome");
+        npc.setState("findingHome");
       }
       break;
       
@@ -68,15 +68,15 @@ function updateHunter(npc) {
         npc.currentPath = findPathTo(npc, home);
         npc.pathIndex = 0;
         npc.stateData.targetHome = home;
-        npc.transitionTo("movingToHome");
+        npc.setState("movingToHome");
       } else {
-        npc.transitionTo("idle");
+        npc.setState("idle");
       }
       break;
       
     case "movingToHome":
       if (followPath(npc)) {
-        npc.transitionTo("restingAtHome");
+        npc.setState("restingAtHome");
         npc.waitTime = npc.maxWaitTime;
       }
       break;
@@ -87,7 +87,7 @@ function updateHunter(npc) {
         npc.animationState = "sleeping";
       } else {
         npc.animationState = "normal";
-        npc.transitionTo("findingPrey");
+        npc.setState("findingPrey");
       }
       break;
   }

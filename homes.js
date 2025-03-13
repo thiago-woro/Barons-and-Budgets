@@ -160,7 +160,7 @@ class House {
 
 function drawPaths(houses, ctx) {
   //log
-  console.log("drawPaths");
+ // console.log("drawPaths");
 
   const lineHeight = Math.floor(Math.random() * 7) + 1;
   const verticalSpacing = Math.floor(Math.random() * 50) + 1;

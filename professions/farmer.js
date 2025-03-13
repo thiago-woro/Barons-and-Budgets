@@ -8,9 +8,9 @@ function updateFarmer(npc) {
       // First check if we have a farm, if not, try to build one
       const farm = findNearestFarm(npc);
       if (!farm) {
-        npc.transitionTo("buildingFarm");
+        npc.setState("buildingFarm");
       } else {
-        npc.transitionTo("farming");
+        npc.setState("farming");
       }
       break;
       
@@ -21,15 +21,15 @@ function updateFarmer(npc) {
         npc.currentPath = findPathTo(npc, farmSpot);
         npc.pathIndex = 0;
         npc.stateData.farmSpot = farmSpot;
-        npc.transitionTo("movingToFarmSpot");
+        npc.setState("movingToFarmSpot");
       } else {
-        npc.transitionTo("idle");
+        npc.setState("idle");
       }
       break;
       
     case "movingToFarmSpot":
       if (followPath(npc)) {
-        npc.transitionTo("constructingFarm");
+        npc.setState("constructingFarm");
         npc.waitTime = npc.maxWaitTime * 2; // Farm takes longer to build
       }
       break;
@@ -45,7 +45,7 @@ function updateFarmer(npc) {
           // Check if Farm class exists
           if (typeof Farm === 'undefined') {
             console.error("Farm class is not defined. Ensure buildings/farm.js is loaded before farmer.js");
-            npc.transitionTo("idle");
+            npc.setState("idle");
             return;
           }
           
@@ -53,7 +53,7 @@ function updateFarmer(npc) {
           buildings.push(farm);
           npc.stateData.currentFarm = farm;
           colorAdjacentCells(spot.x, spot.y, 'yellow');
-          npc.transitionTo("farming");
+          npc.setState("farming");
         }
       }
       break;

@@ -42,50 +42,35 @@ function findNearestTree(npc) {
   return nearestTree;
 }
 
-// State machine for woodcutter behavior
+// Simplified state machine for woodcutter behavior
 function updateWoodcutter(npc) {
- 
   switch (npc.state) {
     case "idle":
-      npc.transitionTo("findingTree");
+      npc.setState("cuttingTrees");
       break;
       
-    case "findingTree":
-      const tree = findNearestTree(npc);
-      if (tree) {
-       // console.log(`woodcutter: ${npc.name} found tree at ${tree.x}, ${tree.y}`);
-        npc.currentPath = findPathTo(npc, tree);
-        npc.pathIndex = 0;
-        npc.stateData.targetTree = tree;
-        npc.transitionTo("movingToTree");
-      } else {
-       // console.log(`woodcutter: ${npc.name} couldn't find any trees!`);
-        npc.transitionTo("idle");
-      }
-      break;
-      
-    case "movingToTree":
-      // Check if we have a valid path
-      if (!npc.currentPath) {
-        // If path is invalid, try to find a new one
+    case "cuttingTrees":
+      // If we don't have a path or target tree, find one
+      if (!npc.currentPath || !npc.stateData.targetTree) {
         const tree = findNearestTree(npc);
         if (tree) {
           npc.currentPath = findPathTo(npc, tree);
           npc.pathIndex = 0;
           npc.stateData.targetTree = tree;
         } else {
-          npc.transitionTo("idle");
+          // No trees found, go idle
+          npc.setState("idle");
           break;
         }
       }
       
-      // Follow the path for one step
+      // Follow the path to the tree
       const pathCompleted = followPath(npc);
       
-      // Only transition when path is actually completed
+      // If we've reached the tree, start cutting
       if (pathCompleted) {
-        npc.transitionTo("cuttingTree");
         npc.waitTime = npc.maxWaitTime;
+        
         // Store the tree index for animation later
         if (npc.stateData.targetTree && npc.stateData.targetTree.originalTree) {
           const treeIndex = treePositions.indexOf(npc.stateData.targetTree.originalTree);
@@ -93,10 +78,13 @@ function updateWoodcutter(npc) {
             npc.stateData.targetTreeIndex = treeIndex;
           }
         }
+        
+        // Start the cutting process
+        npc.setState("activelyCutting");
       }
       break;
       
-    case "cuttingTree":
+    case "activelyCutting":
       if (npc.waitTime > 0) {
         npc.waitTime--;
         
@@ -109,75 +97,62 @@ function updateWoodcutter(npc) {
         }
         
         // Start tree animation when we're about halfway through cutting
-        // This ensures the tree falls as the woodcutter is still chopping
         if (npc.waitTime === Math.floor(npc.maxWaitTime / 2) && npc.stateData.targetTreeIndex !== undefined) {
           dyingTreeAnimation(npc.stateData.targetTreeIndex, () => {
-           // console.log(`woodcutter: ${npc.name} cut down a tree`);
-
             //add wood to the wood count
             elfWoodCount += 1;
 
-           //update the wood count display
+            //update the wood count display
             document.getElementById("woodCount").textContent = elfWoodCount + "/ " + treePositions.length;
- 
-        
           });
         }
       } else {
         npc.animationState = "normal"; // Reset animation state
-        // Tree has already been removed by the animation
-        npc.transitionTo("findingHome");
+        // Tree has been cut, go back home
+        npc.setState("returningHome");
+        
+        // Clear the current path and target tree
+        npc.currentPath = null;
+        npc.stateData.targetTree = null;
       }
       break;
       
-    case "findingHome":
-      const home = findNearestHome(npc);
-      if (home) {
-       // console.log(`woodcutter: ${npc.name} found home at ${home.x}, ${home.y}`);
-        npc.currentPath = findPathTo(npc, home);
-        npc.pathIndex = 0;
-        npc.stateData.targetHome = home;
-        npc.transitionTo("movingToHome");
-      } else {
-      //  console.log(`woodcutter: ${npc.name} couldn't find any homes!`);
-        npc.transitionTo("idle");
-      }
-      break;
-      
-    case "movingToHome":
-      // Check if we have a valid path
-      if (!npc.currentPath) {
-        // If path is invalid, try to find a new one
+    case "returningHome":
+      // If we don't have a path or target home, find one
+      if (!npc.currentPath || !npc.stateData.targetHome) {
         const home = findNearestHome(npc);
         if (home) {
           npc.currentPath = findPathTo(npc, home);
           npc.pathIndex = 0;
           npc.stateData.targetHome = home;
         } else {
-          npc.transitionTo("idle");
+          // No homes found, go back to cutting trees
+          npc.setState("cuttingTrees");
           break;
         }
       }
       
-      // Follow the path for one step
+      // Follow the path to home
       const homePathCompleted = followPath(npc);
       
-      // Only transition when path is actually completed
+      // If we've reached home, rest briefly then go back to cutting trees
       if (homePathCompleted) {
-        npc.transitionTo("restingAtHome");
-        npc.waitTime = npc.maxWaitTime;
+        npc.waitTime = npc.maxWaitTime / 2; // Rest for half the time of cutting
+        npc.animationState = "sleeping";
+        npc.setState("resting");
+        
+        // Clear the current path and target home
+        npc.currentPath = null;
+        npc.stateData.targetHome = null;
       }
       break;
       
-    case "restingAtHome":
+    case "resting":
       if (npc.waitTime > 0) {
         npc.waitTime--;
-        
-        // Add visual feedback for resting (sleeping animation)
-        npc.animationState = "sleeping";
       } else {
         npc.animationState = "normal"; // Reset animation state
-        npc.transitionTo("findingTree");
+        npc.setState("cuttingTrees"); // Go back to cutting trees
       }
       break;
   }
@@ -202,28 +177,20 @@ function drawWoodcutterInfo(npc, ctx) {
       text = "🔍 Idle"; 
       bgColor = "rgba(200, 200, 200, 0.7)"; // Gray
       break;
-    case "findingTree": 
-      text = "🔍 Finding tree"; 
-      bgColor = "rgba(152, 251, 152, 0.7)"; // Pale green
-      break;
-    case "movingToTree": 
-      text = "To tree"; 
+    case "cuttingTrees": 
+      text = "🌲 To tree"; 
       bgColor = "rgba(135, 206, 250, 0.7)"; // Light blue
       break;
-    case "cuttingTree": 
+    case "activelyCutting": 
       text = "🪓 Cutting"; 
       bgColor = "rgba(255, 165, 0, 0.7)"; // Orange
       break;
-    case "findingHome": 
-      text = "🔍 Finding home"; 
-      bgColor = "rgba(152, 251, 152, 0.7)"; // Pale green
-      break;
-    case "movingToHome": 
-      text = "To home"; 
+    case "returningHome": 
+      text = "🏠 To home"; 
       bgColor = "rgba(135, 206, 250, 0.7)"; // Light blue
       break;
-    case "restingAtHome": 
-      text = "🏠 Resting"; 
+    case "resting": 
+      text = "😴 Resting"; 
       bgColor = "rgba(221, 160, 221, 0.7)"; // Plum
       break;
     default: 
@@ -243,7 +210,7 @@ function drawWoodcutterInfo(npc, ctx) {
   ctx.fillText(text, npc.x, npc.y - 24);
   
   // If waiting, show a progress bar
-  if ((npc.state === "cuttingTree" || npc.state === "restingAtHome") && npc.waitTime > 0) {
+  if ((npc.state === "activelyCutting" || npc.state === "resting") && npc.waitTime > 0) {
     const maxWidth = 20;
     const progress = npc.waitTime / npc.maxWaitTime;
     const barWidth = maxWidth * progress;
@@ -253,7 +220,7 @@ function drawWoodcutterInfo(npc, ctx) {
     ctx.fillRect(npc.x - maxWidth/2, npc.y - 15, maxWidth, 3);
     
     // Draw progress
-    ctx.fillStyle = npc.state === "cuttingTree" ? "orange" : "purple";
+    ctx.fillStyle = npc.state === "activelyCutting" ? "orange" : "purple";
     ctx.fillRect(npc.x - maxWidth/2, npc.y - 15, barWidth, 3);
   }
 } 

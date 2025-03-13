@@ -14,11 +14,8 @@ class Harbor extends Building {
     this.resources = Infinity; // Harbors don't deplete
     this.id = `harbor_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     
-    // Ensure this.size is explicitly set
     this.size = safeSize;
-    
-    // Log when the harbor is created
-    console.log(`Harbor created at (${x}, ${y}) with size ${this.size}`);
+   // console.log(`Harbor created at (${x}, ${y}) with size ${this.size}`);
   }
 
   draw(ctx) {

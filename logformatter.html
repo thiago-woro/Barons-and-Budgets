@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Log Parser</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: sans-serif;
+        }
+        textarea {
+            width: 90%;
+            height: 300px;
+            margin: 20px;
+            background-color: #333;
+            color: #e0e0e0;
+            border: 1px solid #555;
+        }
+        #output {
+            margin: 20px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+
+    <textarea id="logInput" placeholder="Paste your log here..."></textarea>
+    <div id="output"></div>
+
+    <script>
+        const logInput = document.getElementById('logInput');
+        const output = document.getElementById('output');
+
+        logInput.addEventListener('input', processLog);
+
+        function processLog() {
+            const logText = logInput.value;
+            const processedLog = parseLog(logText);
+            output.textContent = processedLog;
+            copyToClipboard(processedLog);
+        }
+
+        function parseLog(log) {
+            if (!log) return "";
+
+            const lines = log.split('\n');
+            let result = "";
+            let skip = false;
+
+            for (const line of lines) {
+                if (line.trim() === "requestAnimationFrame" || line.trim().startsWith("gameLoop @ game.js:")) {
+                    skip = true;
+                    continue;
+                }
+                if(skip){
+                  if(line.trim() === ""){
+                    skip = false;
+                  }
+                  continue;
+                }
+
+                const cleanedLine = line.replace(/^\d{2}:\d{2}:\d{2}\.\d{3}\s+[a-zA-Z0-9_]+\.js:\d+\s*/, '');
+                if (cleanedLine.trim() !== "") {
+                    result += cleanedLine + "\n";
+                }
+            }
+
+            return result;
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function() {
+                console.log('Copying to clipboard was successful!');
+            }, function(err) {
+                console.error('Could not copy text: ', err);
+            });
+        }
+    </script>
+
+</body>
+</html>

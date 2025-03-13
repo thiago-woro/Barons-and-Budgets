@@ -41,6 +41,53 @@ class Item {
 
 // Note: Make sure items.js is included before npcClass.js in your HTML
 
+
+/**
+ * Follows a path one step at a time
+ * @param {Object} npc - The NPC object
+ * @returns {boolean} - True if path is completed, false otherwise
+ */
+function followPath(npc) {
+  if (!npc.currentPath || npc.currentPath.length === 0) {
+    return true; // No path or empty path counts as completed
+  }
+  
+  if (npc.pathIndex < npc.currentPath.length) {
+    const nextCell = npc.currentPath[npc.pathIndex];
+    
+    // Check if nextCell is defined
+    if (!nextCell) {
+      console.warn(`followPath: ${npc.name} - ${npc.profession}: undefined cell in path at index ${npc.pathIndex}`);
+      npc.currentPath = null;
+      return true; // Path is invalid, consider it completed
+    }
+    
+    // Verify the next cell is still a valid land cell
+    if (!isLandCell(nextCell.x, nextCell.y)) {
+      console.warn(`followPath: ${npc.name} - ${npc.profession}: invalid cell (${nextCell.x}, ${nextCell.y}) in path, recalculating`);
+      
+     
+      
+      npc.currentPath = null;
+      return true; // Path is invalid, consider it completed
+    }
+    
+    npc.x = nextCell.x * cellSize;
+    npc.y = nextCell.y * cellSize;
+    npc.pathIndex++;
+    
+    // Check if path is completed
+    if (npc.pathIndex >= npc.currentPath.length) {
+      npc.currentPath = null;
+      return true;
+    }
+    return false;
+  }
+  
+  return true; // Path completed
+} 
+
+
 class NPC {
   constructor(x, y, myNumber, parents, age) {
     this.x = x * cellSize;
@@ -61,8 +108,6 @@ class NPC {
     this.parents = parents || null; // Set parents to null when not provided
     this.currentPath = null;
     this.pathIndex = 0;
-    this.isAtTree = false;
-    this.isAtHome = false;
     this.waitTime = 0;
     this.maxWaitTime = 7; // 7 seconds wait time
     this.state = "idle"; // Initial state
@@ -81,6 +126,7 @@ class NPC {
 
   // Main update method to be called each game loop
   update() {
+    // Call the appropriate profession update function
     if (this.profession === "Woodcutter") {
       updateWoodcutter(this);
     } else if (this.profession === "Hunter") {
@@ -98,74 +144,17 @@ class NPC {
     } else if (this.profession === "Farmer") {
       updateFarmer(this);
     } else {
-      switch (this.state) {
-        case "idle":
-          this.updateIdle();
-          break;
-        case "working":
-          this.updateWorking();
-          break;
-        // Add more states as needed
-        default:
-          this.updateIdle();
-      }
+      // Default behavior for NPCs without specific profession handlers
+      this.move();
     }
     this.updateInfoPanel(); // Update info panel with current position
   }
 
-  // Helper method to transition between states
-  transitionTo(newState) {
-    // Exit actions for the current state
-    switch (this.state) {
-      case "idle":
-        this.exitIdle();
-        break;
-      case "working":
-        this.exitWorking();
-        break;
-      // Add more states as needed
-    }
-
+  // Set the NPC's state and update the UI
+  setState(newState) {
     this.state = newState;
-
-    // Entry actions for the new state
-    switch (newState) {
-      case "idle":
-        this.enterIdle();
-        break;
-      case "working":
-        this.enterWorking();
-        break;
-      // Add more states as needed
-    }
-
     // Update the state in the NPC table
     updateNpcStateInList(this, newState);
-  }
-
-  // State-specific methods
-  updateIdle() {
-    // Behavior for idle state
-  }
-
-  updateWorking() {
-    // Behavior for working state
-  }
-
-  enterIdle() {
-    // Actions to perform when entering idle state
-  }
-
-  exitIdle() {
-    // Actions to perform when exiting idle state
-  }
-
-  enterWorking() {
-    // Actions to perform when entering working state
-  }
-
-  exitWorking() {
-    // Actions to perform when exiting working state
   }
 
   // Determine if NPC should move based on race and loop counter
@@ -553,9 +542,11 @@ class NPC {
 
 const raceProfessions = {
   Purries: [
-    { profession: "Miner", probability: 0.3, salary: 300 },
-    { profession: "Hunter", probability: 0.3, salary: 1400 },
-    { profession: "Fisher", probability: 0.3, salary: 1500 },
+    { profession: "Woodcutter", probability: 0.99, salary: 3000 },
+
+    { profession: "Miner", probability: 0.0, salary: 300 },
+    { profession: "Hunter", probability: 0.0, salary: 1400 },
+    { profession: "Fisher", probability: 0.0, salary: 1500 },
 /*     { profession: "Jester", probability: 0.05, salary: 1000 }, // Low probability
     { profession: "Innkeeper", probability: 0.1, salary: 1200 }, // Medium probability
     { profession: "Tailor", probability: 0.15, salary: 1300 },
@@ -585,6 +576,8 @@ const raceProfessions = {
     { profession: "Farmer", probability: 0.05, salary: 1100 },
     { profession: "Miner", probability: 0.45, salary: 300 },
     { profession: "Hunter", probability: 0.05, salary: 1400 },
+    { profession: "Woodcutter", probability: 0.99, salary: 3000 },
+
   ],
 
   Elf: [

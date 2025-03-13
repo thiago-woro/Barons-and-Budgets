@@ -8,6 +8,13 @@ class Animal {
   static PREDATOR_MAX_AGE = 20000;  // Predators die twice as fast (30 seconds)
   static MAX_ANIMALS = Math.floor(maxLandPopulation);  // Maximum number of animals allowed based on usable land
 
+  // Add static method to pause/unpause all animals
+  static setAllPaused(isPaused) {
+    animals.forEach(animal => {
+      animal.isPaused = isPaused;
+    });
+  }
+
   constructor(x, y, type) {
     this.x = x * cellSize;
     this.y = y * cellSize;
@@ -22,6 +29,7 @@ class Animal {
     this.animation = null;
     this.isFrozen = false;
     this.freezeTime = 0;
+    this.isPaused = false; // Add pause state flag
     
     // Set movement speed based on predator/prey status
     this.moveInterval = this.isPredator ? 
@@ -354,7 +362,7 @@ class Animal {
   }
 
   move(deltaTime) {
-    if (!this.isAlive) return;
+    if (!this.isAlive || this.isPaused) return; // Check for pause state
 
     // Check if frozen
     if (this.isFrozen) {

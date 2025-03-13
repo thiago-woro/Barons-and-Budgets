@@ -398,13 +398,13 @@ function updateFisher(npc) {
       // First, check if there's a harbor for our race or if we need to build one
       if (!harborsByRace[npc.race]) {
         // No harbor for our race yet, transition to building a harbor
-        npc.transitionTo("buildingHarbor");
+        npc.setState("buildingHarbor");
         return;
       }
       
       // If we already have a boat, just go to fishing state
       if (fishingBoats.some(boat => boat.owner === npc)) {
-        npc.transitionTo("fishing");
+        npc.setState("fishing");
         return;
       }
       
@@ -414,7 +414,7 @@ function updateFisher(npc) {
       fishingBoats.push(newBoat);
       
       // Transition to fishing state
-      npc.transitionTo("fishing");
+      npc.setState("fishing");
       break;
       
     case "fishing":
@@ -439,7 +439,7 @@ function updateFisher(npc) {
     case "buildingHarbor":
       // Only build if there isn't already a harbor for this race
       if (harborsByRace[npc.race]) {
-        npc.transitionTo("idle");
+        npc.setState("idle");
         break;
       }
       
@@ -447,7 +447,7 @@ function updateFisher(npc) {
       if (npc.stateData.waitingForHarbor) {
         // Check if the harbor is now built
         if (harborsByRace[npc.race]) {
-          npc.transitionTo("idle"); // Will transition to fishing on next update
+          npc.setState("idle"); // Will transition to fishing on next update
           break;
         }
         
@@ -474,7 +474,7 @@ function updateFisher(npc) {
             // Use our new registerHarbor function to register the harbor and calculate fishing paths
             registerHarbor(npc.race, harbor);
             
-            npc.transitionTo("fishing");
+            npc.setState("fishing");
           }
         }
         break;
@@ -512,7 +512,7 @@ function updateFisher(npc) {
         npc.stateData.harborSpot = harborSpot;
         registerHarborBeingBuilt(npc.race, harborSpot.x, harborSpot.y, npc);
       } else {
-        npc.transitionTo("idle");
+        npc.setState("idle");
       }
       break;
   }
