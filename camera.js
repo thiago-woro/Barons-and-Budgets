@@ -1,6 +1,17 @@
 let highlightedCellX = null;
 let highlightedCellY = null;
 
+// Function to convert mouse position to game cell coordinates
+function mouseToGameCell(mouseX, mouseY) {
+  const worldX = mouseX / camera.zoom + camera.position.x;
+  const worldY = mouseY / camera.zoom + camera.position.y;
+  
+  const cellX = Math.floor(worldX / cellSize);
+  const cellY = Math.floor(worldY / cellSize);
+  
+  return { cellX, cellY };
+}
+
 class Camera {
   constructor(container) {
     this.container = container;
@@ -60,15 +71,11 @@ worldToScreen(worldX, worldY) {
 }
 
   updateHoveredCell(event) { //highlighted cell
-    let cellX, cellY; // Declare cellX and cellY at the top of the function
-
     const mouseX = event.offsetX;
     const mouseY = event.offsetY;
-    const worldX = mouseX / this.zoom + this.position.x;
-    const worldY = mouseY / this.zoom + this.position.y;
-
-    cellX = Math.floor(worldX / cellSize);
-    cellY = Math.floor(worldY / cellSize);
+    
+    // Use the mouseToGameCell function to get cell coordinates
+    const { cellX, cellY } = mouseToGameCell(mouseX, mouseY);
 
     const cellScreenX = (cellX * cellSize - this.position.x) * this.zoom;
     const cellScreenY = (cellY * cellSize - this.position.y) * this.zoom;
@@ -133,6 +140,13 @@ centerOnCell(cellX, cellY) {
     const centerX = totalX / groundCells.length;
     const centerY = totalY / groundCells.length;
     this.centerOnCell(Math.floor(centerX), Math.floor(centerY));
+  }
+  
+  // Function to center the camera on the origin (0,0)
+  centerOnOrigin() {
+    console.warn(`--- Centering on Origin (0,0) ---`);
+    this.centerOnCell(0, 0);
+    console.log(`Camera now at position: (${this.position.x.toFixed(2)}, ${this.position.y.toFixed(2)})`);
   }
 }
 
@@ -402,22 +416,359 @@ document.addEventListener('DOMContentLoaded', () => {
 let isDragging = false;
 function logCellOnClick(container, ctx, cellSize, event) {
   const rect = container.getBoundingClientRect();
-  const x = event.clientX - rect.left;
-  const y = event.clientY - rect.top;
-  const { x: worldX, y: worldY } = camera.screenToWorld(x, y);
-  const cellRow = Math.floor(worldY / cellSize);
-  const cellCol = Math.floor(worldX / cellSize);
-  console.info(`😁 logCellOnClick: ${x.toFixed(2)}, ${y.toFixed(2)}), Cell: (${cellCol}, ${cellRow}), tab: ${window.activeTabBottomLeft} - zoom level: ${camera.zoom}`);
+  const screenX = event.clientX - rect.left;
+  const screenY = event.clientY - rect.top;
+  
+  // Use the mouseToGameCell function to get cell coordinates
+  const { cellX: cellCol, cellY: cellRow } = mouseToGameCell(screenX, screenY);
+  
+  // Get world coordinates using camera's screenToWorld
+  const { x: worldX, y: worldY } = camera.screenToWorld(screenX, screenY);
+  
+  // Calculate world coordinates of the cell's top-left corner
+  const cellWorldX = cellCol * cellSize;
+  const cellWorldY = cellRow * cellSize;
+  
+  console.info(`😁 logCellOnClick: Screen(${screenX.toFixed(2)}, ${screenY.toFixed(2)}) → World(${worldX.toFixed(2)}, ${worldY.toFixed(2)}) → Cell(${cellCol}, ${cellRow})`);
+  console.info(`Cell world coords: (${cellWorldX}, ${cellWorldY}), Camera: pos(${camera.position.x.toFixed(2)}, ${camera.position.y.toFixed(2)}), zoom: ${camera.zoom}`);
 
   if (event.shiftKey) {
     camera.centerOnCell(cellCol, cellRow);
     return;
   }
 
+  // Draw rectangle around the clicked cell
   ctx.strokeStyle = 'orange';
   ctx.lineWidth = 2;
-  ctx.strokeRect(cellCol * cellSize, cellRow * cellSize, cellSize, cellSize);
-  return { x, y, cellCol, cellRow, activeTab: window.activeTabBottomLeft, zoomLevel: camera.zoom };
+  ctx.strokeRect(cellWorldX, cellWorldY, cellSize, cellSize);
+  
+  return { 
+    screen: { x: screenX, y: screenY },
+    world: { x: worldX, y: worldY },
+    cell: { col: cellCol, row: cellRow },
+    cellWorld: { x: cellWorldX, y: cellWorldY },
+    activeTab: window.activeTabBottomLeft, 
+    zoomLevel: camera.zoom 
+  };
 }
 
 //logCellOnClick(container, boatCtx, cellSize, npcCtx, treeCtx, pathCtx);
+
+// Add event listener for the R key
+window.addEventListener("keydown", (event) => {
+  if (event.key.toLowerCase() === 'r') {
+    //
+    console.log("r key pressed - no function yet. file: uitools.js");
+  } else if (event.key.toLowerCase() === 'o') {
+    // Center on origin when O key is pressed
+    camera.centerOnOrigin();
+  } else if (event.key.toLowerCase() === 'x') {
+    // Display cell X positions on the boatCtx canvas
+    displayCellXPositions();
+  } else if (event.key.toLowerCase() === 'y') {
+    // Display cell Y positions on the boatCtx canvas
+    displayCellYPositions();
+  } else if (event.key.toLowerCase() === 'c') {
+    // Display cell coordinates (both X and Y) on the boatCtx canvas
+    displayCellCoordinates();
+  } else if (event.key.toLowerCase() === 'h') {
+    // Display house positions on the boatCtx canvas
+    displayHousePositions();
+  } else if (event.key.toLowerCase() === 'i') {
+    // Display information about camera position and origin
+    displayCameraInfo();
+  }
+});
+
+// Function to display cell X positions on the boatCtx canvas
+function displayCellXPositions() {
+  console.log("Displaying cell X positions on the canvas");
+  
+  // Clear the boat canvas
+  boatCtx.clearRect(0, 0, boatCanvas.width, boatCanvas.height);
+  
+  // Get visible area in world coordinates
+  const containerRect = container.getBoundingClientRect();
+  const topLeft = camera.screenToWorld(0, 0);
+  const bottomRight = camera.screenToWorld(containerRect.width, containerRect.height);
+  
+  // Calculate visible cell range (add some margin)
+  const startCellX = Math.floor(topLeft.x / cellSize) - 1;
+  const endCellX = Math.ceil(bottomRight.x / cellSize) + 1;
+  const startCellY = Math.floor(topLeft.y / cellSize) - 1;
+  const endCellY = Math.ceil(bottomRight.y / cellSize) + 1;
+  
+  console.log(`Visible cell range: X(${startCellX} to ${endCellX}), Y(${startCellY} to ${endCellY})`);
+  
+  // Set text properties
+  boatCtx.font = "12px Arial";
+  boatCtx.textAlign = "center";
+  boatCtx.textBaseline = "middle";
+  
+  // Draw cell X positions
+  for (let x = startCellX; x <= endCellX; x++) {
+    for (let y = startCellY; y <= endCellY; y++) {
+      // Calculate world coordinates of cell center
+      const worldX = x * cellSize + cellSize / 2;
+      const worldY = y * cellSize + cellSize / 2;
+      
+      // Convert to screen coordinates
+      const screenPos = camera.worldToScreen(worldX, worldY);
+      
+      // Draw cell X position
+      boatCtx.fillStyle = "rgba(255, 0, 0, 0.8)";
+      boatCtx.fillText(x.toString(), screenPos.x, screenPos.y);
+      
+      // Draw cell outline
+      boatCtx.strokeStyle = "rgba(200, 200, 200, 0.3)";
+      boatCtx.lineWidth = 1;
+      const cellScreenX = (x * cellSize - camera.position.x) * camera.zoom;
+      const cellScreenY = (y * cellSize - camera.position.y) * camera.zoom;
+      boatCtx.strokeRect(cellScreenX, cellScreenY, cellSize * camera.zoom, cellSize * camera.zoom);
+    }
+  }
+}
+
+// Function to display cell Y positions on the boatCtx canvas
+function displayCellYPositions() {
+  console.log("Displaying cell Y positions on the canvas");
+  
+  // Clear the boat canvas
+  boatCtx.clearRect(0, 0, boatCanvas.width, boatCanvas.height);
+  
+  // Get visible area in world coordinates
+  const containerRect = container.getBoundingClientRect();
+  const topLeft = camera.screenToWorld(0, 0);
+  const bottomRight = camera.screenToWorld(containerRect.width, containerRect.height);
+  
+  // Calculate visible cell range (add some margin)
+  const startCellX = Math.floor(topLeft.x / cellSize) - 1;
+  const endCellX = Math.ceil(bottomRight.x / cellSize) + 1;
+  const startCellY = Math.floor(topLeft.y / cellSize) - 1;
+  const endCellY = Math.ceil(bottomRight.y / cellSize) + 1;
+  
+  console.log(`Visible cell range: X(${startCellX} to ${endCellX}), Y(${startCellY} to ${endCellY})`);
+  
+  // Set text properties
+  boatCtx.font = "12px Arial";
+  boatCtx.textAlign = "center";
+  boatCtx.textBaseline = "middle";
+  
+  // Draw cell Y positions
+  for (let x = startCellX; x <= endCellX; x++) {
+    for (let y = startCellY; y <= endCellY; y++) {
+      // Calculate world coordinates of cell center
+      const worldX = x * cellSize + cellSize / 2;
+      const worldY = y * cellSize + cellSize / 2;
+      
+      // Convert to screen coordinates
+      const screenPos = camera.worldToScreen(worldX, worldY);
+      
+      // Draw cell Y position
+      boatCtx.fillStyle = "rgba(0, 0, 255, 0.8)";
+      boatCtx.fillText(y.toString(), screenPos.x, screenPos.y);
+      
+      // Draw cell outline
+      boatCtx.strokeStyle = "rgba(200, 200, 200, 0.3)";
+      boatCtx.lineWidth = 1;
+      const cellScreenX = (x * cellSize - camera.position.x) * camera.zoom;
+      const cellScreenY = (y * cellSize - camera.position.y) * camera.zoom;
+      boatCtx.strokeRect(cellScreenX, cellScreenY, cellSize * camera.zoom, cellSize * camera.zoom);
+    }
+  }
+}
+
+// Function to display both X and Y coordinates
+function displayCellCoordinates() {
+  console.log("Displaying cell coordinates on the canvas");
+  
+  // Clear the boat canvas
+  boatCtx.clearRect(0, 0, boatCanvas.width, boatCanvas.height);
+  
+  // Get visible area in world coordinates
+  const containerRect = container.getBoundingClientRect();
+  const topLeft = camera.screenToWorld(0, 0);
+  const bottomRight = camera.screenToWorld(containerRect.width, containerRect.height);
+  
+  // Calculate visible cell range (add some margin)
+  const startCellX = Math.floor(topLeft.x / cellSize) - 1;
+  const endCellX = Math.ceil(bottomRight.x / cellSize) + 1;
+  const startCellY = Math.floor(topLeft.y / cellSize) - 1;
+  const endCellY = Math.ceil(bottomRight.y / cellSize) + 1;
+  
+  console.log(`Visible cell range: X(${startCellX} to ${endCellX}), Y(${startCellY} to ${endCellY})`);
+  
+  // Set text properties
+  boatCtx.font = "10px Arial";
+  boatCtx.textAlign = "center";
+  boatCtx.textBaseline = "middle";
+  
+  // Draw cell coordinates
+  for (let x = startCellX; x <= endCellX; x++) {
+    for (let y = startCellY; y <= endCellY; y++) {
+      // Calculate world coordinates of cell center
+      const worldX = x * cellSize + cellSize / 2;
+      const worldY = y * cellSize + cellSize / 2;
+      
+      // Convert to screen coordinates
+      const screenPos = camera.worldToScreen(worldX, worldY);
+      
+      // Draw cell coordinates
+      boatCtx.fillStyle = "rgba(0, 0, 0, 0.8)";
+      boatCtx.fillText(`${x},${y}`, screenPos.x, screenPos.y);
+      
+      // Draw cell outline
+      boatCtx.strokeStyle = "rgba(200, 200, 200, 0.3)";
+      boatCtx.lineWidth = 1;
+      const cellScreenX = (x * cellSize - camera.position.x) * camera.zoom;
+      const cellScreenY = (y * cellSize - camera.position.y) * camera.zoom;
+      boatCtx.strokeRect(cellScreenX, cellScreenY, cellSize * camera.zoom, cellSize * camera.zoom);
+    }
+  }
+}
+
+// Function to display house positions on the canvas
+function displayHousePositions() {
+  console.log("Displaying house positions on the canvas");
+  
+  // Clear the boat canvas
+  boatCtx.clearRect(0, 0, boatCanvas.width, boatCanvas.height);
+  
+  // Check if houses array exists and has items
+  if (!houses || !houses.length) {
+    console.warn("No houses to display");
+    return;
+  }
+  
+  // Set text properties
+  boatCtx.font = "10px Arial";
+  boatCtx.textAlign = "center";
+  boatCtx.textBaseline = "middle";
+  
+  // Log all house positions
+  console.log("All houses positions:");
+  houses.forEach((house, index) => {
+    // Calculate cell coordinates
+    const cellX = Math.floor(house.x / cellSize);
+    const cellY = Math.floor(house.y / cellSize);
+    
+    console.log(`House ${index}: world(${house.x}, ${house.y}), cell(${cellX}, ${cellY})`);
+    
+    // Convert to screen coordinates
+    const screenPos = camera.worldToScreen(house.x, house.y);
+    
+    // Draw house position
+    boatCtx.fillStyle = "rgba(255, 0, 0, 0.8)";
+    boatCtx.fillText(`H${index}(${cellX},${cellY})`, screenPos.x, screenPos.y);
+    
+    // Draw house hitbox
+    boatCtx.strokeStyle = "rgba(255, 0, 0, 0.5)";
+    boatCtx.lineWidth = 2;
+    const hitboxSize = 50 / camera.zoom;
+    const hitboxScreenX = (house.x - hitboxSize/2 - camera.position.x) * camera.zoom;
+    const hitboxScreenY = (house.y - hitboxSize/2 - camera.position.y) * camera.zoom;
+    boatCtx.strokeRect(hitboxScreenX, hitboxScreenY, hitboxSize * camera.zoom, hitboxSize * camera.zoom);
+    
+    // Draw a line from the house to cell (0,0) to visualize the offset
+    boatCtx.strokeStyle = "rgba(255, 255, 0, 0.3)";
+    boatCtx.lineWidth = 1;
+    boatCtx.beginPath();
+    boatCtx.moveTo(screenPos.x, screenPos.y);
+    
+    // Get screen coordinates for cell (0,0)
+    const originScreenPos = camera.worldToScreen(0, 0);
+    boatCtx.lineTo(originScreenPos.x, originScreenPos.y);
+    boatCtx.stroke();
+    
+    // Mark the origin (0,0) with a cross
+    boatCtx.strokeStyle = "rgba(0, 255, 0, 0.8)";
+    boatCtx.lineWidth = 2;
+    boatCtx.beginPath();
+    boatCtx.moveTo(originScreenPos.x - 10, originScreenPos.y);
+    boatCtx.lineTo(originScreenPos.x + 10, originScreenPos.y);
+    boatCtx.moveTo(originScreenPos.x, originScreenPos.y - 10);
+    boatCtx.lineTo(originScreenPos.x, originScreenPos.y + 10);
+    boatCtx.stroke();
+    
+    // Label the origin
+    boatCtx.fillStyle = "rgba(0, 255, 0, 0.8)";
+    boatCtx.fillText("(0,0)", originScreenPos.x, originScreenPos.y + 15);
+  });
+}
+
+// Function to display information about camera position and origin
+function displayCameraInfo() {
+  console.log("--- Camera Information ---");
+  console.log(`Camera position: (${camera.position.x.toFixed(2)}, ${camera.position.y.toFixed(2)})`);
+  console.log(`Camera zoom: ${camera.zoom.toFixed(2)}`);
+  
+  // Calculate the cell that contains the point (0,0)
+  const originCellX = Math.floor(0 / cellSize);
+  const originCellY = Math.floor(0 / cellSize);
+  console.log(`Origin (0,0) is in cell: (${originCellX}, ${originCellY})`);
+  
+  // Calculate the screen position of the origin (0,0)
+  const originScreenPos = camera.worldToScreen(0, 0);
+  console.log(`Origin (0,0) screen position: (${originScreenPos.x.toFixed(2)}, ${originScreenPos.y.toFixed(2)})`);
+  
+  // Calculate the world position of the screen center
+  const containerRect = camera.container.getBoundingClientRect();
+  const screenCenterX = containerRect.width / 2;
+  const screenCenterY = containerRect.height / 2;
+  const worldCenter = camera.screenToWorld(screenCenterX, screenCenterY);
+  console.log(`Screen center world position: (${worldCenter.x.toFixed(2)}, ${worldCenter.y.toFixed(2)})`);
+  
+  // Calculate the cell at the screen center
+  const { cellX: centerCellX, cellY: centerCellY } = mouseToGameCell(screenCenterX, screenCenterY);
+  console.log(`Screen center is in cell: (${centerCellX}, ${centerCellY})`);
+  
+  // Clear the boat canvas and draw the information
+  boatCtx.clearRect(0, 0, boatCanvas.width, boatCanvas.height);
+  
+  // Get the correct screen position for world origin (0,0)
+  const originScreenPos2 = camera.worldToScreen(0, 0);
+  
+  // Mark the origin (0,0) with a cross
+  boatCtx.strokeStyle = "rgba(0, 255, 0, 0.8)";
+  boatCtx.lineWidth = 2;
+  boatCtx.beginPath();
+  boatCtx.moveTo(originScreenPos2.x - 10, originScreenPos2.y);
+  boatCtx.lineTo(originScreenPos2.x + 10, originScreenPos2.y);
+  boatCtx.moveTo(originScreenPos2.x, originScreenPos2.y - 10);
+  boatCtx.lineTo(originScreenPos2.x, originScreenPos2.y + 10);
+  boatCtx.stroke();
+  
+  // Label the origin
+  boatCtx.font = "12px Arial";
+  boatCtx.fillStyle = "rgba(0, 255, 0, 0.8)";
+  boatCtx.fillText("World (0,0)", originScreenPos2.x, originScreenPos2.y + 20);
+  
+  // Mark the screen center
+  boatCtx.strokeStyle = "rgba(255, 0, 0, 0.8)";
+  boatCtx.beginPath();
+  boatCtx.moveTo(screenCenterX - 10, screenCenterY);
+  boatCtx.lineTo(screenCenterX + 10, screenCenterY);
+  boatCtx.moveTo(screenCenterX, screenCenterY - 10);
+  boatCtx.lineTo(screenCenterX, screenCenterY + 10);
+  boatCtx.stroke();
+  
+  // Label the screen center
+  boatCtx.fillStyle = "rgba(255, 0, 0, 0.8)";
+  boatCtx.fillText("Screen Center", screenCenterX, screenCenterY + 20);
+  
+  // Draw a line connecting the origin and screen center
+  boatCtx.strokeStyle = "rgba(255, 255, 0, 0.5)";
+  boatCtx.lineWidth = 1;
+  boatCtx.beginPath();
+  boatCtx.moveTo(originScreenPos2.x, originScreenPos2.y);
+  boatCtx.lineTo(screenCenterX, screenCenterY);
+  boatCtx.stroke();
+  
+  // Add text showing the distance between origin and screen center
+  const distanceX = Math.abs(worldCenter.x).toFixed(0);
+  const distanceY = Math.abs(worldCenter.y).toFixed(0);
+  const midX = (originScreenPos2.x + screenCenterX) / 2;
+  const midY = (originScreenPos2.y + screenCenterY) / 2;
+  boatCtx.fillStyle = "rgba(255, 255, 0, 0.8)";
+  boatCtx.fillText(`Distance: (${distanceX}, ${distanceY})`, midX, midY - 10);
+}

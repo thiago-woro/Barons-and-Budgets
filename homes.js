@@ -144,9 +144,9 @@ class House {
     ctx.drawImage(selectedHouseImage, this.x, this.y, cellSize * 2, cellSize * 2);
 
     // draw house shadow
-    drawCircle(pathCtx,  this.x,  this.y, 10, "rgba(227, 204, 162, 0.3)");
+   // drawCircle(pathCtx,  this.x,  this.y, 10, "rgba(227, 204, 162, 0.3)");
 
-     drawRectanglesBetweenHouses(houses, pathCtx);
+    // drawRectanglesBetweenHouses(houses, pathCtx);
     // drawSmallScatteredPaths(houses, pathCtx);
 
   }

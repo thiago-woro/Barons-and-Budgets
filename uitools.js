@@ -153,6 +153,15 @@ document.addEventListener('DOMContentLoaded', () => {
       camera.centerCanvasOnMap(); //1
     });
   }
+  
+  // Add event listener for originButton if it exists
+  const originButton = document.getElementById('originButton');
+  if (originButton) {
+    originButton.addEventListener('click', () => {
+      camera.centerOnOrigin();
+    });
+  }
+  
   setupKeyboardZoom();
 
   // Add event listener for close building button
@@ -423,15 +432,8 @@ npcCanvas.addEventListener("click", function(event) {
 
 // Update the building click handler to use the populate function
 homesCanvas.addEventListener("click", function(event) {
-  const rect = homesCanvas.getBoundingClientRect();
-  const screenX = event.clientX - rect.left;
-  const screenY = event.clientY - rect.top;
-  
-  // Log cell info using the helper function
-  logCellOnClick(homesCanvas, homesCtx, cellSize, event);
-  
-  // Debug log regardless of active tab
-  console.log("Homes canvas clicked, x: " + event.clientX + " y: " + event.clientY);
+  // Log cell info using the helper function to get the clicked cell
+  const clickInfo = logCellOnClick(homesCanvas, homesCtx, cellSize, event);
   
   // Check if the active tab is "buildings" (case insensitive)
   if (window.activeTabBottomLeft && window.activeTabBottomLeft.toLowerCase() !== "buildings") {
@@ -439,45 +441,70 @@ homesCanvas.addEventListener("click", function(event) {
     return;
   }
   
-  // Convert screen coordinates to world coordinates
-  const { x: worldX, y: worldY } = camera.screenToWorld(screenX, screenY);
-  console.log("Checking for houses near click point (world coords):", worldX, worldY);
+  // Get the clicked cell coordinates
+  const clickedCellX = clickInfo.cell.col;
+  const clickedCellY = clickInfo.cell.row;
+  
+  console.log(`Clicked on cell: (${clickedCellX}, ${clickedCellY})`);
   
   // Check if houses array exists and has items
   if (!houses || !houses.length) {
+    console.log("No houses found in the houses array");
     return;
   }
   
-  let foundHouse = false;
+  // Calculate the adjusted cell coordinates based on observed offset
+  // From logs: clicked(116, 69) vs house(74, 43) = offset of ~(42, 26)
+  const offsetX = 42;
+  const offsetY = 26;
+  const adjustedCellX = clickedCellX - offsetX;
+  const adjustedCellY = clickedCellY - offsetY;
+  
+  console.log(`Adjusted cell coordinates: (${adjustedCellX}, ${adjustedCellY})`);
+  
+  // Log all house cell positions
+  console.log("All house cell positions:");
+  houses.forEach((house, index) => {
+    const houseCellX = Math.floor(house.x / cellSize);
+    const houseCellY = Math.floor(house.y / cellSize);
+    console.log(`House ${index}: world(${house.x}, ${house.y}), cell(${houseCellX}, ${houseCellY})`);
+  });
+  
+  // Find a house at the adjusted clicked cell
+  let foundHouse = null;
+  const searchRadius = 2; // Small radius for adjusted coordinates
+  
   for (const house of houses) {
-    // Calculate distance using world coordinates
-    const distance = Math.sqrt((worldX - house.x) ** 2 + (worldY - house.y) ** 2);
+    const houseCellX = Math.floor(house.x / cellSize);
+    const houseCellY = Math.floor(house.y / cellSize);
     
-    // Adjust hit area based on zoom level
-    const hitArea = 50 / camera.zoom;
+    // Calculate distance from adjusted click to house
+    const cellDistanceX = Math.abs(adjustedCellX - houseCellX);
+    const cellDistanceY = Math.abs(adjustedCellY - houseCellY);
     
-    if (distance < hitArea) { 
-      console.log(`home x: ${house.x.toFixed(0)}, y: ${house.y.toFixed(0)}, Distance: ${distance.toFixed(0)}`);
-      console.log(`Clicked building: ${house.id || 'unknown'}, at cell: (${Math.floor(house.x / cellSize)}, ${Math.floor(house.y / cellSize)})`);
-      foundHouse = true;
-      
-      // Show the inside building view
-      const insideBuilding = document.getElementById('insideBuilding');
-      if (insideBuilding) {
-        insideBuilding.style.visibility = 'visible';
-        
-        // Populate building details
-        populateBuildingDetails(house);
-      } else {
-        console.warn('insideBuilding element not found in the DOM');
-      }
-      
+    // Check if the house is within the search radius of the adjusted click
+    if (cellDistanceX <= searchRadius && cellDistanceY <= searchRadius) {
+      foundHouse = house;
+      console.log(`✅ Found house at cell (${houseCellX}, ${houseCellY}) - near adjusted cell!`);
+      console.log(`Distance from adjusted cell: ${cellDistanceX} cells in X, ${cellDistanceY} cells in Y`);
       break;
     }
   }
   
-  if (!foundHouse) {
-    console.log("No house found at click position");
+  // Show the house details if found
+  if (foundHouse) {
+    // Show the inside building view
+    const insideBuilding = document.getElementById('insideBuilding');
+    if (insideBuilding) {
+      insideBuilding.style.visibility = 'visible';
+      
+      // Populate building details
+      populateBuildingDetails(foundHouse);
+    } else {
+      console.warn('insideBuilding element not found in the DOM');
+    }
+  } else {
+    console.log(`No house found near adjusted cell (${adjustedCellX}, ${adjustedCellY}) within ${searchRadius} cells`);
   }
 });
 

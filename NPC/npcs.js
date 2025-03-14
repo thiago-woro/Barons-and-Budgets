@@ -345,6 +345,8 @@ function updatePopulationChart(year, population, medianAge) {
 
 //start npc colony
 function startNPCs(ctx, cellSize) {
+//TO DO , filter out small island, and choose the biggest island as valid ground cells
+  
   // Make a copy of groundCells to work with
   const availableCells = [...groundCells];
   
@@ -456,41 +458,50 @@ function startNPCs(ctx, cellSize) {
   
   npcTableHeader.textContent = `Total Population ${npcs.length}`;
   
-  // Set zoom to 1.25 and center the camera on the first NPC
+  // Create a home for the first NPC
+  createFirstNPCHome();
+}
+
+// Function to create and draw a home at the position of the first NPC
+function createFirstNPCHome() {
   if (npcs.length > 0) {
-    // Set the zoom level to 1.25
-    camera.zoom = 1.25;
+    const firstNPC = npcs[0];
+    const npcCellX = Math.floor(firstNPC.x / cellSize);
+    const npcCellY = Math.floor(firstNPC.y / cellSize);
     
-    // Get the first Elf NPC's position
-    const firstNPC = npcs.find(npc => npc.race === "Elf") || npcs[0];
-    // Use the NPC's position but ensure it's within the map boundaries
-    // Map boundaries from custom instructions:
-    // Min bounds: (-144.00, 316.00)
-    // Max bounds: (4520.00, 4100.00)
+    // Create a new house at the first NPC's position
+    const newHouse = new House(npcCellX, npcCellY);
     
-    // Calculate the position to center on the NPC
-    const containerWidth = camera.container.clientWidth;
-    const containerHeight = camera.container.clientHeight;
+    // Add the first NPC as an inhabitant
+    newHouse.addInhabitant(firstNPC);
     
-    // Calculate the target position (centered on the NPC)
-    let targetX = (firstNPC.x * cellSize) - (containerWidth / (2 * camera.zoom));
-    let targetY = (firstNPC.y * cellSize) - (containerHeight / (2 * camera.zoom));
+    // Add the house to the houses array
+    houses.push(newHouse);
     
-    // Define the map boundaries
-    const minBoundX = -144;
-    const minBoundY = 316;
-    const maxBoundX = 4520;
-    const maxBoundY = 4100;
+    // Draw the house
+    newHouse.draw(homesCtx);
     
-    // Calculate the maximum allowed camera position based on boundaries and zoom
-    const maxCameraX = maxBoundX - (containerWidth / camera.zoom);
-    const maxCameraY = maxBoundY - (containerHeight / camera.zoom);
+    // Add notification about the new house
+    addNotification(
+      "Economy",
+      `🏡 First Home built!`,
+      `${newHouse.x}, ${newHouse.y}`,
+      firstNPC,
+      "#4f753c"
+    );
     
-    // Clamp the camera position to stay within boundaries
-    camera.position.x = Math.max(minBoundX, Math.min(targetX, maxCameraX));
-    camera.position.y = Math.max(minBoundY, Math.min(targetY, maxCameraY));
+    console.log(`First home created at (${npcCellX}, ${npcCellY}) for ${firstNPC.name}`);
     
-   // camera.updateTransform();camera.updateTransform();
+    // Pause the game loop
+    isPaused = true;
+    
+    // Update UI if there's a start button
+    const startButton = document.getElementById("startButton");
+    if (startButton) {
+      startButton.textContent = "⏯ Play";
+    }
+    
+    console.log("Game paused after creating first home");
   }
 }
 
