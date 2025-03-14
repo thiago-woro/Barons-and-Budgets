@@ -59,7 +59,7 @@ worldToScreen(worldX, worldY) {
   return { x: screenX, y: screenY };
 }
 
-  updateHoveredCell(event) {
+  updateHoveredCell(event) { //highlighted cell
     let cellX, cellY; // Declare cellX and cellY at the top of the function
 
     const mouseX = event.offsetX;
@@ -73,12 +73,12 @@ worldToScreen(worldX, worldY) {
     const cellScreenX = (cellX * cellSize - this.position.x) * this.zoom;
     const cellScreenY = (cellY * cellSize - this.position.y) * this.zoom;
     boatCtx.clearRect(0, 0, boatCanvas.width, boatCanvas.height);
-    boatCtx.fillStyle = 'rgba(128, 0, 128, 0.5)';
+    boatCtx.fillStyle = 'rgba(128, 0, 128, 0.5)';  //purple highlight
     boatCtx.strokeStyle = 'rgba(128, 0, 128, 0.5)';
     boatCtx.strokeRect(cellScreenX, cellScreenY, cellSize * this.zoom, cellSize * this.zoom);
     const cameraZoomInfo = document.getElementById('cameraZoomInfo');
     if (cameraZoomInfo) {
-     // cameraZoomInfo.innerHTML = `Zoom: ${this.zoom.toFixed(2)} | Position: (${this.position.x.toFixed(2)}, ${this.position.y.toFixed(2)}) | Cell: (${cellX}, ${cellY}) | Screen: (${cellScreenX.toFixed(2)}, ${cellScreenY.toFixed(2)})`;
+      cameraZoomInfo.innerHTML = `Zoom: ${this.zoom.toFixed(2)} | Position: (${this.position.x.toFixed(2)}, ${this.position.y.toFixed(2)}) | Cell: (${cellX}, ${cellY}) | Row: ${cellY} | Column: ${cellX} | Screen: (${cellScreenX.toFixed(2)}, ${cellScreenY.toFixed(2)})`;
     }
 
     highlightedCellX = cellX;
@@ -400,27 +400,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Mouse clicks canvas map
 let isDragging = false;
-function logCellOnClick(container, ctx, cellSize) {
-  container.addEventListener("click", function(event) {
-   
-      const rect = container.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
-      const { x: worldX, y: worldY } = camera.screenToWorld(x, y);
-      const cellRow = Math.floor(worldY / cellSize);
-      const cellCol = Math.floor(worldX / cellSize);
-      console.info(`1 logCellOnClick: ${x.toFixed(2)}, ${y.toFixed(2)}), Cell: (${cellCol}, ${cellRow}), tab: ${window.activeTabBottomLeft} - zoom level: ${camera.zoom}`);
+function logCellOnClick(container, ctx, cellSize, event) {
+  const rect = container.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  const { x: worldX, y: worldY } = camera.screenToWorld(x, y);
+  const cellRow = Math.floor(worldY / cellSize);
+  const cellCol = Math.floor(worldX / cellSize);
+  console.info(`😁 logCellOnClick: ${x.toFixed(2)}, ${y.toFixed(2)}), Cell: (${cellCol}, ${cellRow}), tab: ${window.activeTabBottomLeft} - zoom level: ${camera.zoom}`);
 
-      if (event.shiftKey) {
-        camera.centerOnCell(cellCol, cellRow);
-        return;
-      }
+  if (event.shiftKey) {
+    camera.centerOnCell(cellCol, cellRow);
+    return;
+  }
 
-      ctx.strokeStyle = 'orange';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(cellCol * cellSize, cellRow * cellSize, cellSize, cellSize);
-    return { x, y, cellCol, cellRow, activeTab: window.activeTabBottomLeft, zoomLevel: camera.zoom };
-  });
+  ctx.strokeStyle = 'orange';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(cellCol * cellSize, cellRow * cellSize, cellSize, cellSize);
+  return { x, y, cellCol, cellRow, activeTab: window.activeTabBottomLeft, zoomLevel: camera.zoom };
 }
 
 //logCellOnClick(container, boatCtx, cellSize, npcCtx, treeCtx, pathCtx);

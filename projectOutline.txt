@@ -1,0 +1,375 @@
+j:\BaronsBudgets/
+├── .cursor
+├── .git
+├── .gitignore
+├── .prettierrc
+├── .vscode
+├── animalClass.js
+│   └── Definitions:
+│       ├── class Animal
+│       │   ├── setAllPaused()
+│       │   ├── checkIfPredator()
+│       │   ├── getEmoji()
+│       │   ├── checkReproduction()
+│       │   ├── detectNearbyAnimals()
+│       │   ├── checkForKills()
+│       │   ├── animateEmoji()
+│       │   ├── drawAnimation()
+│       │   ├── switch()
+│       │   ├── killAnimal()
+│       │   ├── getDirectionTowardsOrAway()
+│       │   ├── evaluateCellDesirability()
+│       │   ├── getNextCell()
+│       │   ├── ageDie()
+│       │   ├── move()
+│       │   └── draw()
+│       └── functions:
+│           ├── starterAnimalPopulations()
+│           │   └── nested functions: starterAnimalPopulations, placeAnimals
+│           ├── to()
+│           │   └── nested functions: placeAnimals
+│           ├── placeAnimals()
+│           │   └── nested functions: placeAnimals
+│           └── moveCoyote()
+│               └── nested functions: moveCoyote
+├── camera.js
+│   └── Definitions:
+│       ├── class Camera
+│       │   ├── setupEventListeners()
+│       │   ├── centerOnHighlightedCell()
+│       │   ├── screenToWorld()
+│       │   ├── worldToScreen()
+│       │   ├── updateHoveredCell()
+│       │   ├── updateTransform()
+│       │   ├── centerOnCell()
+│       │   └── centerCanvasOnMap()
+│       └── functions:
+│           ├── const()
+│           ├── updateCameraPosition()
+│           │   └── nested functions: updateCameraPosition
+│           ├── logAllCenters()
+│           │   └── nested functions: logAllCenters
+│           ├── promptAndCenterOnCell()
+│           │   └── nested functions: promptAndCenterOnCell
+│           ├── applyWorldBounds()
+│           │   └── nested functions: applyWorldBounds
+│           ├── updateContainerSize()
+│           │   └── nested functions: updateContainerSize
+│           └── logCellOnClick()
+│               └── nested functions: logCellOnClick
+├── codebaseSummary.txt
+├── economy.js
+│   └── Definitions:
+├── game.html
+├── game.js
+│   └── Definitions:
+│       ├── gameLoop()
+│       │   └── nested functions: gameLoop
+│       ├── updateDebuggerOverlay()
+│       │   └── nested functions: updateDebuggerOverlay
+│       ├── saveGame()
+│       │   └── nested functions: saveGame, prepareNPCsForSave, prepareBoatsForSave, prepareBuildingsForSave, prepareAnimalsForSave, prepareMapForSave
+│       ├── prepareNPCsForSave()
+│       │   └── nested functions: prepareNPCsForSave
+│       ├── prepareBoatsForSave()
+│       │   └── nested functions: prepareBoatsForSave
+│       ├── prepareBuildingsForSave()
+│       │   └── nested functions: prepareBuildingsForSave
+│       ├── prepareAnimalsForSave()
+│       │   └── nested functions: prepareAnimalsForSave
+│       ├── prepareMapForSave()
+│       │   └── nested functions: prepareMapForSave
+│       ├── loadGame()
+│       │   └── nested functions: loadGame
+│       ├── signature()
+│       └── drawPath()
+│           └── nested functions: drawPath
+├── globalvariables.js
+│   └── Definitions:
+├── grass.js
+│   └── Definitions:
+│       ├── getRandomGrassImage()
+│       │   └── nested functions: getRandomGrassImage
+│       └── drawGrass()
+│           └── nested functions: drawGrass
+├── history.html
+├── homes.js
+│   └── Definitions:
+│       ├── class House
+│       │   ├── playBuildSound()
+│       │   ├── validateCells()
+│       │   ├── findRandomAdjacentCell()
+│       │   ├── draw()
+│       │   └── addInhabitant()
+│       ├── class Building
+│       │   ├── addInhabitant()
+│       │   ├── addUpgrade()
+│       │   └── draw()
+│       └── functions:
+│           ├── to()
+│           ├── drawSmallScatteredPaths()
+│           │   └── nested functions: drawSmallScatteredPaths
+│           ├── drawRectanglesBetweenHouses()
+│           │   └── nested functions: drawRectanglesBetweenHouses
+│           ├── bfsFindPath()
+│           │   └── nested functions: bfsFindPath
+│           ├── initializeBoat()
+│           │   └── nested functions: initializeBoat
+│           └── moveAndDrawBoat()
+│               └── nested functions: moveAndDrawBoat
+├── items.js
+│   └── Definitions:
+│       └── class Item
+│           ├── add()
+│           └── remove()
+├── loadimages.js
+│   └── Definitions:
+│       ├── class NPC
+│       └── functions:
+│           └── renderNPCs()
+│               └── nested functions: renderNPCs
+├── logformatter.html
+├── mapGen.js
+│   └── Definitions:
+│       ├── function()
+│       │   └── nested functions: generateTerrainMap
+│       ├── to()
+│       ├── drawTerrainLayer()
+│       │   └── nested functions: drawTerrainLayer
+│       ├── afterMapGen()
+│       │   └── nested functions: afterMapGen
+│       ├── drawHousePaths()
+│       │   └── nested functions: drawHousePaths
+│       ├── drawCellsInArray()
+│       │   └── nested functions: drawCellsInArray
+│       ├── calculateAdjacentCells()
+│       │   └── nested functions: calculateAdjacentCells
+│       ├── drawOreDeposit()
+│       │   └── nested functions: drawOreDeposit
+│       ├── showCellnumber()
+│       │   └── nested functions: showCellnumber
+│       ├── isValidCell()
+│       │   └── nested functions: isValidCell
+│       ├── debugTerrain()
+│       │   └── nested functions: debugTerrain
+│       ├── drawRoundedRect()
+│       │   └── nested functions: drawRoundedRect
+│       ├── clearCanvas()
+│       │   └── nested functions: clearCanvas
+│       ├── clearNPC()
+│       │   └── nested functions: clearNPC
+│       ├── drawSandTexture()
+│       │   └── nested functions: drawSandTexture
+│       └── drawMountainTexture()
+│           └── nested functions: drawMountainTexture
+├── mapTester.html
+├── npcClass.js
+│   └── Definitions:
+│       ├── class Item
+│       │   ├── add()
+│       │   └── remove()
+│       ├── class NPC
+│       │   ├── update()
+│       │   ├── setState()
+│       │   ├── shouldMove()
+│       │   ├── move()
+│       │   ├── ageAndDie()
+│       │   ├── die()
+│       │   ├── chooseRace()
+│       │   ├── addChild()
+│       │   ├── generateProfession()
+│       │   ├── calculateSalary()
+│       │   ├── drawNPCInfo()
+│       │   ├── drawInfoText()
+│       │   ├── getRaceColor()
+│       │   ├── updateInfoPanel()
+│       │   ├── addToInventory()
+│       │   ├── removeFromInventory()
+│       │   └── getInventoryCount()
+│       └── functions:
+│           ├── followPath()
+│           │   └── nested functions: followPath
+│           ├── this()
+│           └── not()
+├── npcnames.js
+│   └── Definitions:
+│       └── generateName()
+│           └── nested functions: generateName
+├── package-lock.json
+├── package.json
+├── perlin.js
+│   └── Definitions:
+├── push.bat
+├── races.text
+├── raceSelector.html
+├── radialTerrainMapGenerator.js
+│   └── Definitions:
+│       ├── generateTerrainMap()
+│       │   └── nested functions: generateTerrainMap, generateTerrainMap, drawTerrainLayer, startTrees, drawTrees, distributeOreDeposits, calculateAdjacentCells, drawOreDeposit, showCellnumber, isValidCell, debugTerrain, drawRoundedRect, clearCanvas, clearNPC
+│       ├── generateTerrainMap()
+│       │   └── nested functions: generateTerrainMap
+│       ├── drawTerrainLayer()
+│       │   └── nested functions: drawTerrainLayer
+│       ├── startTrees()
+│       │   └── nested functions: startTrees
+│       ├── drawTrees()
+│       │   └── nested functions: drawTrees
+│       ├── distributeOreDeposits()
+│       │   └── nested functions: distributeOreDeposits
+│       ├── calculateAdjacentCells()
+│       │   └── nested functions: calculateAdjacentCells
+│       ├── drawOreDeposit()
+│       │   └── nested functions: drawOreDeposit
+│       ├── showCellnumber()
+│       │   └── nested functions: showCellnumber
+│       ├── isValidCell()
+│       │   └── nested functions: isValidCell
+│       ├── debugTerrain()
+│       │   └── nested functions: debugTerrain
+│       ├── drawRoundedRect()
+│       │   └── nested functions: drawRoundedRect
+│       ├── clearCanvas()
+│       │   └── nested functions: clearCanvas
+│       └── clearNPC()
+│           └── nested functions: clearNPC
+├── README.md
+├── simulation.js
+│   └── Definitions:
+│       ├── class NPC
+│       │   ├── ageAndDie()
+│       │   ├── getMaleColor()
+│       │   ├── getFemaleColor()
+│       │   └── generateName()
+│       ├── class PopulationManager
+│       │   ├── calculateGrowth()
+│       │   ├── setMaxPopulation()
+│       │   ├── increasePopulation()
+│       │   └── decreasePopulation()
+│       └── functions:
+│           ├── in()
+│           │   └── nested functions: managePopulation8
+│           ├── managePopulation8()
+│           │   └── nested functions: managePopulation8
+│           ├── gameLoop9()
+│           │   └── nested functions: gameLoop9
+│           ├── drawNPCs10()
+│           │   └── nested functions: drawNPCs10
+│           ├── console()
+│           ├── addNPCToTable()
+│           │   └── nested functions: addNPCToTable
+│           └── sortNPCtable()
+│               └── nested functions: sortNPCtable
+├── style.css
+├── todo.html
+├── todo.txt
+├── todonow.txt
+├── toolManager.js
+│   └── Definitions:
+│       ├── to()
+│       │   └── nested functions: getClickCoordinates
+│       ├── getClickCoordinates()
+│       │   └── nested functions: getClickCoordinates
+│       ├── placeAnimal()
+│       │   └── nested functions: placeAnimal
+│       ├── updateAnimals()
+│       │   └── nested functions: updateAnimals
+│       ├── placeBuilding()
+│       │   └── nested functions: placeBuilding
+│       ├── handleTerrainTool()
+│       │   └── nested functions: handleTerrainTool
+│       └── handleNPCSelection()
+│           └── nested functions: handleNPCSelection
+├── trees.js
+│   └── Definitions:
+│       ├── manhattan()
+│       │   └── nested functions: manhattan
+│       ├── findNearestTree()
+│       │   └── nested functions: findNearestTree
+│       ├── to()
+│       │   └── nested functions: drawPath
+│       ├── drawPath()
+│       │   └── nested functions: drawPath
+│       ├── startTrees()
+│       │   └── nested functions: startTrees
+│       ├── drawTrees()
+│       │   └── nested functions: drawTrees
+│       ├── animateNewTree()
+│       │   └── nested functions: animateNewTree, animate
+│       ├── animate()
+│       │   └── nested functions: animate
+│       ├── dyingTreeAnimation()
+│       │   └── nested functions: dyingTreeAnimation, animate
+│       ├── animate()
+│       │   └── nested functions: animate
+│       ├── distributeOreDeposits()
+│       │   └── nested functions: distributeOreDeposits
+│       ├── to()
+│       │   └── nested functions: initTreeLifecycle, processNextDeath
+│       ├── initTreeLifecycle()
+│       │   └── nested functions: initTreeLifecycle, processNextDeath
+│       └── processNextDeath()
+│           └── nested functions: processNextDeath
+├── uitools.js
+│   └── Definitions:
+│       ├── setupCanvas()
+│       │   └── nested functions: setupCanvas
+│       ├── toggleTab()
+│       │   └── nested functions: toggleTab
+│       ├── handleBottomTabClick()
+│       │   └── nested functions: handleBottomTabClick
+│       ├── camera()
+│       ├── hideTabs()
+│       │   └── nested functions: hideTabs
+│       ├── updateVariables()
+│       │   └── nested functions: updateVariables
+│       ├── hideWelcomeScreen()
+│       │   └── nested functions: hideWelcomeScreen
+│       ├── addNotification()
+│       │   └── nested functions: addNotification
+│       ├── homesCanvas()
+│       ├── populateBuildingDetails()
+│       │   └── nested functions: populateBuildingDetails
+│       ├── showNPCInfo()
+│       │   └── nested functions: showNPCInfo
+│       ├── centerCameraOnNPC()
+│       │   └── nested functions: centerCameraOnNPC
+│       ├── updateUIbottomToolbar()
+│       │   └── nested functions: updateUIbottomToolbar, formatGDP
+│       ├── formatGDP()
+│       │   └── nested functions: formatGDP
+│       ├── drawNearCells()
+│       │   └── nested functions: drawNearCells
+│       ├── drawCircle()
+│       │   └── nested functions: drawCircle
+│       ├── setupKeyboardZoom()
+│       │   └── nested functions: setupKeyboardZoom
+│       ├── yet()
+│       │   └── nested functions: closeInsideBuilding
+│       └── closeInsideBuilding()
+│           └── nested functions: closeInsideBuilding
+├── utils.js
+│   └── Definitions:
+│       ├── drawStartandTarget()
+│       │   └── nested functions: drawStartandTarget
+│       ├── findNearestHome()
+│       │   └── nested functions: findNearestHome
+│       ├── isLandCell()
+│       │   └── nested functions: isLandCell
+│       ├── findPathTo()
+│       │   └── nested functions: findPathTo
+│       ├── heuristic()
+│       │   └── nested functions: heuristic
+│       ├── getNeighbors()
+│       │   └── nested functions: getNeighbors
+│       └── reconstructPath()
+│           └── nested functions: reconstructPath
+├── water.html
+├── water.js
+│   └── Definitions:
+│       ├── generateWavyWaterCanvas()
+│       │   └── nested functions: generateWavyWaterCanvas
+│       ├── drawWaterTexture()
+│       │   └── nested functions: drawWaterTexture
+│       └── addSubtleWaterPixels()
+│           └── nested functions: addSubtleWaterPixels
+└── zoom.html

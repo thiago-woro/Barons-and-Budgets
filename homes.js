@@ -146,8 +146,8 @@ class House {
     // draw house shadow
     drawCircle(pathCtx,  this.x,  this.y, 10, "rgba(227, 204, 162, 0.3)");
 
-     //drawRectanglesBetweenHouses(houses, pathCtx);
-     drawPaths(houses, pathCtx);
+     drawRectanglesBetweenHouses(houses, pathCtx);
+    // drawSmallScatteredPaths(houses, pathCtx);
 
   }
 
@@ -158,7 +158,7 @@ class House {
 
 
 
-function drawPaths(houses, ctx) {
+function drawSmallScatteredPaths(houses, ctx) {
   //log
  // console.log("drawPaths");
 
@@ -233,13 +233,14 @@ function drawRectanglesBetweenHouses(houses, ctx) {
 
   // Define an array of color options
   const colorOptions = [
-    "#648a3b",
+/*     "#648a3b",
     "#9ac558",
     "#9ac558",
     "#9ac558", // Muddy brown with low opacity
     "rgba(92, 128, 0, 0.5)",
     "rgba(139, 69, 19, 0.5)", // Old grass green with low opacity
-    "rgba(240, 230, 140, 0.5)", // Yellowish sand with low opacity
+    "rgba(240, 230, 140, 0.5)", // Yellowish sand with low opacity */
+    "grey",
   ];
 
   for (let i = 0; i < houses.length - 1; i++) {
@@ -274,7 +275,7 @@ function drawRectanglesBetweenHouses(houses, ctx) {
         lineHeight,
         lineHeight,
         borderRadius,
-        randomColor
+        "grey"  //randomColor
       );
 
       // Calculate the cell coordinates based on x and y

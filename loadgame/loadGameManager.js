@@ -189,6 +189,7 @@ function performPostLoadOperations() {
     try {
       // Clear canvases
       if (typeof clearCanvas === 'function') {
+        alert("clearCanvas");
         if (window.groundCtx) clearCanvas(window.groundCtx);
         if (window.waterCtx) clearCanvas(window.waterCtx);
         if (window.treeCtx) clearCanvas(window.treeCtx);
@@ -212,7 +213,8 @@ function performPostLoadOperations() {
       
       console.log("LoadGameManager: World redrawn using fallback method");
     } catch (error) {
-      console.warn("LoadGameManager: Error in fallback redraw:", error);
+        alert("error in fallback redraw");
+      console.warn("line 217 LoadGameManager: Error in fallback redraw:", error);
     }
   }
   

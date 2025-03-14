@@ -110,6 +110,20 @@ function handleBottomTabClick(tabId) {
     targetRow.style.display = 'flex';
   }
 
+  // Reset all canvas z-indexes to default
+  document.getElementById('npcCanvas').style.zIndex = '90';
+  document.getElementById('homes').style.zIndex = '90';
+  document.getElementById('animalCanvas').style.zIndex = '51';
+  
+  // Set z-index based on active tab
+  if (window.activeTabBottomLeft === 'creatures') {
+    document.getElementById('npcCanvas').style.zIndex = '99';
+  } else if (window.activeTabBottomLeft === 'buildings') {
+    document.getElementById('homes').style.zIndex = '99';
+  } else if (window.activeTabBottomLeft === 'animals') {
+    document.getElementById('animalCanvas').style.zIndex = '99';
+  }
+
   console.log(`Active bottom tab: ${window.activeTabBottomLeft}`);
 }
 
@@ -127,6 +141,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Set default active tab
   if (document.getElementById('creaturesTab')) {
     handleBottomTabClick('creaturesTab');
+    // Set initial z-index for the default tab (creatures)
+    document.getElementById('npcCanvas').style.zIndex = '99';
   }
   
   // Add event listener for resetCameraButton
@@ -373,12 +389,20 @@ npcCanvas.addEventListener("click", function(event) {
   if (window.activeTabBottomLeft !== "creatures") return;
   
   const rect = npcCanvas.getBoundingClientRect();
-  const x = event.clientX - rect.left;
-  const y = event.clientY - rect.top;
+  const screenX = event.clientX - rect.left;
+  const screenY = event.clientY - rect.top;
+  
+  // Convert screen coordinates to world coordinates
+  const { x: worldX, y: worldY } = camera.screenToWorld(screenX, screenY);
   
   for (const npc of npcs) {
-    const distance = Math.sqrt((x - npc.x) ** 2 + (y - npc.y) ** 2);
-    if (distance < 20) { // Larger hit area for clicking
+    // Calculate distance using world coordinates
+    const distance = Math.sqrt((worldX - npc.x) ** 2 + (worldY - npc.y) ** 2);
+    
+    // Adjust hit area based on zoom level
+    const hitArea = 20 / camera.zoom;
+    
+    if (distance < hitArea) { // Larger hit area for clicking
       console.log(`Clicked NPC: ${npc.name}`);
       showNPCInfo(npc);
       foundNPC = true;
@@ -396,17 +420,18 @@ npcCanvas.addEventListener("click", function(event) {
     }
   }
 });
+
 // Update the building click handler to use the populate function
 homesCanvas.addEventListener("click", function(event) {
-
   const rect = homesCanvas.getBoundingClientRect();
-  const x = event.clientX - rect.left;
-  const y = event.clientY - rect.top;
-  logCellOnClick(homesCanvas, homesCtx, cellSize);
+  const screenX = event.clientX - rect.left;
+  const screenY = event.clientY - rect.top;
+  
+  // Log cell info using the helper function
+  logCellOnClick(homesCanvas, homesCtx, cellSize, event);
   
   // Debug log regardless of active tab
   console.log("Homes canvas clicked, x: " + event.clientX + " y: " + event.clientY);
-  console.log("Current active tab: " + window.activeTabBottomLeft);
   
   // Check if the active tab is "buildings" (case insensitive)
   if (window.activeTabBottomLeft && window.activeTabBottomLeft.toLowerCase() !== "buildings") {
@@ -414,7 +439,9 @@ homesCanvas.addEventListener("click", function(event) {
     return;
   }
   
-  console.log("Checking for houses near click point:", x, y);
+  // Convert screen coordinates to world coordinates
+  const { x: worldX, y: worldY } = camera.screenToWorld(screenX, screenY);
+  console.log("Checking for houses near click point (world coords):", worldX, worldY);
   
   // Check if houses array exists and has items
   if (!houses || !houses.length) {
@@ -423,12 +450,15 @@ homesCanvas.addEventListener("click", function(event) {
   
   let foundHouse = false;
   for (const house of houses) {
+    // Calculate distance using world coordinates
+    const distance = Math.sqrt((worldX - house.x) ** 2 + (worldY - house.y) ** 2);
     
-    const distance = Math.sqrt((x - house.x) ** 2 + (y - house.y) ** 2);
-    console.log(`home x: ${house.x.toFixed(0)}, y: ${house.y.toFixed(0)}, Distance: ${distance.toFixed(0)}`);
-    console.log(`House is at cell: (${Math.floor(house.x / cellSize)}, ${Math.floor(house.y / cellSize)})`);
-    if (distance < 50) { // Larger hit area for clicking
-      console.log(`Clicked building: ${house.id || 'unknown'}`);
+    // Adjust hit area based on zoom level
+    const hitArea = 50 / camera.zoom;
+    
+    if (distance < hitArea) { 
+      console.log(`home x: ${house.x.toFixed(0)}, y: ${house.y.toFixed(0)}, Distance: ${distance.toFixed(0)}`);
+      console.log(`Clicked building: ${house.id || 'unknown'}, at cell: (${Math.floor(house.x / cellSize)}, ${Math.floor(house.y / cellSize)})`);
       foundHouse = true;
       
       // Show the inside building view

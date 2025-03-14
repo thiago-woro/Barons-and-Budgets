@@ -108,14 +108,9 @@ function drawTrees(ctx, treePositions) {
     clearCanvas(ctx);
     //console.log('drawing trees 🌵🌵')
 
-
     treePositions.sort((a, b) => {
         if (a.y === b.y) return b.x - a.x;
         return a.y - b.y;
-
-
-
-
     });
 
     treePositions.forEach((tree) => {

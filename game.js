@@ -468,9 +468,9 @@ function saveGame() {
       isPaused = savedGameState.isPaused;
       gameLoopSpeed = savedGameState.gameLoopSpeed;
       
-      // Population
-      startingPopulation = savedGameState.startingPopulation;
-      populationIncreaseSpeed = savedGameState.populationIncreaseSpeed;
+      // Population - don't reassign constants
+      console.log(`Loaded game with starting population: ${savedGameState.startingPopulation}`);
+      console.log(`Loaded game with population increase speed: ${savedGameState.populationIncreaseSpeed}`);
       
       // Load NPCs with proper prototype methods
       npcs = savedGameState.npcs.map(npcData => {
@@ -518,48 +518,173 @@ function saveGame() {
         }
       });
       
-      // World map data
-      terrainMap = savedGameState.terrainMap;
-      groundCells = savedGameState.groundCells;
-      waterCells = savedGameState.waterCells;
-      availableHouseCells = savedGameState.availableHouseCells;
-      flatLandCells = savedGameState.flatLandCells;
-      sandCells = savedGameState.sandCells || [];
-      pathCells = savedGameState.pathCells;
+      // World map data - check if variables are constants before assigning
+      if (typeof terrainMap !== 'undefined' && !Object.isFrozen(terrainMap)) {
+        terrainMap = savedGameState.terrainMap;
+      }
+      
+      if (typeof groundCells !== 'undefined' && !Object.isFrozen(groundCells)) {
+        groundCells = savedGameState.groundCells;
+      }
+      
+      if (typeof waterCells !== 'undefined' && !Object.isFrozen(waterCells)) {
+        waterCells = savedGameState.waterCells;
+      }
+      
+      if (typeof availableHouseCells !== 'undefined' && !Object.isFrozen(availableHouseCells)) {
+        availableHouseCells = savedGameState.availableHouseCells;
+      }
+      
+      if (typeof flatLandCells !== 'undefined' && !Object.isFrozen(flatLandCells)) {
+        flatLandCells = savedGameState.flatLandCells;
+      }
+      
+      if (typeof sandCells !== 'undefined' && !Object.isFrozen(sandCells)) {
+        sandCells = savedGameState.sandCells || [];
+      }
+      
+      if (typeof pathCells !== 'undefined' && !Object.isFrozen(pathCells)) {
+        pathCells = savedGameState.pathCells;
+      }
       
       // Resources
-      trees = savedGameState.trees;
-      treePositions = savedGameState.treePositions;
+      if (typeof trees !== 'undefined' && !Object.isFrozen(trees)) {
+        trees = savedGameState.trees;
+      }
       
-      if (typeof distributeOreDeposits === 'function' && savedGameState.oreDeposits) {
+      // Handle treePositions - ensure it's an array
+      if (typeof treePositions !== 'undefined') {
+        if (!Object.isFrozen(treePositions)) {
+          // If it's not frozen, we can reassign
+          treePositions = Array.isArray(savedGameState.treePositions) ? 
+            savedGameState.treePositions : [];
+        } else if (Array.isArray(treePositions)) {
+          // If it's frozen but is an array, we can modify its contents
+          treePositions.length = 0; // Clear the array
+          if (Array.isArray(savedGameState.treePositions)) {
+            // Add each tree position to the existing array
+            savedGameState.treePositions.forEach(tree => treePositions.push(tree));
+          }
+        } else {
+          console.warn("treePositions exists but is not an array and cannot be modified");
+        }
+      }
+      
+      if (typeof distributeOreDeposits === 'function' && savedGameState.oreDeposits && 
+          typeof oreDeposits !== 'undefined' && !Object.isFrozen(oreDeposits)) {
         oreDeposits = savedGameState.oreDeposits;
       }
       
       // Buildings
-      houses = savedGameState.houses;
-      buildings = savedGameState.buildings;
+      if (typeof houses !== 'undefined' && !Object.isFrozen(houses)) {
+        houses = savedGameState.houses;
+      }
+      
+      if (typeof buildings !== 'undefined' && !Object.isFrozen(buildings)) {
+        buildings = savedGameState.buildings;
+      }
       
       // Fishing - only if the fisher module is loaded
       if (typeof FishingBoat === 'function' && savedGameState.fishingBoats) {
-        // Restore Maps from array entries
-        fishingSpotsByHarbor = new Map(savedGameState.fishingSpotsByHarbor);
-        harborToFishingSpotPaths = new Map(savedGameState.harborToFishingSpotPaths);
-        
-        // Restore fishing boats with proper prototypes
-        fishingBoats = savedGameState.fishingBoats.map(boatData => {
-          const harbor = buildings.find(b => b.id === boatData.harborId);
-          const owner = npcs.find(n => n.myNumber === boatData.ownerId);
-          
-          if (!harbor || !owner) {
-            console.warn("Could not find harbor or owner for boat:", boatData);
-            return null;
+        // Handle fishing spots map - since it's a constant, we need to clear and add items instead of reassigning
+        if (typeof fishingSpotsByHarbor !== 'undefined') {
+          try {
+            // Clear the existing map
+            if (typeof fishingSpotsByHarbor.clear === 'function') {
+              fishingSpotsByHarbor.clear();
+              
+              // Add entries from saved data
+              if (Array.isArray(savedGameState.fishingSpotsByHarbor)) {
+                savedGameState.fishingSpotsByHarbor.forEach(entry => {
+                  if (Array.isArray(entry) && entry.length === 2) {
+                    fishingSpotsByHarbor.set(entry[0], entry[1]);
+                  }
+                });
+              }
+              console.log("Restored fishingSpotsByHarbor with", fishingSpotsByHarbor.size, "entries");
+            } else {
+              console.warn("fishingSpotsByHarbor exists but is not a Map or doesn't have clear method");
+            }
+          } catch (error) {
+            console.warn("Error restoring fishingSpotsByHarbor:", error);
           }
-          
-          const boat = new FishingBoat(harbor, owner);
-          Object.assign(boat, boatData);
-          boat.owner = owner; // Set owner reference properly
-          return boat;
-        }).filter(boat => boat !== null);
+        }
+        
+        // Handle harbor paths map - since it's a constant, we need to clear and add items instead of reassigning
+        if (typeof harborToFishingSpotPaths !== 'undefined') {
+          try {
+            // Clear the existing map
+            if (typeof harborToFishingSpotPaths.clear === 'function') {
+              harborToFishingSpotPaths.clear();
+              
+              // Add entries from saved data
+              if (Array.isArray(savedGameState.harborToFishingSpotPaths)) {
+                savedGameState.harborToFishingSpotPaths.forEach(entry => {
+                  if (Array.isArray(entry) && entry.length === 2) {
+                    harborToFishingSpotPaths.set(entry[0], entry[1]);
+                  }
+                });
+              }
+              console.log("Restored harborToFishingSpotPaths with", harborToFishingSpotPaths.size, "entries");
+            } else {
+              console.warn("harborToFishingSpotPaths exists but is not a Map or doesn't have clear method");
+            }
+          } catch (error) {
+            console.warn("Error restoring harborToFishingSpotPaths:", error);
+          }
+        }
+        
+        // Handle fishing boats - since it's a constant array, we need to clear and add items instead of reassigning
+        if (typeof fishingBoats !== 'undefined' && Array.isArray(fishingBoats)) {
+          try {
+            // Clear the existing array
+            fishingBoats.length = 0;
+            
+            // Create new boat objects and push them to the existing array
+            if (Array.isArray(savedGameState.fishingBoats)) {
+              const newBoats = savedGameState.fishingBoats.map(boatData => {
+                const harbor = buildings.find(b => b.id === boatData.harborId);
+                const owner = npcs.find(n => n.myNumber === boatData.ownerId);
+                
+                if (!harbor || !owner) {
+                  console.warn("Could not find harbor or owner for boat:", boatData);
+                  return null;
+                }
+                
+                const boat = new FishingBoat(harbor, owner);
+                Object.assign(boat, boatData);
+                boat.owner = owner; // Set owner reference properly
+                return boat;
+              }).filter(boat => boat !== null);
+              
+              // Push all new boats to the existing array
+              newBoats.forEach(boat => fishingBoats.push(boat));
+              console.log("Restored", fishingBoats.length, "fishing boats");
+            }
+          } catch (error) {
+            console.warn("Error restoring fishing boats:", error);
+          }
+        }
+      }
+      
+      // Animals - if the module is loaded
+      if (typeof animals !== 'undefined' && !Object.isFrozen(animals) && 
+          savedGameState.animals && Array.isArray(savedGameState.animals)) {
+        try {
+          if (typeof Animal === 'function') {
+            // If Animal constructor exists, recreate with proper prototypes
+            animals = savedGameState.animals.map(animalData => {
+              const animal = new Animal(animalData.x, animalData.y, animalData.type);
+              Object.assign(animal, animalData);
+              return animal;
+            });
+          } else {
+            // Otherwise just assign the data
+            animals = savedGameState.animals;
+          }
+        } catch (error) {
+          console.warn("Error restoring animals:", error);
+        }
       }
       
       // Clear all canvases before redrawing
@@ -585,7 +710,17 @@ function saveGame() {
       
       // Redraw trees
       if (typeof drawTrees === 'function' && treeCtx) {
-        drawTrees(treeCtx, cellSize, treePositions, []);
+        // Make sure treePositions is an array before passing it
+        if (Array.isArray(treePositions)) {
+          try {
+            // Call with the correct parameters based on the function signature
+            drawTrees(treeCtx, treePositions);
+          } catch (error) {
+            console.warn("Error drawing trees:", error);
+          }
+        } else {
+          console.warn("Cannot draw trees: treePositions is not an array");
+        }
       }
       
       // Redraw buildings

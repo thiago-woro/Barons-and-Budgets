@@ -3,6 +3,11 @@
 /assets
 /ignore/*
 /.cursorrules
+node_modules
+
+
+/node_modules/
+*node_modules
 
 
 /ignore/

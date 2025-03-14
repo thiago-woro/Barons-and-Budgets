@@ -261,7 +261,7 @@ function afterMapGen() {
   //debugTerrain(npcCtx, gridSize, cellSize);
 
   // Initialize animal populations after everything else is set up
-  starterAnimalPopulations(0);  //animpop
+  starterAnimalPopulations(30);  //animpop
 }
 
 function drawHousePaths(cellArray, numRowsToSkip, pathCurveAmount) {

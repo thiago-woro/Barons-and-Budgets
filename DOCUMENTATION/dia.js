@@ -86,7 +86,7 @@ function mainDiagram(sourceFile, outputFile) {
       functionDivs += `
         <div class="function">
           ${func.name}
-          <div class="function-variables">
+          <div class="function-variables" id="variable-container-fn-${func.name}">
             ${functionVariablesDivs}
           </div>
         </div>

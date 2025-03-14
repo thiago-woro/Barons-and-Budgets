@@ -1,3 +1,7 @@
+// Import Animation utility
+// import { Animation } from './animations.js';
+// Animation class will be loaded via script tag
+
 class Animal {
   // Static speed settings
   static PREY_BASE_SPEED = 1000;  // Base movement interval for prey
@@ -169,52 +173,25 @@ class Animal {
   }
 
   animateEmoji(type, emoji, duration = 500) {
-    this.animation = {
-      type,
-      emoji,
-      startTime: Date.now(),
-      duration
-    };
+    this.animation = Animation.create(type, emoji, duration, this.x, this.y);
   }
 
   drawAnimation(ctx) {
-    if (!this.animation) return false;
-
-    const progress = (Date.now() - this.animation.startTime) / this.animation.duration;
-    if (progress >= 1) {
-      this.animation = null;
-      return false;
-    }
-
-    ctx.font = '20px Arial';
-    
-    switch (this.animation.type) {
-      case 'pop':
-        const scale = 1 + Math.sin(progress * Math.PI) * 0.5; // Scale between 1 and 1.5
-        ctx.font = `${20 * scale}px Arial`;
-        ctx.fillText(this.animation.emoji, this.x, this.y);
-        break;
+    if (this.animation) {
+      // Update animation position in case animal moved
+      Animation.updatePosition(this.animation, this.x, this.y);
       
-      case 'fade':
-        ctx.globalAlpha = 1 - progress;
-        ctx.fillText(this.animation.emoji, this.x, this.y);
-        ctx.globalAlpha = 1;
-        break;
+      // Draw the animation and check if it's still active
+      const isActive = Animation.draw(ctx, this.animation);
       
-      case 'small':
-        const size = 20 - (progress * 10); // Shrink from 20 to 10
-        ctx.font = `${size}px Arial`;
-        ctx.fillText(this.animation.emoji, this.x, this.y);
-        break;
-
-      case 'getBig':
-        const growSize = 4 + (progress * 16); // Start at 4px, grow to 20px
-        ctx.font = `${growSize}px Arial`;
-        ctx.fillText(this.animation.emoji, this.x, this.y);
-        break;
+      // Clear animation if complete
+      if (!isActive) {
+        this.animation = null;
+      }
+      
+      return isActive;
     }
-
-    return true;
+    return false;
   }
 
   killAnimal(prey) {

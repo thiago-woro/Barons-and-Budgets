@@ -42,9 +42,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const dx = Math.abs(e.clientX - mouseDownX);
     const dy = Math.abs(e.clientY - mouseDownY);
     
+    // Only consider it a drag if mouse moved more than 3 pixels
+    isDragging = wasDragging || (dx > 3 || dy > 3);
+    
     // Reset tracking variables
     mouseDownTime = 0;
-    isDragging = wasDragging || (mouseUpTime - mouseDownTime > 200) || (dx > 3 || dy > 3);
     
     // Reset drag state after a short delay
     setTimeout(() => {
@@ -98,14 +100,8 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    //return if isdragging is true
-    if (isDragging) {
-      console.warn("Mouse is grabbing!");
-      return;
-    }
-
     //return early if animal limit is reached
-    if (animals.length >= Animal.MAX_ANIMALS) {
+    if (animals.length >= 500) {
       console.log("Animal limit reached!");
       return;
     }
@@ -115,6 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
       cell.x === coords.cellCol && cell.y === coords.cellRow
     );
 
+    console.log(`Cell coordinates: Row ${coords.cellRow}, Col ${coords.cellCol}`);
     if (!isGround) {
       console.log("Can't place animal on water!");
       return;
@@ -171,7 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Main click handler for the container
   container.addEventListener("click", function(event) {
     // Only check for dragging when animals tab is active
-    if ((window.activeTabBottomLeft === "animals") && (isDragging || wasDragging)) {
+    if (isDragging || wasDragging) {
       console.warn("Prevented placement - was dragging");
       return;
     }
