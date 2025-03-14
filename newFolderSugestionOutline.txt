@@ -1,0 +1,104 @@
+# Suggested Folder Structure for BaronsBudgets
+
+```
+j:\BaronsBudgets/
+├── .cursor/
+├── .git/
+├── .vscode/
+├── assets/
+│   └── images/           # For all game images
+├── config/
+│   ├── .prettierrc       # Configuration files
+│   └── package.json
+├── data/
+│   ├── npcnames.js       # Data files
+│   └── races.text
+├── docs/
+│   ├── README.md
+│   ├── codebaseSummary.txt
+│   ├── projectOutline.txt
+│   ├── todo.txt
+│   ├── todonow.txt
+│   └── DOCUMENTATION/    # Already exists in project
+├── src/
+│   ├── core/             # Core game mechanics
+│   │   ├── game.js
+│   │   ├── globalvariables.js
+│   │   └── simulation.js
+│   ├── entities/         # Game entities
+│   │   ├── animals/      # Animal-related files
+│   │   │   └── animalClass.js
+│   │   ├── npcs/         # NPC-related files
+│   │   │   ├── npcClass.js
+│   │   │   └── NPC/      # Already exists in project
+│   │   ├── buildings/    # Building-related files
+│   │   │   ├── buildings/  # Already exists in project
+│   │   │   │   ├── Harbor.js
+│   │   │   │   └── farm.js
+│   │   │   └── homes.js
+│   │   ├── professions/  # Already exists in project
+│   │   │   ├── fisher.js
+│   │   │   ├── woodcutter.js
+│   │   │   ├── miner.js
+│   │   │   ├── farmer.js
+│   │   │   └── hunter.js
+│   │   └── items.js
+│   ├── map/              # Map generation and terrain
+│   │   ├── mapGen.js
+│   │   ├── radialTerrainMapGenerator.js
+│   │   ├── trees.js
+│   │   ├── grass.js
+│   │   └── water.js
+│   ├── economy/          # Economic systems
+│   │   └── economy.js
+│   ├── utils/            # Utility functions
+│   │   ├── utils.js
+│   │   ├── perlin.js
+│   │   ├── animations.js # Animation utilities
+│   │   └── camera.js
+│   ├── ui/               # User interface
+│   │   ├── uitools.js
+│   │   ├── toolManager.js
+│   │   └── style.css
+│   └── loadgame/         # Already exists in project
+│       ├── loadGameManager.js
+│       ├── saveGameManager.js
+│       ├── restoreFishingSystem.js
+│       ├── restoreAnimals.js
+│       ├── restorebuildings.js
+│       └── restoreNPCRelationships.js
+├── html/                 # HTML pages
+│   ├── game.html         # Main game page
+│   ├── history.html
+│   ├── logformatter.html
+│   ├── mapTester.html
+│   ├── raceSelector.html
+│   ├── todo.html
+│   ├── water.html
+│   └── zoom.html
+├── scripts/              # Build/deployment scripts
+│   └── push.bat
+├── node_modules/         # Node dependencies
+└── ignore/               # Already exists in project
+
+```
+
+## Migration Strategy
+
+1. Create the folder structure first
+2. Move files to appropriate folders without changing imports
+3. Update HTML files to point to new file locations
+4. Later, convert to ES6 modules with proper imports/exports
+
+## Benefits
+
+- Improved code organization and maintainability
+- Easier to find related files
+- Better separation of concerns
+- Clearer project structure for new developers
+- Easier to implement future features
+
+## Documentation
+
+- Added `howsavegameworks.md` to the loadgame folder
+- Consider moving all documentation files to the docs folder for better organization 
