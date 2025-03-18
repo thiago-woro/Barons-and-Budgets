@@ -101,16 +101,8 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log(`Placing building: ${toolId} at`, coords);
 
   const building = new Building(coords.cellCol, coords.cellRow, cellSize, null, toolId);
-  buildings.push(building);
+    houses.push(building);
 
-  // Clear canvas before drawing
-  homesCtx.clearRect(0, 0, boatCanvas.width, boatCanvas.height);
-
-  // Draw all buildings
-  buildings.forEach(building => {
-    building.draw(homesCtx);
-  });
-  
   }
 
   function handleTerrainTool(coords, toolId) {
@@ -158,6 +150,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Start the animation loop
   requestAnimationFrame(updateAnimals);
+
+  // Add this at the end of your DOMContentLoaded event or at the bottom of your file
+  document.getElementById('closeBuildingButton').addEventListener('click', function() {
+    const insideBuilding = document.getElementById('insideBuilding');
+    if (insideBuilding) {
+        insideBuilding.style.visibility = 'collapse';
+    }
+    
+    // Show the game container again
+    const container = document.getElementById('container');
+    if (container) {
+        container.style.visibility = 'visible';
+        container.style.display = "block";
+    }
+  });
 }); 
 
 
@@ -165,14 +172,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function selectBuilding(toolId, coords) {
   console.log("Selecting homes in the homes array, received coords:", coords);
-
-  // Log all house cell positions for debugging
-  console.log("All house cell positions:");
-  houses.forEach((house, index) => {
-    const houseCellX = Math.floor(house.x / cellSize);
-    const houseCellY = Math.floor(house.y / cellSize);
-    console.log(`House ${index}: world(${house.x}, ${house.y}), cell(${houseCellX}, ${houseCellY})`);
-  });
 
   // Find a house at the exact clicked cell coordinates
   let foundHouse = null;
@@ -234,6 +233,7 @@ function populateBuildingDetails(house) {
     }
     
     buildingDetails.innerHTML = detailsHtml;
+    buildingDetails.style.display = "block";
   }
 }
 
