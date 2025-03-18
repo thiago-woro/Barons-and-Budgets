@@ -254,7 +254,7 @@ function getAdjacentCells(targetCell) {
   return adjacentCells;
 }
 
-// Mouse clicks canvas map
+/* // Mouse clicks canvas map
 //let isDragging = false; // Define a global isDragging variable
 function logCellOnClick(container, ctx, cellSize, npcCtx, treeCtx, pathCtx) {
   container.addEventListener("click", function(event) {
@@ -279,6 +279,46 @@ function logCellOnClick(container, ctx, cellSize, npcCtx, treeCtx, pathCtx) {
 }
 
 logCellOnClick(container, boatCtx, cellSize, npcCtx, treeCtx, pathCtx);
+ */
+
+  container.addEventListener("click", function(event) {
+    if (isDragging === false) {
+logCellOnClick(container, boatCtx, cellSize, npcCtx, treeCtx, pathCtx);
+
+    }
+  });
+
+//let isDragging = false; // Define a global isDragging variable
+function logCellOnClick(container, ctx, cellSize) { //same things as getClickCoordinates   ❤❤❤
+    if (isDragging === false) {
+      // Calculate the mouse position within the container.
+      const rect = container.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      // Convert screen coordinates to world coordinates
+      const { x: worldX, y: worldY } = camera.screenToWorld(x, y);
+      // Calculate cell indices (row and column) based on world position.
+      const cellRow = Math.floor(worldY / cellSize);
+      const cellCol = Math.floor(worldX / cellSize);
+      console.log(`logCellOnClick - Cell clicked: X = ${cellCol}, Y = ${cellRow}`);
+
+
+
+      // Draw a purple rectangle at the clicked cell
+      ctx.fillStyle = 'green';
+      ctx.fillRect(cellCol * cellSize, cellRow * cellSize, cellSize, cellSize);
+
+
+      return { cellCol, cellRow };
+
+    }
+  ;
+}
+
+
+
+
+
 
 
 

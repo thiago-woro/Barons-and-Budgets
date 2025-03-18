@@ -37,7 +37,7 @@ const ctxElements = {};
 for (const canvasId of canvasElements) {
   ctxElements[canvasId] = setupCanvas(canvasId);
 }
-
+//all canvas ctx    homesctx
 const [npcCanvas, npcCtx] = ctxElements["npcCanvas"];
 const [groundCanvas, groundCtx] = ctxElements["groundCanvas"];
 const [waterCanvas, waterCtx] = ctxElements["waterCanvas"];
@@ -51,6 +51,7 @@ const [oreDepositsCanvas, oreDepositsCtx] = ctxElements["oreDeposits"];
 const [homesCanvas, homesCtx] = ctxElements["homes"];
 const [animalCanvas, animalCtx] = ctxElements["animalCanvas"];
 //finished canvases setup
+
 
 
 
@@ -432,116 +433,6 @@ npcCanvas.addEventListener("click", function(event) {
     }
   }
 });
-
-// Update the building click handler to use the populate function
-homesCanvas.addEventListener("click", function(event) {
-  // Log cell info using the helper function to get the clicked cell
-  const clickInfo = logCellOnClick(homesCanvas, homesCtx, cellSize, event);
-  
-  // Check if the active tab is "buildings" (case insensitive)
-  if (window.activeTabBottomLeft && window.activeTabBottomLeft.toLowerCase() !== "buildings") {
-    console.log("Not on buildings tab, ignoring click");
-    return;
-  }
-  
-  // Get the clicked cell coordinates
-  const clickedCellX = clickInfo.cell.col;
-  const clickedCellY = clickInfo.cell.row;
-  
-  console.log(`Clicked on cell: (${clickedCellX}, ${clickedCellY})`);
-  
-  // Check if houses array exists and has items
-  if (!houses || !houses.length) {
-    console.log("No houses found in the houses array");
-    return;
-  }
-  
-  // Calculate the adjusted cell coordinates based on observed offset
-  // From logs: clicked(116, 69) vs house(74, 43) = offset of ~(42, 26)
-  const offsetX = 42;
-  const offsetY = 26;
-  const adjustedCellX = clickedCellX - offsetX;
-  const adjustedCellY = clickedCellY - offsetY;
-  
-  console.log(`Adjusted cell coordinates: (${adjustedCellX}, ${adjustedCellY})`);
-  
-  // Log all house cell positions
-  console.log("All house cell positions:");
-  houses.forEach((house, index) => {
-    const houseCellX = Math.floor(house.x / cellSize);
-    const houseCellY = Math.floor(house.y / cellSize);
-    console.log(`House ${index}: world(${house.x}, ${house.y}), cell(${houseCellX}, ${houseCellY})`);
-  });
-  
-  // Find a house at the adjusted clicked cell
-  let foundHouse = null;
-  const searchRadius = 2; // Small radius for adjusted coordinates
-  
-  for (const house of houses) {
-    const houseCellX = Math.floor(house.x / cellSize);
-    const houseCellY = Math.floor(house.y / cellSize);
-    
-    // Calculate distance from adjusted click to house
-    const cellDistanceX = Math.abs(adjustedCellX - houseCellX);
-    const cellDistanceY = Math.abs(adjustedCellY - houseCellY);
-    
-    // Check if the house is within the search radius of the adjusted click
-    if (cellDistanceX <= searchRadius && cellDistanceY <= searchRadius) {
-      foundHouse = house;
-      console.log(`✅ Found house at cell (${houseCellX}, ${houseCellY}) - near adjusted cell!`);
-      console.log(`Distance from adjusted cell: ${cellDistanceX} cells in X, ${cellDistanceY} cells in Y`);
-      break;
-    }
-  }
-  
-  // Show the house details if found
-  if (foundHouse) {
-    // Show the inside building view
-    const insideBuilding = document.getElementById('insideBuilding');
-    if (insideBuilding) {
-      insideBuilding.style.visibility = 'visible';
-      
-      // Populate building details
-      populateBuildingDetails(foundHouse);
-    } else {
-      console.warn('insideBuilding element not found in the DOM');
-    }
-  } else {
-    console.log(`No house found near adjusted cell (${adjustedCellX}, ${adjustedCellY}) within ${searchRadius} cells`);
-  }
-});
-
-// Function to populate building details
-function populateBuildingDetails(house) {
-  const buildingTitle = document.getElementById('buildingTitle');
-  const buildingDetails = document.getElementById('buildingDetails');
-  
-  if (buildingTitle) {
-    buildingTitle.textContent = house.type || 'Building';
-  }
-  
-  if (buildingDetails) {
-    let detailsHtml = '';
-    
-    // Add building ID or name
-    detailsHtml += `<p>ID: ${house.id || 'Unknown'}</p>`;
-    
-    // Add building position
-    detailsHtml += `<p>Position: (${Math.floor(house.x / cellSize)}, ${Math.floor(house.y / cellSize)})</p>`;
-    
-    // Add owner information if available
-    if (house.owner) {
-      detailsHtml += `<p>Owner: ${house.owner}</p>`;
-    }
-    
-    // Add any other relevant building information
-    if (house.size) {
-      detailsHtml += `<p>Size: ${house.size}</p>`;
-    }
-    
-    buildingDetails.innerHTML = detailsHtml;
-  }
-}
 
 
 

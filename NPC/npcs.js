@@ -492,16 +492,7 @@ function createFirstNPCHome() {
     
     console.log(`First home created at (${npcCellX}, ${npcCellY}) for ${firstNPC.name}`);
     
-    // Pause the game loop
-    isPaused = true;
     
-    // Update UI if there's a start button
-    const startButton = document.getElementById("startButton");
-    if (startButton) {
-      startButton.textContent = "⏯ Play";
-    }
-    
-    console.log("Game paused after creating first home");
   }
 }
 

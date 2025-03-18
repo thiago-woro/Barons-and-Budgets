@@ -312,11 +312,11 @@ function drawRectanglesBetweenHouses(houses, ctx) {
 //commercial buildings
 
 class Building {
-  constructor(x, y, cellSize, owner) {
+  constructor(x, y, cellSize, owner, type) {
     this.x = x * cellSize;
     this.y = y * cellSize;
-    this.owner = owner; // The NPC owner of the building
-    this.type = owner.profession; // Type of the building based on owner's profession
+    this.owner = owner ?? null; // The NPC owner of the building
+    this.type = type ?? "House"; // Type of the building based on owner's profession
     this.inhabitants = []; // Array to store NPCs or characters in the building
     this.upgrades = []; // Array to store building upgrades
     this.economicStatus = "Average"; // Economic status of the building

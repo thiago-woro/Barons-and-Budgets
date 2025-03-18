@@ -35,7 +35,7 @@ class Animal {
     this.freezeTime = 0;
     this.isPaused = false; // Add pause state flag
     
-    console.log(`Animal created at cell (${x}, ${y}), world position (${this.x}, ${this.y}), type: ${type}, emoji: ${this.emoji}`);
+    //console.log(`Animal created at cell (${x}, ${y}), world position (${this.x}, ${this.y}), type: ${type}, emoji: ${this.emoji}`);
     
     // Set movement speed based on predator/prey status
     this.moveInterval = this.isPredator ? 
