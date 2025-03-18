@@ -41,7 +41,7 @@
 
 
 	<body>
-        <div class="canvas-container" id="container" style="visibility: collapse;">
+        <div class="canvas-container" id="container">
             <canvas id="groundCanvas"  style="z-index: 10;"></canvas>
             <canvas id="waterCanvas"  style="z-index: 0;"></canvas>
             <canvas id="wavesCanvas"  style="z-index: 1;"></canvas>
@@ -153,6 +153,12 @@
         if (activeCard) {
             activeCard.classList.add('active');
             document.body.style.cursor = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><text x="0" y="24" font-size="14">${emoji}</text></svg>'), auto`;
+            
+            // Make sure window.activeTabBottomLeft is set correctly
+            if (window.activeTabBottomLeft !== "animals") {
+                window.activeTabBottomLeft = "animals";
+                console.log("Forcing active tab to animals");
+            }
         }
     }
 
@@ -161,6 +167,9 @@
             const animalName = this.id.replace('creaturesCard', '');
             const emoji = this.querySelector('h3').textContent.trim();
             setActiveAnimalCard(animalName, emoji);
+            
+            // Log the current selection
+            console.log(`Animal selected: ${this.id}, active tab: ${window.activeTabBottomLeft}`);
         });
     });
 

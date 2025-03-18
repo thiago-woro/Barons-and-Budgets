@@ -413,7 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 // Mouse clicks canvas map
-let isDragging = false;
+// Using the global isDragging variable from globalvariables.js
 function logCellOnClick(container, ctx, cellSize, event) {
   const rect = container.getBoundingClientRect();
   const screenX = event.clientX - rect.left;

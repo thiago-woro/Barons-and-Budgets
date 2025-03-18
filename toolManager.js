@@ -95,8 +95,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function placeAnimal(coords, toolId) {
+    console.log(`Attempting to place animal: ${toolId} at Row ${coords.cellRow}, Col ${coords.cellCol}, Tab: ${window.activeTabBottomLeft}`);
+    
     // Return early if active tab is not Animals
     if (window.activeTabBottomLeft !== "animals") {
+      console.warn("Cannot place animal: Active tab is not Animals");
       return;
     }
 
@@ -111,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
       cell.x === coords.cellCol && cell.y === coords.cellRow
     );
 
-    console.log(`Cell coordinates: Row ${coords.cellRow}, Col ${coords.cellCol}`);
+    console.log(`Cell coordinates: Row ${coords.cellRow}, Col ${coords.cellCol}, isGround: ${isGround}`);
     if (!isGround) {
       console.log("Can't place animal on water!");
       return;
@@ -147,6 +150,8 @@ document.addEventListener('DOMContentLoaded', () => {
       animal.draw(animalCtx);
     });
 
+   
+
     requestAnimationFrame(updateAnimals);
   }
 
@@ -167,6 +172,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Main click handler for the container
   container.addEventListener("click", function(event) {
+    console.log("Canvas container clicked");
+    
     // Only check for dragging when animals tab is active
     if (isDragging || wasDragging) {
       console.warn("Prevented placement - was dragging");
@@ -174,10 +181,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     const coords = getClickCoordinates(event);
+    console.log(`Click coordinates: Row ${coords.cellRow}, Col ${coords.cellCol}`);
     
     switch(currentToolState) {
       case ToolState.PLACING_ANIMAL:
+        console.log(`Attempting to place animal, current tool: ${selectedTool}`);
         placeAnimal(coords, selectedTool);
+        console.log(`Animals count after placement: ${animals.length}`);
         break;
       case ToolState.PLACING_BUILDING:
         placeBuilding(coords, selectedTool); 
@@ -188,6 +198,8 @@ document.addEventListener('DOMContentLoaded', () => {
       case ToolState.SELECTING_NPC:
         handleNPCSelection(coords);
         break;
+      default:
+        console.log(`Current tool state: ${currentToolState}`);
     }
   });
 

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phaser Game with Layered Canvases</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000;
+        }
+        .canvas-container {
+            display: none; /* Changed to none as requested */
+            overflow: auto;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        #cameraZoomInfo {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-family: Arial, sans-serif;
+            z-index: 10;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="canvas-container" id="container">
+        <div id="cameraZoomInfo">Zoom: 1.00 | Position: (0.00, 0.00)</div>
+        <canvas id="groundCanvas" style="z-index: 0;"></canvas>
+        <canvas id="waterCanvas" style="z-index: 1;"></canvas>
+        <!-- Phaser canvas will be added dynamically by phaserCamera.js -->
+    </div>
+
+      <script src="https://cdn.jsdelivr.net/npm/phaser@v3.88.2/dist/phaser.min.js"></script>
+
+    <script src="phaserCamera.js"></script>
+    <script>
+        // Map settings
+        let rows = 20;
+        let cellSize = 30;
+        let groundCells = []; // Array for green ground cells
+        let waterCells = [];  // Array for random water cells
+
+        // Populate cell arrays
+        function generateMap() {
+            // All cells are ground (green)
+            for (let y = 0; y < rows; y++) {
+                for (let x = 0; x < rows; x++) {
+                    groundCells.push({ x: x * cellSize, y: y * cellSize });
+                }
+            }
+
+            // Add some random water cells (blue)
+            const waterCount = Math.floor(rows * rows * 0.2); // 20% of cells as water
+            for (let i = 0; i < waterCount; i++) {
+                const x = Math.floor(Math.random() * rows) * cellSize;
+                const y = Math.floor(Math.random() * rows) * cellSize;
+                waterCells.push({ x, y });
+                // Remove from ground if it's there
+                const groundIndex = groundCells.findIndex(cell => cell.x === x && cell.y === y);
+                if (groundIndex !== -1) groundCells.splice(groundIndex, 1);
+            }
+        }
+
+        // Override createScene to initialize map
+        const originalCreateScene = createScene;
+        createScene = function() {
+            originalCreateScene.call(this);
+            
+            // Generate map data
+            generateMap();
+            
+            // Center the camera after map is created
+            centerCanvasOnMap();
+        };
+
+        // Override updateScene to draw on separate canvases
+        const originalUpdateScene = updateScene;
+        updateScene = function() {
+            originalUpdateScene.call(this);
+            
+            // Draw ground layer (green)
+            if (groundCtx) {
+                groundCtx.clearRect(0, 0, groundCanvas.width, groundCanvas.height);
+                groundCtx.fillStyle = '#00ff00'; // Green
+                groundCells.forEach(cell => {
+                    const screenPos = worldToScreen(phaserCamera, cell.x, cell.y);
+                    groundCtx.fillRect(
+                        screenPos.x,
+                        screenPos.y,
+                        (cellSize - 1) * phaserCamera.zoom,
+                        (cellSize - 1) * phaserCamera.zoom
+                    );
+                });
+            }
+
+            // Draw water layer (blue)
+            if (waterCtx) {
+                waterCtx.clearRect(0, 0, waterCanvas.width, waterCanvas.height);
+                waterCtx.fillStyle = '#0000ff'; // Blue
+                waterCells.forEach(cell => {
+                    const screenPos = worldToScreen(phaserCamera, cell.x, cell.y);
+                    waterCtx.fillRect(
+                        screenPos.x,
+                        screenPos.y,
+                        (cellSize - 1) * phaserCamera.zoom,
+                        (cellSize - 1) * phaserCamera.zoom
+                    );
+                });
+            }
+        };
+
+        // Start the game when the page loads
+        window.onload = function() {
+            initPhaserGame();
+
+            // Ensure container is visible after Phaser initializes
+            document.getElementById('container').style.display = 'block';
+        };
+    </script>
+</body>
+</html>

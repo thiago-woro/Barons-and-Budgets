@@ -4,6 +4,8 @@
 /ignore/*
 /.cursorrules
 node_modules
+/libraries
+/src
 
 
 /node_modules/

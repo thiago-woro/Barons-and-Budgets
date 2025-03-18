@@ -6,6 +6,9 @@ let kingdomName = "Elven Kingdom";
 let playerName = "OrcXSlayer777";
 let playedHours = 0;
 
+// Global variable for mouse tracking
+let isDragging = false; // Ensure isDragging is defined globally
+
 //map generation - global variables
 let cellSize = 20;
 var gridSize = 10; // seems to be unused

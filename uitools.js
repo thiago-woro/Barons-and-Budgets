@@ -82,6 +82,8 @@ function toggleTab(tabId) {
 
 // Function to handle bottom tab clicks
 function handleBottomTabClick(tabId) {
+  console.log(`Bottom tab clicked: ${tabId}`);
+  
   // Remove active class from all bottom tabs
   const bottomTabs = document.querySelectorAll('.bottomTabs span');
   bottomTabs.forEach(tab => {
@@ -93,6 +95,7 @@ function handleBottomTabClick(tabId) {
   
   // Set global variable to the name of the tab
   window.activeTabBottomLeft = tabId.replace('Tab', '').toLowerCase();
+  console.log(`Active tab set to: ${window.activeTabBottomLeft}`);
   
   // Hide all rows first
   const rows = ['terrainRow', 'creaturesRow', 'buildingsRow', 'budgetsRow', 'animalsRow'];
