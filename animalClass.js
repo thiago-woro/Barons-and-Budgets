@@ -7,7 +7,7 @@ class Animal {
   static PREY_BASE_SPEED = 1000;  // Base movement interval for prey
   static PREDATOR_SPEED_MULTIPLIER = 2;  // How much faster predators are
   static KILL_DISTANCE = 1;  // Distance in cells required for a kill
-  static REPRODUCTION_INTERVAL = 10000;  // Time between reproduction attempts (5 seconds)
+  static REPRODUCTION_INTERVAL = 15000;  // Time between reproduction attempts (5 seconds)
   static MAX_AGE = 30000;  // Time until natural death (60 seconds)
   static PREDATOR_MAX_AGE = 20000;  // Predators die twice as fast (30 seconds)
   static MAX_ANIMALS = Math.floor(maxLandPopulation);  // Maximum number of animals allowed based on usable land

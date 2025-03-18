@@ -15,14 +15,14 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.bottomCard').forEach(card => {
     card.addEventListener('click', () => {
       const cardId = card.id;
-      
+
       // Set state based on active tab and card
-      switch(window.activeTabBottomLeft) {
+      switch (window.activeTabBottomLeft) {
         case 'animals':
           currentToolState = ToolState.PLACING_ANIMAL;
           selectedTool = cardId;
           break;
-        case 'buildings': 
+        case 'buildings':
           currentToolState = ToolState.PLACING_BUILDING;
           selectedTool = cardId;
           break;
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Helper function to get click coordinates 
-   //LIFE SAVER, DO NOT DELETE ❤❤❤❤❤❤❤
+  //LIFE SAVER, DO NOT DELETE ❤❤❤❤❤❤❤
   //THIS ACTUALLY CONVERTS MOUSE TO CELL X,Y THE RIGHT WAY
   function getClickCoordinates(event) {   //same thing as logCellonClick()
     const rect = container.getBoundingClientRect();
@@ -48,13 +48,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const { x: worldX, y: worldY } = camera.screenToWorld(x, y);
     const cellRow = Math.floor(worldY / cellSize);
     const cellCol = Math.floor(worldX / cellSize);
-    
+
     return { cellRow, cellCol, worldX, worldY };
   }
 
   function placeAnimal(coords, toolId) {
     // Check if clicked on ground
-    const isGround = groundCells.some(cell => 
+    const isGround = groundCells.some(cell =>
       cell.x === coords.cellCol && cell.y === coords.cellRow
     );
 
@@ -66,10 +66,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Create and add new animal
     const animal = new Animal(coords.cellCol, coords.cellRow, toolId);
     animals.push(animal);
-    
+
     // Clear canvas before drawing
     animalCtx.clearRect(0, 0, animalCanvas.width, animalCanvas.height);
-    
+
     // Draw all animals
     animals.forEach(animal => {
       animal.draw(animalCtx);
@@ -78,29 +78,12 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("Placed animal:", animal);
   }
 
-  // Animation loop for animals
-  function updateAnimals(currentTime) {
-    // Calculate time passed since last frame
-    const deltaTime = currentTime - lastTime;
-    lastTime = currentTime;
-    
-    // Clear previous positions
-    animalCtx.clearRect(0, 0, animalCanvas.width, animalCanvas.height);
-    
-    // Update and draw each animal
-    animals.forEach(animal => {
-      animal.move(deltaTime);
-      animal.draw(animalCtx);
-    });
-
-    requestAnimationFrame(updateAnimals);
-  }
 
   function placeBuilding(coords, toolId) {
 
     console.log(`Placing building: ${toolId} at`, coords);
 
-  const building = new Building(coords.cellCol, coords.cellRow, cellSize, null, toolId);
+    const building = new Building(coords.cellCol, coords.cellRow, cellSize, null, toolId);
     houses.push(building);
 
   }
@@ -110,65 +93,82 @@ document.addEventListener('DOMContentLoaded', () => {
     // Implement terrain modification logic
   }
 
-  function handleNPCSelection(coords) {
-    console.log(`Selecting NPC at`, coords);
-    // Implement NPC selection logic
-  }
 
-  // Main click handler for the container
-  container.addEventListener("click", function(event) {
+  container.addEventListener("click", function (event) {
     if (isDragging) return;
-    
+
     const coords = getClickCoordinates(event);
-    
-    switch(currentToolState) {
+
+    switch (currentToolState) {
       case ToolState.PLACING_ANIMAL:
         placeAnimal(coords, selectedTool);
         break;
       case ToolState.PLACING_BUILDING:
 
-      if (selectedTool === "buildingsCardSelectTool") {
+        if (selectedTool === "buildingsCardSelectTool") {
 
           // Check if houses array exists and has items
-  if (!houses || !houses.length) {
-    console.log("No houses found in the houses array");
-    return;
-  }
-        selectBuilding(selectedTool, coords);
-      } else {
-        placeBuilding(coords, selectedTool); 
-      }
+          if (!houses || !houses.length) {
+            console.log("No houses found in the houses array");
+            return;
+          }
+          selectBuilding(selectedTool, coords);
+        } else {
+          placeBuilding(coords, selectedTool);
+        }
         break;
       case ToolState.TERRAIN_TOOL:
         handleTerrainTool(coords, selectedTool);
         break;
+
+
+
       case ToolState.SELECTING_NPC:
-        handleNPCSelection(coords);
+
+        if (selectedTool === "creaturesCardSelectTool") {
+          if (npc.length === 0) {
+            console.log("No npcs found in the npc array");
+            return;
+          }
+          selectNPC(coords);
+
+
+        } else
+          //place npc
+          placeNPC(coords);
+
         break;
     }
   });
 
-  // Start the animation loop
-  requestAnimationFrame(updateAnimals);
 
   // Add this at the end of your DOMContentLoaded event or at the bottom of your file
-  document.getElementById('closeBuildingButton').addEventListener('click', function() {
+  document.getElementById('closeBuildingButton').addEventListener('click', function () {
     const insideBuilding = document.getElementById('insideBuilding');
     if (insideBuilding) {
-        insideBuilding.style.visibility = 'collapse';
+      insideBuilding.style.visibility = 'collapse';
+      insideBuilding.style.display = 'none';
     }
-    
+
     // Show the game container again
     const container = document.getElementById('container');
     if (container) {
-        container.style.visibility = 'visible';
-        container.style.display = "block";
+      container.style.visibility = 'visible';
+      container.style.display = "block";
     }
   });
-}); 
+});
 
 
-
+function selectNPC(coords) {
+  console.log("Selecting NPC at", coords);
+  for (const npc of npcs) {
+    if (npc.x === coords.cellCol && npc.y === coords.cellRow) {
+      console.log("Found NPC at", coords);
+      break;
+    }
+  }
+}
 
 function selectBuilding(toolId, coords) {
   console.log("Selecting homes in the homes array, received coords:", coords);
@@ -193,8 +193,9 @@ function selectBuilding(toolId, coords) {
     const insideBuilding = document.getElementById('insideBuilding');
     if (insideBuilding) {
       insideBuilding.style.visibility = 'visible';
+      insideBuilding.style.display = 'flex';
       populateBuildingDetails(foundHouse);
-    } 
+    }
   } else {
     console.log(`No house found at exact cell (${coords.cellCol}, ${coords.cellRow})`);
   }
@@ -208,30 +209,30 @@ function populateBuildingDetails(house) {
 
   const buildingTitle = document.getElementById('buildingTitle');
   const buildingDetails = document.getElementById('buildingDetails');
-  
+
   if (buildingTitle) {
     buildingTitle.textContent = house.type || 'Building';
   }
-  
+
   if (buildingDetails) {
     let detailsHtml = '';
-    
+
     // Add building ID or name
     detailsHtml += `<p>ID: ${house.id || 'Unknown'}</p>`;
-    
+
     // Add building position
     detailsHtml += `<p>Position: (${Math.floor(house.x / cellSize)}, ${Math.floor(house.y / cellSize)})</p>`;
-    
+
     // Add owner information if available
     if (house.owner) {
       detailsHtml += `<p>Owner: ${house.owner}</p>`;
     }
-    
+
     // Add any other relevant building information
     if (house.size) {
       detailsHtml += `<p>Size: ${house.size}</p>`;
     }
-    
+
     buildingDetails.innerHTML = detailsHtml;
     buildingDetails.style.display = "block";
   }

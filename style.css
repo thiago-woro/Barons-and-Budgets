@@ -656,12 +656,14 @@ font-size: 16px;
 
 
 #insideBuilding {
+    display: flex;
+    flex-direction: column;
     position: fixed;
     top: 0;
     left: 0;
     width: 1000px;
     height: 1000px;
-    background-color: #000000;
+    background-color: #000000f4;
     margin: 0px;
     padding: 0px;
 }
@@ -704,19 +706,29 @@ font-size: 16px;
 
                      
 .bottomTabs {
+    display: flex;
+    flex-direction: row;
     border: 0px solid #484f43;
     background-color: #84bc3f;
     border-radius: 10px;
-    padding: 0px;
+    padding: 10px;
     margin: 10px;
 }
 
 /* span inside bottomTabs */
 .bottomTabs span {
     font-size: 12px;
-    padding: 10px;
+    padding: 0px;
     border-radius: 10px;
     cursor: pointer;
+}
+
+.shortcutSpan {
+    font-size: 12px;
+    padding: 0px;
+    border-radius: 10px;
+    cursor: pointer;
+    color: grey;
 }
 
 

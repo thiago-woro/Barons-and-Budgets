@@ -16,17 +16,32 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
 
-<div id="infoPanel" style="position: absolute; display: block;visibility: collapse; z-index: 2000; left: 0; top: 0;">
+<div id="infoPanel" style="position: absolute; display: none;visibility: collapse; z-index: 2000; left: 0; top: 0;">
+
 <img src="./assets/Races/purries/female/catgirl (4).png" style="height: 200px; width: 200px;">
 </div>
 
-<div id="insideBuilding" style="width: 100vw; height: 100vh; position: absolute; display: block;visibility: collapse; z-index: 2000; left: 0; top: 0;">
-   
+
+<!-- shows houses interior -->
+<div id="insideBuilding" class="col" style="width: 100vw; height: 100vh; position: absolute; display: none; z-index: 2000; left: 0; top: 0;">
+   <div class="col" id="insideBuildingContent">
         <h2 id="buildingTitle">Building</h2>
         <div id="buildingDetails">
             <!-- Building details will be populated here -->
         </div>
      <button id="closeBuildingButton" style="position: absolute; top: 10px; right: 10px;">Close</button>
+     </div>
+</div>
+
+
+<!-- debug panel -->
+<div id="debugPanel" style="width: 100vw; height: 100vh; position: absolute; display: none;visibility: collapse; z-index: 2000; left: 0; top: 0;">
+    <div id="debugPanelContent">
+        <h2>Debug Panel</h2>
+        <div id="debugInfo">
+            <p>Debug information will be displayed here.</p>
+        </div>
+    </div>
 </div>
 
 <div id="welcomeScreen" class=""> <!-- Start: welcome screen -->
@@ -74,18 +89,23 @@
                     <div id="leftMenuHeaderTabs" class="row" style="margin: 0px;">
                         <div class="bottomTabs">
                             <span id="terrainTab">Terrain</span>
+                            <span class="shortcutSpan">[1]</span>
                         </div>
                         <div class="bottomTabs">
                             <span id="creaturesTab">Creatures</span>
+                            <span class="shortcutSpan">[2]</span>
                         </div>
                            <div class="bottomTabs">
                             <span id="animalsTab">Animals</span>
+                            <span class="shortcutSpan">[3]</span>
                         </div>
                         <div class="bottomTabs">
                             <span id="budgetsTab">Budgets</span>
+                            <span class="shortcutSpan">[4]</span>
                         </div>
                         <div class="bottomTabs">
                             <span id="buildingsTab">Buildings</span>
+                            <span class="shortcutSpan">[5]</span>
                         </div>
                     </div>
 
@@ -319,10 +339,10 @@
 			<div class="row">
 				<button id="gen2">Generate Map</button>
 				<button id="startColony" class="blueButton">Start colony</button>
-                <span id="recenterCanvas">[m]</span>
 
             </div>
                 <div id="secondRowButtons" class="row footprint" style="margin-top: 10px;">
+                <span id="recenterCanvas">[m]</span>
 				<button class="secondaryBtn" id="clearGround">Remove Land</button>
 				<button class="secondaryBtn" id="removeWater">Remove Water</button>
 				<button class="secondaryBtn" onclick="clearNPC()" id="clearNPCS">Remove NPCS</button>
@@ -358,7 +378,7 @@
 
                 <img id="playStatusImg" style="width: 50px; display: none;" src="https://cdn.pixabay.com/animation/2022/07/31/05/09/05-09-47-978_512.gif">
             </div>
-<div id="slidersGP" class="col footprint" style=" margin-top: 10px; padding: 15px;">
+<div id="slidersGP" class="col footprint" style=" margin-top: 10px; padding: 15px; display: none;">
             <p id="cameraZoomInfo" style="margin: 3px; color: #fff;">Camera: Zoom: 1.00 | Position: (0.00, 0.00)</p>
             <br>
             <br>
@@ -504,14 +524,14 @@
 
   <!--     <script src="./simulation.js"></script> -->
   <script src="globalvariables.js"></script>
-  <script src="./uitools.js"></script>
+  <script src="./UI/uitools.js"></script>
 		<script src="perlin.js"></script>
      <script src="./mapGen.js"></script>
      <script src="./water.js"></script>
      <script src="./trees.js"></script>
      <script src="./grass.js"></script>
      <script src="./game.js"></script>
-     <script src="./utils.js"></script>
+     <script src="./UI/utils.js"></script>
      <script src="./professions/woodcutter.js"></script>
      <script src="./professions/hunter.js"></script>
      <script src="./professions/fisher.js"></script>
@@ -525,10 +545,10 @@
      <script src="./NPC/raceProfessions.js"></script>
      <script src="./NPC/npcClass.js"></script>
      <script src="./NPC/npcs.js"></script>
-     <script src="./camera.js"></script>
+     <script src="./UI/camera.js"></script>
      <script src="./animations.js"></script>
      <script src="./animalClass.js"></script>
-     <script src="./toolManager.js"></script>
+     <script src="./UI/toolManager.js"></script>
      <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
 
   <script>

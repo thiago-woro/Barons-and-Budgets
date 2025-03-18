@@ -164,7 +164,44 @@ function gameLoop(timestamp) {
     
 
   }
+
+
+  
 }
+ // Start the animation loop
+  requestAnimationFrame(updateAnimals);
+
+
+
+
+  let lastTime = performance.now();
+
+  // Animation loop for animals
+  function updateAnimals(currentTime) {
+    // Calculate time passed since last frame
+    const deltaTime = currentTime - lastTime;
+    lastTime = currentTime;
+    
+    // Clear previous positions
+    animalCtx.clearRect(0, 0, animalCanvas.width, animalCanvas.height);
+    
+    // Update and draw each animal
+    animals.forEach(animal => {
+      animal.move(deltaTime);
+      animal.draw(animalCtx);
+    });
+
+    requestAnimationFrame(updateAnimals);
+  }
+
+
+
+
+
+
+
+
+
 
 function updateDebuggerOverlay() {
   const debuggerOverlay = document.getElementById("debuggerOverlay");
