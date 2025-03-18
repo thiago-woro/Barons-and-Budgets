@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function placeAnimal(coords, toolId) {
     // Check if clicked on ground
-    const isGround = groundCells.some(cell =>
+    const isGround = emptyCells.some(cell =>
       cell.x === coords.cellCol && cell.y === coords.cellRow
     );
 
@@ -103,9 +103,23 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function handleTerrainTool(coords, toolId) {
-    console.log(`Using terrain tool: ${toolId} at`, coords);
+    console.log(`> terrain >> ${toolId}`);
     // Implement terrain modification logic
+
+
+    if (toolId === "terrainCardBush") {
+      console.log(`> terrain >> ${toolId}`);
+      placeTree(coords.cellCol, coords.cellRow, "🌳");
+    }
+
+    if (toolId === "terrainCardTree") {
+      console.log(`> terrain >> ${toolId}`);
+      placeTree(coords.cellCol, coords.cellRow, "🌲");
+    }
+
   }
+
+
 
 
   container.addEventListener("click", function (event) {

@@ -8,101 +8,91 @@ const TREE_LIFECYCLE = {
   MIN_TREES: 20                // Minimum number of trees to maintain
 };
 
-// Add these helper functions at the top of the file
-function manhattan(point1, point2) {
-    return Math.abs(point1.x - point2.x) + Math.abs(point1.y - point2.y);
-}
 
-function findNearestTree(startX, startY) {
-    let nearest = null;
-    let minDistance = Infinity;
+function modifyWalkableCells(cells, operation) {
+    if (!Array.isArray(cells)) {
+console.error("modifyWalkableCells: cells argument must be an array.");
+        return;}   
+    console.log(`🌲 modifyWalkableCells: ${operation}ing ${cells.length} cells.`);
 
-    // Filter for pine trees only (🌲)
-    treePositions.filter(tree => tree.emoji === "🌲").forEach(tree => {
-        const distance = manhattan(
-            { x: Math.floor(startX/cellSize), y: Math.floor(startY/cellSize) },
-            { x: Math.floor(tree.x/cellSize), y: Math.floor(tree.y/cellSize) }
-        );
-        if (distance < minDistance) {
-            minDistance = distance;
-            nearest = tree;
-        }
-    });
-
-    return nearest;
-}
-
-
-
-// Add this function to visualize the path (for debugging)
-function drawPath(ctx, path) {
-    if (!path) return;
-    
-    ctx.beginPath();
-    ctx.moveTo(path[0].x, path[0].y);
-    for (let i = 1; i < path.length; i++) {
-        ctx.lineTo(path[i].x, path[i].y);
+    if (operation !== "remove" && operation !== "add") {
+        console.error("modifyWalkableCells: operation argument must be 'remove' or 'add'.");
+        return;
     }
-    ctx.strokeStyle = 'rgba(255, 255, 0, 0.5)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
+
+    if (operation === "remove") {
+        emptyCells = emptyCells.filter(ec => !cells.some(cell => ec.x === cell.x && ec.y === cell.y));
+    } else if (operation === "add") {
+        cells.forEach(cell => {
+            if (!emptyCells.some(ec => ec.x === cell.x && ec.y === cell.y)) {
+                emptyCells.push(cell);
+            }
+        });
+    }
+
+    console.log(`🌲 ${operation}ed ${cells.length} cells. emptyCells.length: ${emptyCells.length}`);
 }
 
 function startTrees(ctx, cellSize) {
-    clearCanvas(ctx);
-    let treeCount = 0;
+  clearCanvas(ctx);
+  let treeCount = 0;
 
-    // Define the tree emojis based on noise values
-    const treeEmojis = {
-        "🌴": [],   // For lower noise values
-        "🌵": [],   // For medium noise values
-        "🌳": [],   // For higher noise values
-        "🌲": [],   // For the highest noise values
-    };
+  const treeEmojis = {
+    "🌴": [], //Palm
+    "🌵": [],  //Cactus
+    "🌳": [],   //Deciduous Tree
+    "🌲": [],    //Coniferous Tree
+  };
 
-    treeCount = groundCells.length * treePercentageofLand;
+  treeCount = groundCells.length * treePercentageofLand;
 
+  emptyCells.forEach((cell) => {
+    let selectedEmoji = null;
+    const noise = cell.noise;
 
-    // Assign tree emojis based on noise values
-    emptyCells.forEach((cell) => {
-        let selectedEmoji = null;
-        const noise = cell.noise;
-
-        // Very strict noise ranges for each tree type
-        if (noise > 0.01 && noise <= 0.03) {
-            selectedEmoji = "🌴";  // Palm trees only in very specific low range (0.05-0.06)
-        } else if (noise > 0.06 && noise <= 0.08) {
-            selectedEmoji = "🌵";  // Cactus in low-medium range (0.06-0.13)
-        } else if (noise > 0.13 && noise < 0.45) {
-            selectedEmoji = "🌳";  // Deciduous trees in medium range (0.13-0.45)
-        } else if (noise >= 0.45) {
-            selectedEmoji = "🌲";  // Pine trees only at high elevations (0.45+)
-        }
-
-        if (selectedEmoji && treeEmojis[selectedEmoji]) {
-            treeEmojis[selectedEmoji].push(cell);
-        }
-    });
-
-    // Generate initial tree positions instantly
-    for (let i = 0; i < treeCount; i++) {
-        const selectedEmoji = Object.keys(treeEmojis)[i % 4];
-        if (treeEmojis[selectedEmoji].length > 0) {
-            const randomIndex = Math.floor(Math.random() * treeEmojis[selectedEmoji].length);
-            const selectedCell = treeEmojis[selectedEmoji].splice(randomIndex, 1)[0];
-            const x = selectedCell.x * cellSize;
-            const y = selectedCell.y * cellSize;
-            treePositions.push({ x, y, emoji: selectedEmoji, scale: 1, opacity: 1, rotation: 0 });
-        }
+    if (noise > 0.01 && noise <= 0.03) {
+      selectedEmoji = "🌴";
+    } else if (noise > 0.06 && noise <= 0.08) {
+      selectedEmoji = "🌵";
+    } else if (noise > 0.13 && noise < 0.45) {
+      selectedEmoji = "🌳";
+    } else if (noise >= 0.45) {
+      selectedEmoji = "🌲";
     }
 
-    drawTrees(treeCtx, treePositions);
-    drawGrass(treeCtx, 0.05);
-    
-    // Initialize tree lifecycle
-    initTreeLifecycle();
-    return treePositions;
+    if (selectedEmoji && treeEmojis[selectedEmoji]) {
+      treeEmojis[selectedEmoji].push(cell);
+    }
+  });
+
+  for (let i = 0; i < treeCount; i++) {
+    const selectedEmoji = Object.keys(treeEmojis)[i % 4];
+    if (treeEmojis[selectedEmoji].length > 0) {
+      const randomIndex = Math.floor(Math.random() * treeEmojis[selectedEmoji].length);
+      const selectedCell = treeEmojis[selectedEmoji].splice(randomIndex, 1)[0];
+      const x = selectedCell.x * cellSize;
+      const y = selectedCell.y * cellSize;
+      treePositions.push({ x, y, emoji: selectedEmoji, scale: 1, opacity: 1, rotation: 0 });
+    }
+  }
+
+  drawTrees(treeCtx, treePositions);
+  drawGrass(treeCtx, 0.05);
+
+  // Remove tree positions from emptyCells
+  if (treePositions.length > 0) {
+    const treeCells = treePositions.map(tree => ({
+      x: Math.floor(tree.x / cellSize),
+      y: Math.floor(tree.y / cellSize)
+    }));
+    modifyWalkableCells(treeCells, "remove");
+  }
+
+  initTreeLifecycle();
+  return treePositions;
 }
+
+
 
 function drawTrees(ctx, treePositions) {
     clearCanvas(ctx);
@@ -119,6 +109,8 @@ function drawTrees(ctx, treePositions) {
         const rotation = tree.rotation || 0;
         const x = tree.x;
         const y = tree.y;
+        const emoji = tree.emoji;
+
 
         ctx.save();
         ctx.translate(x, y);
@@ -134,7 +126,7 @@ function drawTrees(ctx, treePositions) {
         ctx.fillStyle = tree.color || `rgba(0, 0, 0, ${opacity})`;
         ctx.textAlign = "center";
         ctx.font = `bold ${20 * scale}px Arial`;
-        ctx.fillText(tree.emoji, 0, 0);
+        ctx.fillText(emoji, 0, 0);
 
         ctx.restore();
     });
@@ -146,13 +138,13 @@ function animateNewTree(x, y, emoji, callback) {
     const tree = { x, y, emoji, scale: 0, opacity: 0, rotation: 0 };  
     treePositions.push(tree);
 
-/*     // Play pop sound at spaced intervals
+     // Play pop sound at spaced intervals
     if (!treePopSound.lastPlayed || (Date.now() - treePopSound.lastPlayed) > 5000) { // 5 seconds interval
       treePopSound.currentTime = 0;
       treePopSound.play().catch(e => console.log("Audio play tree failed:", e));
       treePopSound.lastPlayed = Date.now();
     }
- */
+ 
     //paint the tile terrains a flowery color beneath the tree
     const color = 'rgba(129, 178, 86, 0.37)';
     drawCircle(groundCtx, x, y, 10, color);
@@ -240,7 +232,7 @@ function dyingTreeAnimation(treeIndex, callback) {
                 // Remove the tree from the array
                 treePositions.splice(finalIndex, 1);
                 // Force a complete redraw of all trees
-                drawTrees(treeCtx, treePositions);
+              //  drawTrees(treeCtx, treePositions);
                 // Clear the canvas one more time to ensure no artifacts remain
                 clearCanvas(treeCtx);
                 drawTrees(treeCtx, treePositions);
@@ -315,6 +307,7 @@ function distributeOreDeposits(ctx) {
         );
     });
 
+    //only starts trees after ore deposits!
     startTrees(treeCtx, cellSize);
 }
 
@@ -378,3 +371,48 @@ function initTreeLifecycle() {
         }
     }, TREE_LIFECYCLE.DEATH_CHECK_INTERVAL);
 }
+
+
+
+function placeTree(x, y, emoji) {
+    if (typeof x !== 'number' || typeof y !== 'number' || typeof emoji !== 'string') {
+        console.error("placeTree: Invalid input parameters.");
+        return;
+    }
+
+    const newTree = {
+        x: x * cellSize, // Assuming cellSize is defined globally
+        y: y * cellSize,
+        emoji: emoji,
+        scale: 1, // Default scale
+        opacity: 1, // Default opacity
+        rotation: 0 // Default rotation
+    };
+
+    treePositions.push(newTree); // Assuming treePositions is a global array
+    
+    // Update emptyCells
+    modifyWalkableCells([{ x: x, y: y }], "remove");
+    
+    // Redraw trees
+    drawTrees(treeCtx, treePositions); // Assuming treeCtx and drawTrees are defined
+
+    console.log(`🌲 Tree placed at (${x}, ${y}) with emoji: ${emoji}`);
+}
+
+
+/* 
+// Add this function to visualize the path (for debugging)
+function drawPath(ctx, path) {
+    if (!path) return;
+    
+    ctx.beginPath();
+    ctx.moveTo(path[0].x, path[0].y);
+    for (let i = 1; i < path.length; i++) {
+        ctx.lineTo(path[i].x, path[i].y);
+    }
+    ctx.strokeStyle = 'rgba(255, 255, 0, 0.5)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+}
+ */

@@ -108,7 +108,7 @@ class Animal {
 
         // Filter for valid ground cells
         const validCells = adjacentCells.filter(cell => 
-          groundCells.some(groundCell => 
+          emptyCells .some(groundCell => 
             groundCell.x === cell.x && groundCell.y === cell.y
           )
         );
@@ -296,7 +296,7 @@ class Animal {
     if (!isChasing && this.isPredator) {
       // For predators not in chase mode, evaluate cell desirability
       const cellDesirability = moves.map(move => {
-        const cell = groundCells.find(c => c.x === move.x && c.y === move.y);
+        const cell = emptyCells.find(c => c.x === move.x && c.y === move.y);
         return {
           move,
           desirability: this.evaluateCellDesirability(cell)
@@ -343,16 +343,6 @@ class Animal {
   move(deltaTime) {
     if (!this.isAlive || this.isPaused) return; // Check for pause state
 
-    // Check if frozen
-    if (this.isFrozen) {
-      const timeFrozen = Date.now() - this.freezeTime;
-      if (timeFrozen >= 3000) {
-        this.isFrozen = false;
-      } else {
-        return;
-      }
-    }
-
     this.age += deltaTime;
     this.ageDie();
     
@@ -367,7 +357,7 @@ class Animal {
       let nextCell = this.getNextCell(currentX, currentY);
       
       // Check if preferred cell is valid ground
-      let isValidCell = groundCells.some(cell => 
+      let isValidCell = emptyCells.some(cell => 
         cell.x === nextCell.x && cell.y === nextCell.y
       );
 
@@ -377,7 +367,7 @@ class Animal {
         for (let i = 0; i < 4; i++) {
           this.currentDirection = (this.currentDirection + 1) % 4;
           nextCell = this.getNextCell(currentX, currentY);
-          isValidCell = groundCells.some(cell => 
+          isValidCell = emptyCells.some(cell => 
             cell.x === nextCell.x && cell.y === nextCell.y
           );
           if (isValidCell) break;
@@ -432,9 +422,9 @@ function starterAnimalPopulations(amount = 20) {
   animals = [];
 
   // Group cells by terrain type
-  const sandCells = groundCells.filter(cell => parseFloat(cell.noise) < 0.05);
-  const mountainCells = groundCells.filter(cell => parseFloat(cell.noise) > 0.4);
-  const middleCells = groundCells.filter(cell => {
+  const sandCells = emptyCells.filter(cell => parseFloat(cell.noise) < 0.05);
+  const mountainCells = emptyCells.filter(cell => parseFloat(cell.noise) > 0.4);
+  const middleCells = emptyCells.filter(cell => {
     const noise = parseFloat(cell.noise);
     return noise >= 0.15 && noise <= 0.2;
   });

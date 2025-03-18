@@ -18,7 +18,7 @@ FOCUS ON WHAT I ASKED ONLY.
 6. add taskHistory to npcs
 
 
-
+7. create a debugger that shows all variables for each file
 
 
 
