@@ -1,6 +1,28 @@
 DO NOT ADD RANDOM BULLSHIT I DID NOT ASK. 
 FOCUS ON WHAT I ASKED ONLY.
 
+
+
+1. draw grass spots on adjecnt cells to trees
+2. erase grass , whena  npcs walks over it
+
+3. re-do trees to distribute them according to tree species. (less cacuts, clump bushes together etc)
+3.1 Add availableItemDrops from trees. harvesting or cutting down.
+3.2 add profession harvester.
+3.3 change professions to use a cycle of possible tasks.
+
+4. sheeps should move between lakes and cherry bushes. add animal inventory. Add availableItemDrops for animals.
+
+5. new Class Task -> contains a set of other tasks to do. variables: npc, duration, 
+
+6. add taskHistory to npcs
+
+
+
+
+
+
+
 To do:
 
 

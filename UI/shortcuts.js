@@ -1,5 +1,3 @@
-const shortcuts = () => {
-    const canvases = container.querySelectorAll("canvas");
 
         window.addEventListener("keydown", (event) => {
             const key = event.key.toLowerCase();
@@ -24,5 +22,3 @@ const shortcuts = () => {
             }
         });
 
-
-    export default shortcuts;

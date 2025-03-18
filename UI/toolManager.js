@@ -1,3 +1,5 @@
+
+
 document.addEventListener('DOMContentLoaded', () => {
   const ToolState = {
     SELECTING: 'selecting',
@@ -11,7 +13,15 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedTool = null;
   let lastTime = performance.now();
 
-  // Add click handlers for the bottom cards
+  function removeActiveClassFromBottomCards(cardId) {
+    document.querySelectorAll('.bottomCard').forEach(card => {
+      card.classList.remove('active');
+    });
+          document.getElementById(cardId).classList.add('active');
+
+  }
+
+  // BOTTOM CARDS ARE THE 2nd Row
   document.querySelectorAll('.bottomCard').forEach(card => {
     card.addEventListener('click', () => {
       const cardId = card.id;
@@ -19,18 +29,22 @@ document.addEventListener('DOMContentLoaded', () => {
       // Set state based on active tab and card
       switch (window.activeTabBottomLeft) {
         case 'animals':
+          removeActiveClassFromBottomCards(cardId);
           currentToolState = ToolState.PLACING_ANIMAL;
           selectedTool = cardId;
           break;
         case 'buildings':
+          removeActiveClassFromBottomCards(cardId);
           currentToolState = ToolState.PLACING_BUILDING;
           selectedTool = cardId;
           break;
         case 'terrain':
+          removeActiveClassFromBottomCards(cardId);
           currentToolState = ToolState.TERRAIN_TOOL;
           selectedTool = cardId;
           break;
         case 'creatures':
+          removeActiveClassFromBottomCards(cardId);
           currentToolState = ToolState.SELECTING_NPC;
           selectedTool = cardId;
           break;

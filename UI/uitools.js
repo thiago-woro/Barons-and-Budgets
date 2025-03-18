@@ -127,8 +127,6 @@ function handleBottomTabClick(tabId) {
   } else if (window.activeTabBottomLeft === 'animals') {
     document.getElementById('animalCanvas').style.zIndex = '99';
   }
-
-  console.log(`Active bottom tab: ${window.activeTabBottomLeft}`);
 }
 
 // Add event listeners to bottom tabs
