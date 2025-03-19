@@ -11,6 +11,7 @@ class Animal {
   static MAX_AGE = 30000;  // Time until natural death (60 seconds)
   static PREDATOR_MAX_AGE = 20000;  // Predators die twice as fast (30 seconds)
   static MAX_ANIMALS = Math.floor(maxLandPopulation);  // Maximum number of animals allowed based on usable land
+  static BABY_EMOJI_DURATION = 5000; // Duration for baby emoji size (5 seconds)
 
   // Add static method to pause/unpause all animals
   static setAllPaused(isPaused) {
@@ -34,6 +35,7 @@ class Animal {
     this.isFrozen = false;
     this.freezeTime = 0;
     this.isPaused = false; // Add pause state flag
+    this.birthDate = Date.now(); // Initialize birth date for all animals
     
     //console.log(`Animal created at cell (${x}, ${y}), world position (${this.x}, ${this.y}), type: ${type}, emoji: ${this.emoji}`);
     
@@ -120,6 +122,7 @@ class Animal {
           animals.push(newAnimal);
           // Growth animation for new birth
           newAnimal.animateEmoji('pulse', newAnimal.emoji, 800);
+          // Birth date is already set in constructor
         }
       }
 
@@ -403,13 +406,21 @@ class Animal {
       
       if (!this.drawAnimation(ctx)) {
         ctx.fillStyle = 'black';
-        ctx.font = '20px Arial';
+        
+        // Check if the animal is a "baby" and adjust font size
+        const isBaby = this.birthDate && (Date.now() - this.birthDate < Animal.BABY_EMOJI_DURATION);
+        ctx.font = isBaby ? '10px Arial' : '20px Arial';
+        
         ctx.fillText(this.emoji, this.x, this.y);
       }
     } else {
       if (!this.drawAnimation(ctx)) {
         ctx.fillStyle = 'black';
-        ctx.font = '20px Arial';
+        
+        // Check if the animal is a "baby" and adjust font size
+        const isBaby = this.birthDate && (Date.now() - this.birthDate < Animal.BABY_EMOJI_DURATION);
+        ctx.font = isBaby ? '14px Arial' : '20px Arial';
+        
         ctx.fillText(this.emoji, this.x, this.y);
       }
     }
