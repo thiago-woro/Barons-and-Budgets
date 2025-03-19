@@ -170,6 +170,8 @@ this.name = generateName(this); // Generate a name using global function
 
   // Regular movement method for non-woodcutter NPCs
   move() {
+    //console.log
+    console.log(`NPC ${this.name} is moving`);
     // If NPC can't move (e.g., during cutting), don't move
     if (this.canMove === false) {
       return;

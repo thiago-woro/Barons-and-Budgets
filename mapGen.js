@@ -269,7 +269,7 @@ function afterMapGen() {
   
 }
 
-function drawHousePaths(cellArray, numRowsToSkip, pathCurveAmount) {
+function drawHousePaths(cellArray, numRowsToSkip, pathCurveAmount) {   //wavy house paths
   // Base path color - now we'll adjust opacity dynamically
   const basePathColor = "197, 190, 172"; // RGB values without the alpha
 
@@ -593,10 +593,11 @@ function drawMountainTexture(ctx) {
 
 function placeLakes() {
     // Filter empty cells to find suitable lake locations (noise > 0.035)
-    const potentialLakeCells = emptyCells.filter(cell => cell.noise && parseFloat(cell.noise) > 0.5);
+    const potentialLakeCells = emptyCells.filter(cell => cell.noise && parseFloat(cell.noise) > 0.4);
 
     if (potentialLakeCells.length === 0) {
         console.log("No suitable locations found for lakes.");
+        alert("No suitable locations found for lakes.");
         return;
     }
 
@@ -614,7 +615,7 @@ function placeLakes() {
         const groundCell = groundCells.find(gc => gc.x === cell.x && gc.y === cell.y);
         if (groundCell) {
             groundCell.noise = "-0.9"; // Set noise to -0.4 to make it water
-            groundCell.color = WATER_SHADES[0]; // Optional: Change color to water color
+            groundCell.color = WATER_SHADES[7]; // Optional: Change color to water color
         }
     });
 

@@ -110,18 +110,21 @@
                     </div>
 
                 <div class="row" id="terrainRow" style="margin: 0px;">
-                    <!-- horizontal row, with a list of TERRAIN cards. terrain cards are: "Select", "Delete", "Clear", "Place", "Water", "Ground" -->
+                    <!-- horizontal row, with a list of TERRAIN cards. terrain cards are: "Select", "Delete", "Place", "Water", "Ground" -->
                     <div class="bottomCard" id="terrainCardSelect">
                         <h3>Select</h3>
                     </div>
                     <div class="bottomCard" id="terrainCardDelete">
-                        <h3>Delete</h3>
+                        <h3>❌ Delete</h3>
                     </div>
                     <div class="bottomCard" id="terrainCardBush"  data-emoji="🌳" data-text="Bush">
                         <h3> 🌳 Bush</h3>
                     </div>
                     <div class="bottomCard" id="terrainCardTree"  data-emoji="🌲" data-text="Tree"> 
                         <h3> 🌲 Tree</h3>
+                    </div>
+                    <div class="bottomCard" id="terrainCardPath">
+                        <h3>Path</h3>
                     </div>
                     
                 </div>
@@ -130,6 +133,9 @@
 <!-- creatures row -->
 <div class="row" id="creaturesRow" style="margin: 0px;">
     <!-- horizontal row, with a list of CREATURES cards. creatures cards are: "Elf", "Kurohi", "Purrie", "Sheep", "Cow", "Chicken", "Pig" -->
+    <div class="bottomCard" id="creaturesCardSelectTool">
+        <h3>Select</h3>
+    </div>
     <div class="bottomCard" id="creaturesCardElf">
         <h3>Elf</h3>
     </div>
@@ -170,6 +176,9 @@
     <!-- budgets row -->
     <div class="row" id="budgetsRow" style="margin: 0px;">
         <!-- horizontal row, with a list of BUDGETS cards. budgets cards are: "Food", "Wood", "Crystallite", "Population" -->
+        <div class="bottomCard" id="budgetsCardSelectTool">
+            <h3>Select</h3>
+        </div>
         <div class="bottomCard" id="budgetsCardEconomy">
             <h3>Economy</h3>
         </div>
@@ -195,7 +204,7 @@
             <div class="row" id="buildingsRow" style="margin: 0px;">
                 <!-- horizontal row, with a list of BUILDINGS cards. buildings cards are: "House", "Farm", "Mine", "Factory", "School", "Hospital", "Temple", "Castle" -->
                   <div class="bottomCard" id="buildingsCardSelectTool">
-                    <h3>Select Tool</h3>
+                    <h3>Select</h3>
                 </div>
                 <div class="bottomCard" id="buildingsCardHouse">
                     <h3>House</h3>

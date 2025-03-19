@@ -394,7 +394,7 @@ infoPanel.addEventListener('click', () => {
 
 let foundNPC = false;
 
-// Add click event handler for NPCs
+/* // Add click event handler for NPCs
 npcCanvas.addEventListener("click", function(event) {
   // Only show NPC info if the active tab is "creatures"
   if (window.activeTabBottomLeft !== "creatures") return;
@@ -432,7 +432,7 @@ npcCanvas.addEventListener("click", function(event) {
   }
 });
 
-
+ */
 
 // Keep the existing mousemove handler with simplified functionality
 npcCanvas.addEventListener("mousemove", function (event) {

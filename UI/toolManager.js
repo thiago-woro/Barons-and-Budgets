@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const placeBuilding = (coords, toolId) => {
         console.log(`Placing building: ${toolId} at`, coords);
-        houses.push(new Building(coords.cellCol, coords.cellRow, cellSize, null, toolId));
+        buildings.push(new Building(coords.cellCol, coords.cellRow, cellSize, null, toolId));
     };
 
     const handleTerrainTool = (coords, toolId) => {
@@ -73,6 +73,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
             }
         }
+    };
+
+    const placeNPC = (coords, toolId) => {
+        console.log(`Placing NPC of type: ${toolId} at`, coords);
+        // Assuming you have a NPC class and a way to determine the NPC type based on toolId
+        npcs.push(new NPC(coords.cellCol, coords.cellRow, npcs.length, null, 0));
+        //draw
+        npcCanvas.getContext('2d').clearRect(0, 0, npcCanvas.width, npcCanvas.height);
     };
 
     const selectBuilding = (coords) => {
@@ -109,13 +117,14 @@ document.addEventListener('DOMContentLoaded', () => {
             case ToolState.PLACING_ANIMAL: placeAnimal(coords, selectedTool); break;
             case ToolState.PLACING_BUILDING: selectedTool === "buildingsCardSelectTool" ? selectBuilding(coords) : placeBuilding(coords, selectedTool); break;
             case ToolState.TERRAIN_TOOL: handleTerrainTool(coords, selectedTool); break;
-            case ToolState.SELECTING_NPC: selectedTool === "creaturesCardSelectTool" ? selectNPC(coords) : placeNPC(coords); break;
+            case ToolState.SELECTING_NPC: selectedTool === "creaturesCardSelectTool" ? selectNPC(coords) : placeNPC(coords, selectedTool); break;
         }
     });
 
     document.getElementById('closeBuildingButton').addEventListener('click', () => {
         document.getElementById('insideBuilding').style.display = 'none';
         container.style.display = "block";
+        container.style.visibility = 'visible';
     });
 
     function setActiveAnimalCard(name, emoji) {

@@ -119,7 +119,7 @@ class Animal {
           const newAnimal = new Animal(birthCell.x, birthCell.y, this.type);
           animals.push(newAnimal);
           // Growth animation for new birth
-          newAnimal.animateEmoji('getBig', newAnimal.emoji, 800);
+          newAnimal.animateEmoji('pulse', newAnimal.emoji, 800);
         }
       }
 
@@ -155,7 +155,7 @@ class Animal {
     
     // Check for prey in kill range
     const prey = animals.filter(animal => {
-      if (animal === this || animal.isPredator || !animal.isAlive || animal.isFrozen) return false;
+      if (animal === this || animal.isPredator || !animal.isAlive ) return false;
       
       const animalX = Math.floor(animal.x / cellSize);
       const animalY = Math.floor(animal.y / cellSize);
@@ -165,7 +165,7 @@ class Animal {
         Math.pow(currentY - animalY, 2)
       );
       
-      return distance <= 2; // Changed to 2 cells distance
+      return distance <= 1; // Changed to 2 cells distance
     });
 
     // Kill the first prey found
@@ -207,7 +207,7 @@ class Animal {
     prey.isDying = true;
     prey.deathTime = Date.now();
     prey.animateEmoji('small', prey.emoji, 500);
-    setTimeout(() => prey.animateEmoji('fade', '🥩', 1500), 500);
+    setTimeout(() => prey.animateEmoji('fade', '🥩', 3500), 5500);
     this.animateEmoji('pop', this.emoji, 500);
 
     // Remove prey after animations

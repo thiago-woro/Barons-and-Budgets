@@ -1,6 +1,3 @@
-
-
-
 const houseSimple = new Image();
 houseSimple.src = '/assets/tilesets/houses/simple.png';
 
@@ -20,8 +17,6 @@ const stableHouse = new Image();
 stableHouse.src = '/assets/tilesets/houses/stable.png';
 
 const buildSound = new Audio('/assets/sounds/building_completed.wav');
-
-
 
 // Create an array to hold the house images
 const houseImages = [];
@@ -334,7 +329,7 @@ class Building {
   }
 
   // Method to draw the building on the canvas
-  draw(buildingCtx, cellSize) {
+  draw(buildingCtx) {
     // Choose emoji character based on building type, economic status, and upgrades
     let emoji = "🏠"; // Default emoji for average house
 
