@@ -36,6 +36,7 @@ class Animal {
     this.freezeTime = 0;
     this.isPaused = false; // Add pause state flag
     this.birthDate = Date.now(); // Initialize birth date for all animals
+    this.fontSize = this.getSpeciesFontSize(); // Get species-specific font size
     
     //console.log(`Animal created at cell (${x}, ${y}), world position (${this.x}, ${this.y}), type: ${type}, emoji: ${this.emoji}`);
     
@@ -56,6 +57,25 @@ class Animal {
     // Additional speed modifiers for chase/flee
     this.normalSpeed = this.moveInterval;
     this.chaseSpeed = this.moveInterval * 0.8;  // 20% faster when chasing/fleeing
+  }
+
+  // Get species-specific font size
+  getSpeciesFontSize() {
+    const fontSizeMap = {
+      'creaturesCardSheep': 20,
+      'creaturesCardCow': 21,
+      'creaturesCardChicken': 17,
+      'creaturesCardPig': 19,
+      'creaturesCardBear': 23,
+      'creaturesCardCoyote': 19
+    };
+    return fontSizeMap[this.type] || 20; // Default to 20px if type not found
+  }
+
+  // Get font size considering if animal is a baby
+  getFontSize() {
+    const isBaby = this.birthDate && (Date.now() - this.birthDate < Animal.BABY_EMOJI_DURATION);
+    return isBaby ? Math.floor(this.fontSize * 0.65) : this.fontSize;
   }
 
   checkIfPredator() {
@@ -210,8 +230,8 @@ class Animal {
     prey.isDying = true;
     prey.deathTime = Date.now();
     prey.animateEmoji('small', prey.emoji, 500);
-    setTimeout(() => prey.animateEmoji('fade', '🥩', 3500), 5500);
-    this.animateEmoji('pop', this.emoji, 500);
+    setTimeout(() => prey.animateEmoji('fade', '🥩', 500), 500);
+    this.animateEmoji('fade', this.emoji, 500);
 
     // Remove prey after animations
     setTimeout(() => {
@@ -406,21 +426,13 @@ class Animal {
       
       if (!this.drawAnimation(ctx)) {
         ctx.fillStyle = 'black';
-        
-        // Check if the animal is a "baby" and adjust font size
-        const isBaby = this.birthDate && (Date.now() - this.birthDate < Animal.BABY_EMOJI_DURATION);
-        ctx.font = isBaby ? '10px Arial' : '20px Arial';
-        
+        ctx.font = `${this.getFontSize()}px Arial`;
         ctx.fillText(this.emoji, this.x, this.y);
       }
     } else {
       if (!this.drawAnimation(ctx)) {
         ctx.fillStyle = 'black';
-        
-        // Check if the animal is a "baby" and adjust font size
-        const isBaby = this.birthDate && (Date.now() - this.birthDate < Animal.BABY_EMOJI_DURATION);
-        ctx.font = isBaby ? '14px Arial' : '20px Arial';
-        
+        ctx.font = `${this.getFontSize()}px Arial`;
         ctx.fillText(this.emoji, this.x, this.y);
       }
     }
