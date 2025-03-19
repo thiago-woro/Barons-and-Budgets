@@ -53,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Add to animals array temporarily so it gets drawn in animation loops
             animals.push(drowningAnimal);
+            //TODO: skip the animals push array manipulation and just do the emoji animations!!!!!!!!
             
             // Show drowning animation
             drowningAnimal.animateEmoji('drown', drowningAnimal.emoji, 1500);
@@ -69,7 +70,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 animalCtx.clearRect(0, 0, animalCanvas.width, animalCanvas.height);
                 animals.forEach(animal => animal.draw(animalCtx));
-                console.log("Drowning animation complete");
             }, 2000);
             
             return;

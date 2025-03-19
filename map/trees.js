@@ -92,8 +92,12 @@ for (let i = 0; i < treeCount; i++) {
 
 function drawTrees(ctx, treePositions) {
     clearCanvas(ctx);
-    console.log('drawTrees 😍');
-
+      console.log('drawTrees 😍');
+/*   
+    // Generate a stack trace
+    let err = new Error();
+    console.log(`Call stack:\n${err.stack}`);
+ */
     treePositions.sort((a, b) => a.y === b.y ? b.x - a.x : a.y - b.y);
 
     treePositions.forEach(tree => {
@@ -126,36 +130,29 @@ function drawTrees(ctx, treePositions) {
 
 
 function animateNewTree(x, y, emoji, callback) {
- // console.log('new tree 🌵   🌵 ')
-
-    const tree = { x, y, emoji, scale: 0, opacity: 0, rotation: 0 };  
+    const tree = { x, y, emoji, scale: 0, opacity: 0, rotation: 0 };
     treePositions.push(tree);
 
-     // Play pop sound at spaced intervals
-    if (!treePopSound.lastPlayed || (Date.now() - treePopSound.lastPlayed) > 5000) { // 5 seconds interval
-      treePopSound.currentTime = 0;
-      treePopSound.play().catch(e => console.log("Audio play tree failed:", e));
-      treePopSound.lastPlayed = Date.now();
+    if (!treePopSound.lastPlayed || (Date.now() - treePopSound.lastPlayed) > 5000) {
+        treePopSound.currentTime = 0;
+        treePopSound.play().catch(e => console.log("Audio play tree failed:", e));
+        treePopSound.lastPlayed = Date.now();
     }
- 
-    //paint the tile terrains a flowery color beneath the tree
+
     const color = 'rgba(129, 178, 86, 0.37)';
     drawCircle(groundCtx, x, y, 10, color);
 
     let progress = 0;
-    const duration = 1000; // 1 second animation
+    const duration = 1000;
     const startTime = performance.now();
 
     function animate(currentTime) {
         const elapsed = currentTime - startTime;
         progress = Math.min(elapsed / duration, 1);
 
-        // Elastic bounce effect
         const bounce = Math.pow(progress, 2) * Math.sin(progress * Math.PI * 3);
-        tree.scale = 0.5 + bounce * 0.5; // Scale between 0.5 and 1
+        tree.scale = 0.5 + bounce * 0.5;
         tree.opacity = progress;
-
-        drawTrees(treeCtx, treePositions);
 
         if (progress < 1) {
             requestAnimationFrame(animate);
@@ -163,6 +160,7 @@ function animateNewTree(x, y, emoji, callback) {
             tree.scale = 1;
             tree.opacity = 1;
             if (callback) callback();
+            drawTrees(treeCtx, treePositions); // Draw once animation is complete
         }
     }
 
@@ -172,65 +170,42 @@ function animateNewTree(x, y, emoji, callback) {
 function dyingTreeAnimation(treeIndex, callback) {
     const tree = treePositions[treeIndex];
     if (!tree) return;
-    
-    // Mark this tree as dying to prevent multiple animations on the same tree
+
     tree.isDying = true;
-    
+
     const startTime = performance.now();
     const startRotation = tree.rotation || 0;
-    // Randomly decide if the tree falls to the left or right (50/50 chance)
     const fallDirection = Math.random() < 0.5 ? 1 : -1;
-    const fallDuration = 1000;      // Time to fall (1s)
-    const waitDuration = 1000;      // Time to wait (1s)
-    const fadeDuration = 500;       // Time to fade (0.5s)
-    
-    // Store the original tree index for removal
-    const originalIndex = treeIndex;
+    const fallDuration = 1000;
+    const waitDuration = 1000;
+    const fadeDuration = 500;
 
     function animate(currentTime) {
-        // Check if the tree still exists in the array
         const currentIndex = treePositions.findIndex(t => t === tree);
         if (currentIndex === -1) {
-            // Tree has already been removed, stop animation
             if (callback) callback();
             return;
         }
-        
+
         const elapsed = currentTime - startTime;
 
-        // Fall animation (0-1s)
         if (elapsed < fallDuration) {
             const progress = elapsed / fallDuration;
-            // Apply the fall direction (positive for right, negative for left)
             tree.rotation = startRotation + (Math.PI / 2) * progress * fallDirection;
-            drawTrees(treeCtx, treePositions);
             requestAnimationFrame(animate);
-        }
-        // Wait period (1-2s)
-        else if (elapsed < fallDuration + waitDuration) {
+        } else if (elapsed < fallDuration + waitDuration) {
             requestAnimationFrame(animate);
-        }
-        // Fade out (2-2.5s)
-        else if (elapsed < fallDuration + waitDuration + fadeDuration) {
+        } else if (elapsed < fallDuration + waitDuration + fadeDuration) {
             const fadeProgress = (elapsed - fallDuration - waitDuration) / fadeDuration;
             tree.opacity = 1 - fadeProgress;
-            drawTrees(treeCtx, treePositions);
             requestAnimationFrame(animate);
-        }
-        // Animation complete
-        else {
-            // Find the current index of the tree (it may have changed)
+        } else {
             const finalIndex = treePositions.findIndex(t => t === tree);
             if (finalIndex !== -1) {
-                // Remove the tree from the array
                 treePositions.splice(finalIndex, 1);
-                // Force a complete redraw of all trees
-              //  drawTrees(treeCtx, treePositions);
-                // Clear the canvas one more time to ensure no artifacts remain
-                clearCanvas(treeCtx);
-                drawTrees(treeCtx, treePositions);
             }
             if (callback) callback();
+            drawTrees(treeCtx, treePositions); // Draw once animation is complete
         }
     }
 
@@ -309,19 +284,13 @@ function distributeOreDeposits(ctx) {
 
 
 
-// Add new function to manage tree lifecycle
 function initTreeLifecycle() {
-    // Periodic new tree growth
     setInterval(() => {
-
         if (treePositions.length < TREE_LIFECYCLE.MAX_TREES) {
             const randomEmptyCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
             if (randomEmptyCell) {
-  console.log('new tree 🌵  ')
-
                 const x = randomEmptyCell.x * cellSize;
                 const y = randomEmptyCell.y * cellSize;
-                // Pick random tree type based on noise
                 const treeTypes = ["🌴", "🌵", "🌳", "🌲"];
                 const randomTree = treeTypes[Math.floor(Math.random() * treeTypes.length)];
                 animateNewTree(x, y, randomTree);
@@ -329,38 +298,30 @@ function initTreeLifecycle() {
         }
     }, TREE_LIFECYCLE.NEW_TREE_INTERVAL);
 
-    // Periodic tree death check
-// Periodic tree death check (performance optimized)
     setInterval(() => {
-        console.log('tree death check 🌵  ');
         if (treePositions.length > TREE_LIFECYCLE.MIN_TREES) {
             const dyingIndices = [];
             for (let i = treePositions.length - 1; i >= 0; i--) {
                 if (!treePositions[i].isDying && Math.random() < TREE_LIFECYCLE.TREE_DEATH_CHANCE) {
                     dyingIndices.push(i);
-                    treePositions[i].isDying = true; // Mark as dying
+                    treePositions[i].isDying = true;
                 }
             }
 
             if (dyingIndices.length > 0) {
-                // Animate and remove trees in reverse order to avoid index shifting issues
                 let animationsCompleted = 0;
                 dyingIndices.forEach(index => {
                     dyingTreeAnimation(index, () => {
-                        treePositions.splice(index, 1);
                         animationsCompleted++;
                         if (animationsCompleted === dyingIndices.length) {
-                            // Redraw only once after all animations are done
-                            drawTrees(treeCtx, treePositions);
+                            // drawTrees(treeCtx, treePositions); // Redraw only once after all animations are done
                         }
                     });
                 });
             }
         }
     }, TREE_LIFECYCLE.DEATH_CHECK_INTERVAL);
-
 }
-
 
 
 function placeTree(x, y, emoji) {

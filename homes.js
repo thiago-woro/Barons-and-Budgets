@@ -299,7 +299,7 @@ function drawRectanglesBetweenHouses(houses, ctx) {
       console.error("🌲❌ antes" + trees.length);
       trees.splice(i, 1);
       console.error("🌲❌  depois" + trees.length);
-      drawTrees(treeCtx, cellSize, occupiedCells);
+     // drawTrees(treeCtx, cellSize, occupiedCells);
     }
   }
 }
