@@ -1,18 +1,18 @@
-const treePopSound = new Audio('/assets/sounds/3pop.mp3'); // Create this simple sound file
+const treePopSound = new Audio('/assets/sounds/3pop.mp3');
 
 const TREE_LIFECYCLE = {
-  NEW_TREE_INTERVAL: 100,    // Try to grow new tree every 10 seconds
-  TREE_DEATH_CHANCE: 0.002,     // 2% chance of random tree death check
-  DEATH_CHECK_INTERVAL: 15000, // Check for tree death every 15 seconds
-  MAX_TREES: 300,              // Maximum number of trees allowed
-  MIN_TREES: 20                // Minimum number of trees to maintain
+    NEW_TREE_INTERVAL: 15000,
+    TREE_DEATH_CHANCE: 0.002,
+    DEATH_CHECK_INTERVAL: 130,
+    MAX_TREES: 300,
+    MIN_TREES: 20
 };
-
 
 function modifyWalkableCells(cells, operation) {
     if (!Array.isArray(cells)) {
-console.error("modifyWalkableCells: cells argument must be an array.");
-        return;}   
+        console.error("modifyWalkableCells: cells argument must be an array.");
+        return;
+    }
     console.log(`🌲 modifyWalkableCells: ${operation}ing ${cells.length} cells.`);
 
     if (operation !== "remove" && operation !== "add") {
@@ -20,117 +20,102 @@ console.error("modifyWalkableCells: cells argument must be an array.");
         return;
     }
 
+    const cellSet = new Set(cells.map(cell => `${cell.x},${cell.y}`));
+    let newEmptyCells;
+
     if (operation === "remove") {
-        emptyCells = emptyCells.filter(ec => !cells.some(cell => ec.x === cell.x && ec.y === cell.y));
+        newEmptyCells = emptyCells.filter(ec => !cellSet.has(`${ec.x},${ec.y}`));
     } else if (operation === "add") {
-        cells.forEach(cell => {
-            if (!emptyCells.some(ec => ec.x === cell.x && ec.y === cell.y)) {
-                emptyCells.push(cell);
-            }
-        });
+        newEmptyCells = [...emptyCells, ...cells.filter(cell => !emptyCells.some(ec => ec.x === cell.x && ec.y === cell.y))];
     }
+    emptyCells = newEmptyCells;
 
     console.log(`🌲 ${operation}ed ${cells.length} cells. emptyCells.length: ${emptyCells.length}`);
 }
 
 function startTrees(ctx, cellSize) {
-  clearCanvas(ctx);
-  let treeCount = 0;
+    clearCanvas(ctx);
+    let treeCount = groundCells.length * treePercentageofLand;
 
-  const treeEmojis = {
-    "🌴": [], //Palm
-    "🌵": [],  //Cactus
-    "🌳": [],   //Deciduous Tree
-    "🌲": [],    //Coniferous Tree
-  };
+    const treeEmojis = {
+        "🌴": [],
+        "🌵": [],
+        "🌳": [],
+        "🌲": [],
+    };
+    const noiseToEmoji = {
+        "🌴": (noise) => noise > 0.01 && noise <= 0.03,
+        "🌵": (noise) => noise > 0.06 && noise <= 0.08,
+        "🌳": (noise) => noise > 0.13 && noise < 0.45,
+        "🌲": (noise) => noise >= 0.45,
+    };
 
-  treeCount = groundCells.length * treePercentageofLand;
+    emptyCells.forEach((cell) => {
+        const noise = cell.noise;
+        for (const emoji in noiseToEmoji) {
+            if (noiseToEmoji[emoji](noise)) {
+                treeEmojis[emoji].push(cell);
+                break;
+            }
+        }
+    });
 
-  emptyCells.forEach((cell) => {
-    let selectedEmoji = null;
-    const noise = cell.noise;
+const newTreePositions = [];
+for (let i = 0; i < treeCount; i++) {
+    const selectedTreeEmoji = Object.keys(treeEmojis)[i % 4];
+    if (treeEmojis[selectedTreeEmoji].length > 0) {
+        const randomIndex = Math.floor(Math.random() * treeEmojis[selectedTreeEmoji].length);
+        const selectedCell = treeEmojis[selectedTreeEmoji].splice(randomIndex, 1)[0];
+        const x = (selectedCell.x + 0.5) * cellSize;
+        const y = (selectedCell.y + 0.5) * cellSize;
+        let scale = 1;
 
-    if (noise > 0.01 && noise <= 0.03) {
-      selectedEmoji = "🌴";
-    } else if (noise > 0.06 && noise <= 0.08) {
-      selectedEmoji = "🌵";
-    } else if (noise > 0.13 && noise < 0.45) {
-      selectedEmoji = "🌳";
-    } else if (noise >= 0.45) {
-      selectedEmoji = "🌲";
+        newTreePositions.push({ x, y, emoji: selectedTreeEmoji, scale: scale, opacity: 1, rotation: 0 });
     }
-
-    if (selectedEmoji && treeEmojis[selectedEmoji]) {
-      treeEmojis[selectedEmoji].push(cell);
-    }
-  });
-
-  for (let i = 0; i < treeCount; i++) {
-    const selectedEmoji = Object.keys(treeEmojis)[i % 4];
-    if (treeEmojis[selectedEmoji].length > 0) {
-      const randomIndex = Math.floor(Math.random() * treeEmojis[selectedEmoji].length);
-      const selectedCell = treeEmojis[selectedEmoji].splice(randomIndex, 1)[0];
-      const x = selectedCell.x * cellSize;
-      const y = selectedCell.y * cellSize;
-      treePositions.push({ x, y, emoji: selectedEmoji, scale: 1, opacity: 1, rotation: 0 });
-    }
-  }
-
-  drawTrees(treeCtx, treePositions);
-  drawGrass(treeCtx, 0.05);
-
-  // Remove tree positions from emptyCells
-  if (treePositions.length > 0) {
-    const treeCells = treePositions.map(tree => ({
-      x: Math.floor(tree.x / cellSize),
-      y: Math.floor(tree.y / cellSize)
-    }));
-    modifyWalkableCells(treeCells, "remove");
-  }
-
-  initTreeLifecycle();
-  return treePositions;
 }
+    treePositions = newTreePositions;
+    drawTrees(treeCtx, treePositions);
+    drawGrass(treeCtx, 0.05);
 
+    modifyWalkableCells(treePositions, "remove");
 
+    //initTreeLifecycle(); // its causing weird animations on dead trees redraws
+    return treePositions;
+}
 
 function drawTrees(ctx, treePositions) {
     clearCanvas(ctx);
-    //console.log('drawing trees 🌵🌵')
 
-    treePositions.sort((a, b) => {
-        if (a.y === b.y) return b.x - a.x;
-        return a.y - b.y;
-    });
+    treePositions.sort((a, b) => a.y === b.y ? b.x - a.x : a.y - b.y);
 
-    treePositions.forEach((tree) => {
-        const scale = tree.scale || 1;
-        const opacity = tree.opacity || 1;
-        const rotation = tree.rotation || 0;
-        const x = tree.x;
-        const y = tree.y;
-        const emoji = tree.emoji;
+    treePositions.forEach(tree => {
+    const { x, y, emoji, scale = 1, opacity = 1, rotation = 0, color = `rgba(0, 0, 0, ${opacity})` } = tree;
 
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
 
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(rotation);
+    const yscale = Math.random() < 0.3 ? scale + (Math.random() * 0.1 + 0.3) : scale; // 50% chance to vary yscale slightly
+    ctx.scale(scale, yscale); // Apply scaling
 
-        // Draw shadow with scale
-        ctx.beginPath();
-        ctx.arc(0, 5, 7 * scale, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(0, 0, 0, ${0.3 * opacity})`;
-        ctx.fill();
+    ctx.beginPath();
+    ctx.arc(0, 5, 7, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(0, 0, 0, ${0.3})`;
+    ctx.fill();
 
-        // Draw tree with scale, opacity and color
-        ctx.fillStyle = tree.color || `rgba(0, 0, 0, ${opacity})`;
-        ctx.textAlign = "center";
-        ctx.font = `bold ${20 * scale}px Arial`;
-        ctx.fillText(emoji, 0, 0);
+    ctx.fillStyle = color;
+    ctx.textAlign = "center";
+    ctx.font = `bold ${20}px Arial`;
+    ctx.fillText(emoji, 0, 0);
 
-        ctx.restore();
-    });
+    ctx.restore();
+});
 }
+
+
+
+
+
 
 function animateNewTree(x, y, emoji, callback) {
  // console.log('new tree 🌵   🌵 ')
@@ -311,13 +296,27 @@ function distributeOreDeposits(ctx) {
     startTrees(treeCtx, cellSize);
 }
 
+
+
+
+
+
+
+
+
+
+
+
 // Add new function to manage tree lifecycle
 function initTreeLifecycle() {
     // Periodic new tree growth
     setInterval(() => {
+
         if (treePositions.length < TREE_LIFECYCLE.MAX_TREES) {
             const randomEmptyCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
             if (randomEmptyCell) {
+  console.log('new tree 🌵  ')
+
                 const x = randomEmptyCell.x * cellSize;
                 const y = randomEmptyCell.y * cellSize;
                 // Pick random tree type based on noise
@@ -329,64 +328,47 @@ function initTreeLifecycle() {
     }, TREE_LIFECYCLE.NEW_TREE_INTERVAL);
 
     // Periodic tree death check
+// Periodic tree death check (performance optimized)
     setInterval(() => {
+        console.log('tree death check 🌵  ');
         if (treePositions.length > TREE_LIFECYCLE.MIN_TREES) {
-            // Create a list of indices that will die
-            const treesToDie = [];
-            treePositions.forEach((tree, index) => {
-                // Only consider trees that aren't already dying
-                if (!tree.isDying && Math.random() < TREE_LIFECYCLE.TREE_DEATH_CHANCE) {
-                    treesToDie.push(index);
+            const dyingIndices = [];
+            for (let i = treePositions.length - 1; i >= 0; i--) {
+                if (!treePositions[i].isDying && Math.random() < TREE_LIFECYCLE.TREE_DEATH_CHANCE) {
+                    dyingIndices.push(i);
+                    treePositions[i].isDying = true; // Mark as dying
                 }
-            });
-            
-            // Process deaths one at a time with a delay between each
-            if (treesToDie.length > 0) {
-                // Sort in reverse order so we remove from the end first
-                treesToDie.sort((a, b) => b - a);
-                
-                // Process one tree death at a time
-                let i = 0;
-                const processNextDeath = () => {
-                    if (i < treesToDie.length) {
-                        const index = treesToDie[i];
-                        // Only process if the tree still exists and isn't already dying
-                        if (index < treePositions.length && !treePositions[index].isDying) {
-                            dyingTreeAnimation(index, () => {
-                                // Process next death after this animation completes
-                                i++;
-                                setTimeout(processNextDeath, 100);
-                            });
-                        } else {
-                            // Skip this one and move to next
-                            i++;
-                            processNextDeath();
+            }
+
+            if (dyingIndices.length > 0) {
+                // Animate and remove trees in reverse order to avoid index shifting issues
+                let animationsCompleted = 0;
+                dyingIndices.forEach(index => {
+                    dyingTreeAnimation(index, () => {
+                        treePositions.splice(index, 1);
+                        animationsCompleted++;
+                        if (animationsCompleted === dyingIndices.length) {
+                            // Redraw only once after all animations are done
+                            drawTrees(treeCtx, treePositions);
                         }
-                    }
-                };
-                
-                // Start processing deaths
-                processNextDeath();
+                    });
+                });
             }
         }
     }, TREE_LIFECYCLE.DEATH_CHECK_INTERVAL);
+
 }
 
 
 
 function placeTree(x, y, emoji) {
-    if (typeof x !== 'number' || typeof y !== 'number' || typeof emoji !== 'string') {
-        console.error("placeTree: Invalid input parameters.");
-        return;
-    }
-
-    const newTree = {
-        x: x * cellSize, // Assuming cellSize is defined globally
-        y: y * cellSize,
+      const newTree = {
+        x: (x + 0.5) * cellSize, // Center X
+        y: (y + 0.5) * cellSize, // Center Y
         emoji: emoji,
-        scale: 1, // Default scale
-        opacity: 1, // Default opacity
-        rotation: 0 // Default rotation
+        scale: 1,
+        opacity: 1,
+        rotation: 0
     };
 
     treePositions.push(newTree); // Assuming treePositions is a global array

@@ -145,12 +145,12 @@ updateHoveredCell(event, emoji) {
 
     boatCtx.clearRect(0, 0, boatCanvas.width, boatCanvas.height);
 
-    if (emoji) {
+    if (selectedEmoji) {
         // Draw the emoji on the canvas
         boatCtx.font = `${cellSize}px sans-serif`; // Adjust font size as needed
         boatCtx.textAlign = 'center';
         boatCtx.textBaseline = 'middle';
-        boatCtx.fillText(emoji, (cellCol + 0.5) * cellSize, (cellRow + 0.5) * cellSize);
+        boatCtx.fillText(selectedEmoji, (cellCol + 0.5) * cellSize, (cellRow + 0.5) * cellSize);
     } else {
         // Draw the highlight rectangle
         boatCtx.fillStyle = 'blue';

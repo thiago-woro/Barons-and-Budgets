@@ -1,3 +1,6 @@
+  let selectedEmoji = '';
+  let selectedToolName = '';
+
 document.addEventListener('DOMContentLoaded', () => {
     const ToolState = {
         SELECTING: 'selecting',
@@ -10,11 +13,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentToolState = ToolState.SELECTING;
     let selectedTool = null;
 
+ 
     const removeActiveClass = (selector) => document.querySelectorAll(selector).forEach(el => el.classList.remove('active'));
     const addActiveClass = (selector, id) => document.getElementById(id).classList.add('active');
 
     document.querySelectorAll('.bottomCard').forEach(card => card.addEventListener('click', () => {
         const cardId = card.id;
+        selectedEmoji = card.dataset.emoji;
+        selectedToolName = card.dataset.text;
         removeActiveClass('.bottomCard');
         addActiveClass('.bottomCard', cardId);
 
@@ -95,6 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('buildingDetails').style.display = "block";
     };
 
+//MAIN CLICK DETECTOR    THIAGO
     container.addEventListener("click", (event) => {
         if (isDragging) return;
         const coords = getClickCoordinates(event);

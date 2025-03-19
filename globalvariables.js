@@ -27,7 +27,7 @@ let sandCells = [];
 let trees = [];
 let treePositions = [];  //array format: treePositions.push({ x, y, emoji: selectedEmoji });
 
-let treePercentageofLand = 0.07
+let treePercentageofLand = 0.17
 let usableLand = 0.045
 
 let flatLandCells = [];
