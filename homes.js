@@ -125,18 +125,24 @@ class House {
 
   // Method to draw the house on the ground canvas
   draw(ctx) {
-
-    if (Math.random() < 0.4) {
-      this.y -= 50;
-    }
-
-
     // Randomly select an image from the houseImages array
     const randomIndex = Math.floor(Math.random() * houseImages.length);
     const selectedHouseImage = houseImages[randomIndex];
 
-    //draw house
-    ctx.drawImage(selectedHouseImage, this.x, this.y, cellSize * 2, cellSize * 2);
+    // Calculate position for proper alignment
+    // Center horizontally and align to bottom of cell
+    const centerX = this.x;
+    const bottomY = this.y;
+    
+    // Draw house image - positioned to be centered horizontally and aligned to bottom of cell
+    // Using cellSize * 2 for width and height to maintain the same size
+    ctx.drawImage(
+      selectedHouseImage, 
+      centerX,          // X position 
+      bottomY,          // Y position
+      cellSize * 2,     // Width
+      cellSize * 2      // Height
+    );
 
     // draw house shadow
    // drawCircle(pathCtx,  this.x,  this.y, 10, "rgba(227, 204, 162, 0.3)");
@@ -351,7 +357,19 @@ class Building {
 
     // Draw the emoji on the canvas
     buildingCtx.font = "bold 20px Arial";
-    buildingCtx.fillText(emoji, this.x, this.y);
+    
+    // Set text alignment to center horizontally
+    buildingCtx.textAlign = "center";
+    
+    // Set text baseline to position at the bottom of the cell
+    buildingCtx.textBaseline = "bottom";
+    
+    // Calculate the center x position and bottom y position of the cell
+    const centerX = this.x + (cellSize / 2);
+    const bottomY = this.y + cellSize;
+    
+    // Draw the text centered and at the bottom of the cell
+    buildingCtx.fillText(emoji, centerX, bottomY);
 
     //console.log(`✅ ${this.type} placed on map!\n\n  X: ${this.x}, Y: ${this.y}`);
   }

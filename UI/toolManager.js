@@ -89,12 +89,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const placeBuilding = (coords, toolId) => {
         console.log(`Placing building: ${toolId} at`, coords);
         buildings.push(new Building(coords.cellCol, coords.cellRow, cellSize, null, toolId));
+        
+        // Clear and redraw buildings on the canvas, similar to animals
+        homesCtx.clearRect(0, 0, animalCanvas.width, animalCanvas.height);
+        buildings.forEach(building => building.draw(homesCtx));
+        console.log("Placed building:", buildings[buildings.length - 1]);
     };
 
     const handleTerrainTool = (coords, toolId) => {
         console.log(`> terrain >> ${toolId}`);
         if (toolId === "terrainCardBush") placeTree(coords.cellCol, coords.cellRow, "🌳");
         if (toolId === "terrainCardTree") placeTree(coords.cellCol, coords.cellRow, "🌲");
+        if (toolId === "terrainCardPath") viewPath(coords);
     };
 
     const selectNPC = (coords) => {
@@ -117,27 +123,63 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const selectBuilding = (coords) => {
-        console.log("Selecting homes in the homes array, received coords:", coords);
-        const foundHouse = houses.find(house => Math.floor(house.x / cellSize) === coords.cellCol && Math.floor(house.y / cellSize) === coords.cellRow);
-        if (foundHouse) {
+        console.log("Selecting buildings or houses at coords:", coords);
+        
+        // First, check in the houses array
+        const foundHouse = houses.find(house => 
+            Math.floor(house.x / cellSize) === coords.cellCol && 
+            Math.floor(house.y / cellSize) === coords.cellRow
+        );
+        
+        // Then, check in the buildings array if no house was found
+        const foundBuilding = !foundHouse ? buildings.find(building => 
+            Math.floor(building.x / cellSize) === coords.cellCol && 
+            Math.floor(building.y / cellSize) === coords.cellRow
+        ) : null;
+        
+        // Use either the found house or building
+        const foundStructure = foundHouse || foundBuilding;
+        
+        if (foundStructure) {
             const insideBuilding = document.getElementById('insideBuilding');
             if (insideBuilding) {
                 insideBuilding.style.visibility = 'visible';
                 insideBuilding.style.display = 'flex';
-                populateBuildingDetails(foundHouse);
+                populateBuildingDetails(foundStructure);
             }
         } else {
-            console.log(`No house found at exact cell (${coords.cellCol}, ${coords.cellRow})`);
+            console.log(`No building or house found at cell (${coords.cellCol}, ${coords.cellRow})`);
         }
     };
 
-    const populateBuildingDetails = (house) => {
+    const populateBuildingDetails = (structure) => {
         container.style.visibility = 'collapse';
         container.style.display = "none";
-        document.getElementById('buildingTitle').textContent = house.type || 'Building';
-        let detailsHtml = `<p>ID: ${house.id || 'Unknown'}</p><p>Position: (${Math.floor(house.x / cellSize)}, ${Math.floor(house.y / cellSize)})</p>`;
-        if (house.owner) detailsHtml += `<p>Owner: ${house.owner}</p>`;
-        if (house.size) detailsHtml += `<p>Size: ${house.size}</p>`;
+        
+        // Determine if it's a house or a building
+        const isHouse = houses.includes(structure);
+        const structureType = isHouse ? (structure.type || 'House') : (structure.type || 'Building');
+        
+        document.getElementById('buildingTitle').textContent = structureType;
+        
+        // Common details
+        let detailsHtml = `
+            <p>Type: ${structureType}</p>
+            <p>Position: (${isHouse ? Math.floor(structure.x / cellSize) : structure.x}, 
+                         ${isHouse ? Math.floor(structure.y / cellSize) : structure.y})</p>
+        `;
+        
+        // Additional details based on structure type
+        if (structure.owner) detailsHtml += `<p>Owner: ${structure.owner}</p>`;
+        if (structure.size) detailsHtml += `<p>Size: ${structure.size}</p>`;
+        if (structure.id) detailsHtml += `<p>ID: ${structure.id}</p>`;
+        
+        // Add building-specific details if available
+        if (!isHouse) {
+            if (structure.buildingType) detailsHtml += `<p>Building Type: ${structure.buildingType}</p>`;
+            if (structure.resources) detailsHtml += `<p>Resources: ${structure.resources}</p>`;
+        }
+        
         document.getElementById('buildingDetails').innerHTML = detailsHtml;
         document.getElementById('buildingDetails').style.display = "block";
     };
@@ -145,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
 //MAIN CLICK DETECTOR    THIAGO
     container.addEventListener("click", (event) => {
         if (isDragging) return;
-        const coords = getClickCoordinates(event);
+        const coords = getClickCoordinates(event); //NEVER MODIFY THE getClickCoordinates function.
         switch (currentToolState) {
             case ToolState.PLACING_ANIMAL: placeAnimal(coords, selectedTool); break;
             case ToolState.PLACING_BUILDING: selectedTool === "buildingsCardSelectTool" ? selectBuilding(coords) : placeBuilding(coords, selectedTool); break;
@@ -195,3 +237,162 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+// A* pathfinding algorithm to find a path between two cells
+function findPath(start, target) {
+    // Helper function to calculate Manhattan distance heuristic
+    const heuristic = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+    
+    // Helper function to check if a cell is walkable
+    const isWalkable = (x, y) => {
+        // Check if cell is within grid bounds
+        if (x < 0 || y < 0 || x >= rows || y >= rows) {
+            return false;
+        }
+        
+        // Check if cell is not water
+        return emptyCells.some(cell => cell.x === x && cell.y === y);
+    };
+    
+    // Create open and closed sets
+    const openSet = [];
+    const closedSet = [];
+    
+    // Add start node to open set
+    openSet.push({
+        x: start.x,
+        y: start.y,
+        g: 0,                          // Cost from start to current node
+        h: heuristic(start, target),   // Estimated cost from current to target
+        f: heuristic(start, target),   // Total cost (g + h)
+        parent: null                   // Reference to parent node
+    });
+    
+    // While there are nodes to explore
+    while (openSet.length > 0) {
+        // Sort openSet by f score (lowest first)
+        openSet.sort((a, b) => a.f - b.f);
+        
+        // Get the node with lowest f score
+        const current = openSet.shift();
+        
+        // Add current to closed set
+        closedSet.push(current);
+        
+        // If reached the target
+        if (current.x === target.x && current.y === target.y) {
+            // Reconstruct the path
+            const path = [];
+            let temp = current;
+            
+            while (temp !== null) {
+                path.push({ x: temp.x, y: temp.y });
+                temp = temp.parent;
+            }
+            
+            // Return the path in reverse (from start to target)
+            return path.reverse();
+        }
+        
+        // Get neighboring cells
+        const neighbors = [
+            { x: current.x - 1, y: current.y },     // Left
+            { x: current.x + 1, y: current.y },     // Right
+            { x: current.x, y: current.y - 1 },     // Up
+            { x: current.x, y: current.y + 1 }      // Down
+        ];
+        
+        for (const neighbor of neighbors) {
+            // Skip if not walkable or in closed set
+            if (!isWalkable(neighbor.x, neighbor.y) || 
+                closedSet.some(n => n.x === neighbor.x && n.y === neighbor.y)) {
+                continue;
+            }
+            
+            // Calculate g score for this neighbor
+            const gScore = current.g + 1; // Assuming cost of 1 to move to adjacent cell
+            
+            // Check if neighbor is already in open set
+            const existingNeighborIndex = openSet.findIndex(n => 
+                n.x === neighbor.x && n.y === neighbor.y
+            );
+            
+            if (existingNeighborIndex === -1) {
+                // Not in open set, add it
+                openSet.push({
+                    x: neighbor.x,
+                    y: neighbor.y,
+                    g: gScore,
+                    h: heuristic(neighbor, target),
+                    f: gScore + heuristic(neighbor, target),
+                    parent: current
+                });
+            } else if (gScore < openSet[existingNeighborIndex].g) {
+                // Already in open set, but this path is better
+                openSet[existingNeighborIndex].g = gScore;
+                openSet[existingNeighborIndex].f = gScore + openSet[existingNeighborIndex].h;
+                openSet[existingNeighborIndex].parent = current;
+            }
+        }
+    }
+    
+    // No path found
+    return null;
+}
+
+// Variable to store the start cell for pathfinding
+let pathStart = null;
+
+// Function to handle path visualization when using the path tool
+function viewPath(coords) {
+    if (!pathStart) {
+        // First click - set start cell
+        pathStart = { x: coords.cellCol, y: coords.cellRow };
+        console.log("Path start cell selected:", pathStart);
+    } else {
+        // Second click - set target cell and calculate path
+        const target = { x: coords.cellCol, y: coords.cellRow };
+        console.log("Path target cell selected:", target);
+        
+        // Calculate path using A* algorithm
+        const path = findPath(pathStart, target);
+        
+        if (path) {
+            console.log("Path found:", path);
+            
+            // Clear previous paths
+            boatCtx.clearRect(0, 0, boatCtx.canvas.width, boatCtx.canvas.height);
+            
+            // Draw path as purple line
+            boatCtx.strokeStyle = "#8A2BE2"; // Purple color
+            boatCtx.lineWidth = 2;
+            boatCtx.beginPath();
+            
+            // Move to the first point
+            const firstCell = path[0];
+            boatCtx.moveTo(
+                (firstCell.x * cellSize) + (cellSize / 2), 
+                (firstCell.y * cellSize) + (cellSize / 2)
+            );
+            
+            // Draw lines to each subsequent point
+            for (let i = 1; i < path.length; i++) {
+                const cell = path[i];
+                boatCtx.lineTo(
+                    (cell.x * cellSize) + (cellSize / 2), 
+                    (cell.y * cellSize) + (cellSize / 2)
+                );
+            }
+            
+            boatCtx.stroke();
+        } else {
+            console.log("No path found between start and target");
+            
+            // Clear previous paths when no path is found
+            boatCtx.clearRect(0, 0, boatCtx.canvas.width, boatCtx.canvas.height);
+        }
+        
+        // Reset the start cell for the next path
+        pathStart = null;
+    }
+}
