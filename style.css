@@ -264,6 +264,7 @@ body {
 .bottomCard:hover {
     background-color: var(--purpler-hover);
     box-shadow: 2px 3px 50px 3px rgba(4, 0, 255, 0.176);
+    cursor: url(./assets/cursor/glove1.cur), auto;
 
 }
 
@@ -705,23 +706,6 @@ font-size: 16px;
 
 
                      
-.bottomTabs {
-    display: flex;
-    flex-direction: row;
-    border: 0px solid #484f43;
-    background-color: #84bc3f;
-    border-radius: 10px;
-    padding: 10px;
-    margin: 10px;
-}
-
-/* span inside bottomTabs */
-.bottomTabs span {
-    font-size: 12px;
-    padding: 0px;
-    border-radius: 10px;
-    cursor: pointer;
-}
 
 .shortcutSpan {
     font-size: 12px;
@@ -751,10 +735,12 @@ body {
 }
 
 .bottomTabs {
+    display: flex;
+    flex-direction: row;
+
     padding: 6px;
     align-items: center;
-    width: 60px;
-    max-width: 59px;
+    max-width: 89px;
     height: 40px;
     max-height: 10px;
     background-color: var(--bg);
@@ -766,20 +752,30 @@ body {
     image-rendering: pixelated;
     border-radius: 0;
     transition: transform 0.1s;
-    display: flex;
     justify-content: center;
     border-radius: 2px;
+    border-radius: 6px;
+    margin: 10px;
 }
 
 .bottomTabs:hover {
     transform: scale(1.05);
+    cursor: url(./assets/cursor/glove1.cur), auto;
 }
 
 .bottomTabs:active {
     transform: scale(0.95);
     background-color: var(--purple);
+    
 }
 
+
+/* span inside bottomTabs */
+.bottomTabs span {
+    font-size: 12px;
+    padding: 0px;
+    border-radius: 10px;
+}
 
 
 

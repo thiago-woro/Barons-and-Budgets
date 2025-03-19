@@ -107,8 +107,8 @@ class Camera {
   }
 
   
-
-  updateHoveredCell(event) {
+/* 
+  updateHoveredCell(event) {  OLD FUNCTION
     // Use offsetX/offsetY for mouse coordinates relative to the container
     const mouseX = event.offsetX;
     const mouseY = event.offsetY;
@@ -132,33 +132,41 @@ class Camera {
       cameraZoomInfo.innerHTML = `updateHoveredCell: Zoom: ${this.zoom.toFixed(2)} | Position: (${this.position.x.toFixed(2)}, ${this.position.y.toFixed(2)}) | Cell: (${cellX}, ${cellY}) | Screen: (${cellScreenX.toFixed(2)}, ${cellScreenY.toFixed(2)})`;
     }
   }
+ */
 
 
+updateHoveredCell(event, emoji) {
+    const rect = container.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const { x: worldX, y: worldY } = camera.screenToWorld(x, y);
+    const cellRow = Math.floor(worldY / cellSize);
+    const cellCol = Math.floor(worldX / cellSize);
 
-  updateHoveredCell(event) {
-    // Use offsetX/offsetY for mouse coordinates relative to the container
-    const mouseX = event.offsetX;
-    const mouseY = event.offsetY;
-    // Convert screen coordinates to world coordinates
-    const worldX = mouseX / this.zoom + this.position.x;
-    const worldY = mouseY / this.zoom + this.position.y;
-    // Calculate cell index based on world coordinates
-    const cellX = Math.floor(worldX / cellSize);
-    const cellY = Math.floor(worldY / cellSize);
-    // Calculate the screen position of the cell highlight
-    const cellScreenX = (cellX * cellSize - this.position.x) * this.zoom;
-    const cellScreenY = (cellY * cellSize - this.position.y) * this.zoom;
-    // Clear previous highlight
     boatCtx.clearRect(0, 0, boatCanvas.width, boatCanvas.height);
-    // Draw the highlight
-    boatCtx.fillStyle = 'rgba(128, 0, 128, 0.5)';
-    boatCtx.fillRect(cellScreenX, cellScreenY, cellSize * this.zoom, cellSize * this.zoom);
+
+    if (emoji) {
+        // Draw the emoji on the canvas
+        boatCtx.font = `${cellSize}px sans-serif`; // Adjust font size as needed
+        boatCtx.textAlign = 'center';
+        boatCtx.textBaseline = 'middle';
+        boatCtx.fillText(emoji, (cellCol + 0.5) * cellSize, (cellRow + 0.5) * cellSize);
+    } else {
+        // Draw the highlight rectangle
+        boatCtx.fillStyle = 'blue';
+        boatCtx.strokeStyle = 'blue';
+        boatCtx.lineWidth = 2;
+        boatCtx.strokeRect(cellCol * cellSize, cellRow * cellSize, cellSize, cellSize);
+    }
+}
+/* 
+
     // Update camera zoom info with additional cell info
     const cameraZoomInfo = document.getElementById('cameraZoomInfo');
     if (cameraZoomInfo) {
       cameraZoomInfo.innerHTML = `updateHoveredCell: Zoom: ${this.zoom.toFixed(2)} | Position: (${this.position.x.toFixed(2)}, ${this.position.y.toFixed(2)}) | Cell: (${cellX}, ${cellY}) | Screen: (${cellScreenX.toFixed(2)}, ${cellScreenY.toFixed(2)})`;
     }
-  }
+ */
 
 
 
@@ -188,7 +196,7 @@ class Camera {
       clientX: this.lastMousePos.x,
       clientY: this.lastMousePos.y
     });
-    this.updateHoveredCell(event);
+    this.updateHoveredCell(event, '🔍');
   }
 
  
@@ -291,32 +299,7 @@ function getAdjacentCells(targetCell) {
   return adjacentCells;
 }
 
-/* // Mouse clicks canvas map
-//let isDragging = false; // Define a global isDragging variable
-function logCellOnClick(container, ctx, cellSize, npcCtx, treeCtx, pathCtx) {
-  container.addEventListener("click", function(event) {
-    if (isDragging === false) {
-      // Calculate the mouse position within the container.
-      const rect = container.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
-      // Convert screen coordinates to world coordinates
-      const { x: worldX, y: worldY } = camera.screenToWorld(x, y);
-      // Calculate cell indices (row and column) based on world position.
-      const cellRow = Math.floor(worldY / cellSize);
-      const cellCol = Math.floor(worldX / cellSize);
-      console.log(`Cell clicked: X = ${cellCol}, Y = ${cellRow}`);
-      // Draw a purple rectangle at the clicked cell
-      ctx.fillStyle = 'green';
-      ctx.fillRect(cellCol * cellSize, cellRow * cellSize, cellSize, cellSize);
 
-      //leftClickAction(cellCol, cellRow, npcCtx, cellSize, treeCtx, pathCtx);
-    }
-  });
-}
-
-logCellOnClick(container, boatCtx, cellSize, npcCtx, treeCtx, pathCtx);
- */
 
   container.addEventListener("click", function(event) {
     if (isDragging === false) {

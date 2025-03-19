@@ -202,7 +202,7 @@ function hideTabs() {
     statsTab.style.display = "none";
     chartTab.style.display = "none";
     npcTab.style.display = "none";
-    minimizeTabButton.textContent = "📂"; //abre pasta
+    //minimizeTabButton.textContent = "📂"; //abre pasta
   }
 
   // Store hideMenu value in localStorage

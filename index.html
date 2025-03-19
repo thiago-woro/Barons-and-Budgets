@@ -164,58 +164,7 @@
     </div>
 </div> <!-- end of animals row -->
 
-<script>
-    function setActiveAnimalCard(animalName, emoji) {
-        document.querySelectorAll('#animalsRow .bottomCard').forEach(card => {
-            card.classList.remove('active');
-        });
-        const activeCard = document.querySelector(`#animalsRow .bottomCard#creaturesCard${animalName}`);
-        if (activeCard) {
-            activeCard.classList.add('active');
-            document.body.style.cursor = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><text x="0" y="24" font-size="14">${emoji}</text></svg>'), auto`;
-            
-            // Make sure window.activeTabBottomLeft is set correctly
-            if (window.activeTabBottomLeft !== "animals") {
-                window.activeTabBottomLeft = "animals";
-                console.log("Forcing active tab to animals");
-            }
-        }
-    }
 
-    document.querySelectorAll('#animalsRow .bottomCard').forEach(card => {
-        card.addEventListener('click', function() {
-            const animalName = this.id.replace('creaturesCard', '');
-            const emoji = this.querySelector('h3').textContent.trim();
-            setActiveAnimalCard(animalName, emoji);
-            
-            // Log the current selection
-            console.log(`Animal selected: ${this.id}, active tab: ${window.activeTabBottomLeft}`);
-        });
-    });
-
-    document.addEventListener('mousemove', function(e) {
-
-        //return early if Active bottom tab: ${window.activeTabBottomLeft} is not Animals
-        if (window.activeTabBottomLeft !== "animals") return;
-
-        const activeCard = document.querySelector('#animalsRow .bottomCard.active');
-        if (activeCard) {
-            const emoji = activeCard.querySelector('h3').textContent.trim();
-            let trailingEmoji = document.getElementById('trailingEmoji');
-            if (!trailingEmoji) {
-                trailingEmoji = document.createElement('span');
-                trailingEmoji.id = 'trailingEmoji';
-                trailingEmoji.style.position = 'absolute';
-                trailingEmoji.style.pointerEvents = 'none';
-                trailingEmoji.style.fontSize = '24px';
-                document.body.appendChild(trailingEmoji);
-            }
-            trailingEmoji.textContent = emoji;
-            trailingEmoji.style.left = `${e.pageX + 10}px`;
-            trailingEmoji.style.top = `${e.pageY + 10}px`;
-        }
-    });
-</script>
 
     <!-- budgets row -->
     <div class="row" id="budgetsRow" style="margin: 0px;">
