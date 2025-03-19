@@ -43,11 +43,44 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const placeAnimal = (coords, toolId) => {
+        // Check if the placement is on water
         if (!emptyCells.some(cell => cell.x === coords.cellCol && cell.y === coords.cellRow)) {
-            console.log("Can't place animal on water!");
+            console.log("Animal drowning in water!");
+            
+            // Create a temporary animal for drowning animation
+            const drowningAnimal = new Animal(coords.cellCol, coords.cellRow, toolId);
+            drowningAnimal.isDrowning = true; // Mark as drowning
+            
+            // Add to animals array temporarily so it gets drawn in animation loops
+            animals.push(drowningAnimal);
+            
+            // Show drowning animation
+            drowningAnimal.animateEmoji('drown', drowningAnimal.emoji, 1500);
+            
+            // Force an immediate redraw
+            animalCtx.clearRect(0, 0, animalCanvas.width, animalCanvas.height);
+            animals.forEach(animal => animal.draw(animalCtx));
+            
+            // After animation completes, remove the drowning animal
+            setTimeout(() => {
+                const index = animals.indexOf(drowningAnimal);
+                if (index > -1) {
+                    animals.splice(index, 1);
+                }
+                animalCtx.clearRect(0, 0, animalCanvas.width, animalCanvas.height);
+                animals.forEach(animal => animal.draw(animalCtx));
+                console.log("Drowning animation complete");
+            }, 2000);
+            
             return;
         }
-        animals.push(new Animal(coords.cellCol, coords.cellRow, toolId));
+
+        // Generate a random age between 15-90% of the animal's lifespan
+        const maxAge = toolId.includes('Coyote') || toolId.includes('Bear') ? 
+            Animal.PREDATOR_MAX_AGE : Animal.MAX_AGE;
+        const randomAge = Math.floor(Math.random() * (maxAge * 0.9 - maxAge * 0.15) + maxAge * 0.15);
+        
+        animals.push(new Animal(coords.cellCol, coords.cellRow, toolId, randomAge));
         animalCtx.clearRect(0, 0, animalCanvas.width, animalCanvas.height);
         animals.forEach(animal => animal.draw(animalCtx));
         console.log("Placed animal:", animals[animals.length - 1]);

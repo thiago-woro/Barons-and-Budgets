@@ -92,6 +92,7 @@ for (let i = 0; i < treeCount; i++) {
 
 function drawTrees(ctx, treePositions) {
     clearCanvas(ctx);
+    console.log('drawTrees 😍');
 
     treePositions.sort((a, b) => a.y === b.y ? b.x - a.x : a.y - b.y);
 
@@ -102,9 +103,9 @@ function drawTrees(ctx, treePositions) {
     ctx.translate(x, y);
     ctx.rotate(rotation);
 
-    const yscale = Math.random() < 0.3 ? scale + (Math.random() * 0.1 + 0.3) : scale; // 50% chance to vary yscale slightly
+   /*  const yscale = Math.random() < 0.3 ? scale + (Math.random() * 0.1 + 0.3) : scale; // 50% chance to vary yscale slightly
     ctx.scale(scale, yscale); // Apply scaling
-
+ */
     ctx.beginPath();
     ctx.arc(0, 5, 7, 0, Math.PI * 2);
     ctx.fillStyle = `rgba(0, 0, 0, ${0.3})`;

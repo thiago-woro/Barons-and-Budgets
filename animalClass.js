@@ -20,7 +20,7 @@ class Animal {
     });
   }
 
-  constructor(x, y, type) {
+  constructor(x, y, type, age = 0) {
     this.x = x * cellSize;
     this.y = y * cellSize;
     this.type = type;
@@ -28,12 +28,10 @@ class Animal {
     this.emoji = this.getEmoji();
     this.state = "idle";
     this.isAlive = true;
-    this.age = 0;
+    this.age = age;
     this.deathTime = 0;
     this.isDying = false;
     this.animation = null;
-    this.isFrozen = false;
-    this.freezeTime = 0;
     this.isPaused = false; // Add pause state flag
     this.birthDate = Date.now(); // Initialize birth date for all animals
     this.fontSize = this.getSpeciesFontSize(); // Get species-specific font size
@@ -138,7 +136,7 @@ class Animal {
         // If we found a valid cell, create a new animal there
         if (validCells.length > 0) {
           const birthCell = validCells[Math.floor(Math.random() * validCells.length)];
-          const newAnimal = new Animal(birthCell.x, birthCell.y, this.type);
+          const newAnimal = new Animal(birthCell.x, birthCell.y, this.type, 0); // Set age to 0 for newborns
           animals.push(newAnimal);
           // Growth animation for new birth
           newAnimal.animateEmoji('pulse', newAnimal.emoji, 800);
@@ -198,6 +196,23 @@ class Animal {
   }
 
   animateEmoji(type, emoji, duration = 500) {
+    // Special case for drowning animation
+    if (type === 'drown') {
+      console.log(`Starting drowning animation at (${this.x}, ${this.y}) with emoji ${emoji}`);
+      // First show the animal
+      this.animation = Animation.create('small', emoji, duration * 0.3, this.x, this.y);
+      
+      // Then add drowning sequence
+      setTimeout(() => {
+        if (this.isAlive) {
+          console.log('Adding water splash animation');
+          this.animation = Animation.create('fade', '💦', duration * 0.7, this.x, this.y);
+        }
+      }, duration * 0.4);
+      
+      return;
+    }
+    
     this.animation = Animation.create(type, emoji, duration, this.x, this.y);
   }
 
@@ -412,6 +427,16 @@ class Animal {
 
   draw(ctx) {
     if (!this.isAlive) return;
+    
+    // Handle drowning animation specially
+    if (this.isDrowning) {
+      if (!this.drawAnimation(ctx)) {
+        ctx.fillStyle = 'black';
+        ctx.font = `${this.getFontSize()}px Arial`;
+        ctx.fillText(this.emoji, this.x, this.y);
+      }
+      return;
+    }
     
     if (this.isDying) {
       const timeSinceDeath = Date.now() - this.deathTime;
