@@ -1,4 +1,3 @@
-
 document.getElementById("gen2").addEventListener("click", function () {
   trees = [];
   treePositions = [];
@@ -116,6 +115,9 @@ function generateTerrainMap() {
   console.log(
     `🟩 Ground cells: ${groundCells.length}, 🌊 water cells: ${waterCells.length}`
   );
+  console.log(`Empty Cells: `, emptyCells.length);
+  emptyCells = groundCells;
+  console.log(`Empty Cells: `, emptyCells.length);
   afterMapGen();
 }
 
@@ -234,6 +236,7 @@ function afterMapGen() {
   drawTerrainLayer(groundCtx, groundCells, cellSize);
   drawTerrainLayer(waterCtx, waterCells, cellSize); //water map
   distributeOreDeposits(oreDepositsCtx);
+  placeLakes();
   
   // Draw sand texture after drawing the terrain layer
   drawSandTexture(groundCtx);
@@ -252,6 +255,7 @@ function afterMapGen() {
     const noiseValue = parseFloat(cell.noise);
     return noiseValue >= 0.14 && noiseValue <= 0.445;
   });
+
 
   console.log(
     `From ${groundCells.length} ground cells, down to ${flatLandCells.length} usable, flat lands cells`
@@ -585,4 +589,51 @@ function drawMountainTexture(ctx) {
       }
     }
   }
+}
+
+function placeLakes() {
+    // Filter empty cells to find suitable lake locations (noise > 0.035)
+    const potentialLakeCells = emptyCells.filter(cell => cell.noise && parseFloat(cell.noise) > 0.5);
+
+    if (potentialLakeCells.length === 0) {
+        console.log("No suitable locations found for lakes.");
+        return;
+    }
+
+    // Select a random cell from the filtered list
+    const randomLakeCell = potentialLakeCells[Math.floor(Math.random() * potentialLakeCells.length)];
+    const lakeX = randomLakeCell.x;
+    const lakeY = randomLakeCell.y;
+
+    // Get adjacent cells
+    const adjacentCells = calculateAdjacentCells(lakeX, lakeY);
+
+    // Update noise values of the selected cell and its adjacent cells
+    const lakeCells = [{ x: lakeX, y: lakeY }, ...adjacentCells];
+    lakeCells.forEach(cell => {
+        const groundCell = groundCells.find(gc => gc.x === cell.x && gc.y === cell.y);
+        if (groundCell) {
+            groundCell.noise = "-0.9"; // Set noise to -0.4 to make it water
+            groundCell.color = WATER_SHADES[0]; // Optional: Change color to water color
+        }
+    });
+
+    // Update waterCells array
+    lakeCells.forEach(cell => {
+        waterCells.push({
+            x: cell.x,
+            y: cell.y,
+            color: WATER_SHADES[0],
+            noise: "-0.9"
+        });
+    });
+
+    // Re-filter emptyCells to exclude lake cells
+    emptyCells = groundCells.filter(cell => {
+        return !lakeCells.some(lakeCell => lakeCell.x === cell.x && lakeCell.y === cell.y);
+    });
+
+    // Redraw the terrain layer to reflect the changes
+    drawTerrainLayer(groundCtx, groundCells, cellSize);
+    drawTerrainLayer(waterCtx, waterCells, cellSize);
 }

@@ -13,7 +13,7 @@ function modifyWalkableCells(cells, operation) {
         console.error("modifyWalkableCells: cells argument must be an array.");
         return;
     }
-    console.log(`🌲 modifyWalkableCells: ${operation}ing ${cells.length} cells.`);
+    console.log(`🌲🌲🌲🌲🌲🌲🌲 BEFORE modifyWalkableCells: emptyCells.length: ${emptyCells.length} ${operation}ing ${cells.length} cells.`);
 
     if (operation !== "remove" && operation !== "add") {
         console.error("modifyWalkableCells: operation argument must be 'remove' or 'add'.");
@@ -32,6 +32,13 @@ function modifyWalkableCells(cells, operation) {
 
     console.log(`🌲 ${operation}ed ${cells.length} cells. emptyCells.length: ${emptyCells.length}`);
 }
+
+
+
+
+
+
+
 
 function startTrees(ctx, cellSize) {
     clearCanvas(ctx);
@@ -233,42 +240,36 @@ function distributeOreDeposits(ctx) {
     clearCanvas(oreDepositsCtx);
     oreDeposits = [];
 
-
     betterOreCellsDistribution = groundCells.filter((cell) => {
         const noiseValue = parseFloat(cell.noise);
         return noiseValue >= 0.42;
-
     });
-    // Return early if there are no suitable cells for ore deposits
+
     if (betterOreCellsDistribution.length === 0) {
-    startTrees(treeCtx, cellSize);
+        startTrees(treeCtx, cellSize);
         return;
     }
 
-    const clusterCount = 5; // Number of ore deposit clusters
+    const clusterCount = 5;
     const depositsPerCluster = 3;
 
     for (let cluster = 0; cluster < clusterCount; cluster++) {
         const randomGroundCell =
             betterOreCellsDistribution[Math.floor(Math.random() * betterOreCellsDistribution.length)];
 
-        // Calculate the starting coordinates for the cluster within the selected ground cell
         const randomClusterX = randomGroundCell.x;
         const randomClusterY = randomGroundCell.y;
 
         let color = 'rgba(127, 115, 121, 0.4)';
         drawCircle(groundCtx, randomClusterX * cellSize, randomClusterY * cellSize, 40, color);
 
-        // Draw the first ore deposit in the random cluster X, Y
         drawOreDeposit(ctx, randomClusterX, randomClusterY);
 
-        // Calculate and draw the remaining ore deposits in adjacent cells
         const adjacentCells = calculateAdjacentCells(
             randomClusterX,
             randomClusterY
         );
 
-        // Store the adjacent cells in the global variable
         adjacentOreCells = [...adjacentOreCells, ...adjacentCells];
 
         const depositsToDraw = Math.min(depositsPerCluster, adjacentCells.length);
@@ -277,20 +278,20 @@ function distributeOreDeposits(ctx) {
             const { x, y } = adjacentCells[i];
             drawOreDeposit(ctx, x, y);
         }
-
-
-
-
     }
 
     // Filter out cells with ore deposits from groundCells
-    emptyCells = groundCells.filter((cell) => {
-        // Check if the cell coordinates are occupied by an ore deposit
-        return !adjacentOreCells.some(
-            (coords) =>
-                coords.x === cell.x && coords.y === cell.y
-        );
-    });
+    // emptyCells = groundCells.filter((cell) => {
+    //     // Check if the cell coordinates are occupied by an ore deposit
+    //     return !adjacentOreCells.some(
+    //         (coords) =>
+    //             coords.x === cell.x && coords.y === cell.y
+    //     );
+    // });
+
+    // Use modifyWalkableCells to remove ore deposit cells from emptyCells
+    console.log(`after ore deposits: emptyCells.length: ${emptyCells.length}`);
+    modifyWalkableCells(adjacentOreCells, "remove");
 
     //only starts trees after ore deposits!
     startTrees(treeCtx, cellSize);

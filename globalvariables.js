@@ -24,6 +24,7 @@ let terrainMap = [];
 let groundCells = [];
 let waterCells = [];
 let sandCells = [];
+let emptyCells = [];
 let trees = [];
 let treePositions = [];  //array format: treePositions.push({ x, y, emoji: selectedEmoji });
 
