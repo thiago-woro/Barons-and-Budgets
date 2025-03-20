@@ -790,3 +790,25 @@ body {
     .active {
     background-color: var(--purple)
     }
+
+
+       #debugPanelContent {
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 20px;
+        width: 50%;
+        margin: 20px auto;
+        border-radius: 5px;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    th, td {
+        padding: 8px;
+        text-align: left;
+    }
+    th {
+        background: #333;
+    }

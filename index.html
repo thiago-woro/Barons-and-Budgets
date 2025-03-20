@@ -35,11 +35,21 @@
 
 
 <!-- debug panel -->
-<div id="debugPanel" style="width: 100vw; height: 100vh; position: absolute; display: none;visibility: collapse; z-index: 2000; left: 0; top: 0;">
+<div id="debugPanel" style="width: 100vw; height: 100vh; position: absolute; display: none; z-index: 2000; left: 0; top: 0;">
     <div id="debugPanelContent">
         <h2>Debug Panel</h2>
+        <label for="arrays">Choose an array:</label>
+
+<select name="arrays" id="arrays">
+<!-- fill with javascript dinamically -->
+  <option value="array name here">Terrain</option>
+  <option value="creatures">Creatures</option>
+  <option value="animals">Animals</option>
+  <option value="budgets">Budgets</option>
+  <option value="buildings">Buildings</option>
+</select>
         <div id="debugInfo">
-            <p>Debug information will be displayed here.</p>
+        <!-- insert dinamic table here -->
         </div>
     </div>
 </div>
@@ -280,8 +290,6 @@
                 <span id="minimizeTabButton" class="tabSelector" onclick="hideTabs()">
                     <i style="height: 20px; width: 20px;" class="fas fa-angle-double-up"></i> hide</span>
                 <span id="gameTabButton" class="tabSelector active" onclick="toggleTab('gameTab')">Game</span>
-  
-
                 <span id="statsTabButton" class="tabSelector" onclick="toggleTab('statsTab')">Stats</span>
                 <span id="npcTabButton" class="tabSelector" onclick="toggleTab('npcTab')">NPCs</span>
                 <span id="chartTabButton" class="tabSelector" onclick="toggleTab('chartTab')">Chart</span>
@@ -505,9 +513,70 @@
 
   <script>
     document.getElementById("toggleDebugger").addEventListener("click", function() {
-      const debuggerOverlay = document.getElementById("debuggerOverlay");
+      const debuggerOverlay = document.getElementById("debugPanel");
       debuggerOverlay.style.display = debuggerOverlay.style.display === "none" ? "block" : "none";
     });
+
+    // Function to update debug panel with array information
+function updateDebugPanel(arraysList) {
+    // Get the select element
+    const arraySelect = document.getElementById('arrays');
+    const debugInfo = document.getElementById('debugInfo');
+    
+    // Clear existing options
+    arraySelect.innerHTML = '';
+    
+    // Add all arrays as options
+    Object.keys(arraysList).forEach(arrayName => {
+        const option = document.createElement('option');
+        option.value = arrayName;
+        option.textContent = arrayName.charAt(0).toUpperCase() + arrayName.slice(1);
+        arraySelect.appendChild(option);
+    });
+    
+    // Add change event listener to show selected array contents
+    arraySelect.addEventListener('change', function() {
+        const selectedArrayName = this.value;
+        const selectedArray = arraysList[selectedArrayName];
+        
+        // Create a table to display array contents
+        let tableHTML = '<table border="1"><thead><tr><th>Index</th><th>Value</th></tr></thead><tbody>';
+        
+        selectedArray.forEach((item, index) => {
+            // Handle different types of values
+            let displayValue = '';
+            if (typeof item === 'object' && item !== null) {
+                displayValue = JSON.stringify(item);
+            } else {
+                displayValue = item;
+            }
+            
+            tableHTML += `<tr><td>${index}</td><td>${displayValue}</td></tr>`;
+        });
+        
+        tableHTML += '</tbody></table>';
+        debugInfo.innerHTML = tableHTML;
+    });
+    
+    // Trigger change event to show first array by default
+    arraySelect.dispatchEvent(new Event('change'));
+}
+
+// Usage example with your arrays
+const gameArrays = {
+    groundCells,
+    waterCells,
+ 
+};
+
+// Call this function when you want to initialize the debug panel
+// For example, after your terrain generation or when debug panel is opened
+function initializeDebugPanel() {
+    updateDebugPanel(gameArrays);
+}
+
+
+
   </script>
 
 	</body>

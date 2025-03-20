@@ -182,6 +182,56 @@ document.addEventListener('DOMContentLoaded', () => {
         
         document.getElementById('buildingDetails').innerHTML = detailsHtml;
         document.getElementById('buildingDetails').style.display = "block";
+        //old code
+
+
+
+
+  console.log('importing rooms');
+
+
+        //new code
+        //import interior
+    fetch('buildings/interior.html')
+      .then(res => res.text())
+      .then(html => {
+        let temp = document.createElement('div');
+        temp.innerHTML = html;
+
+        // move non-script nodes into existing #interior
+        let interior = document.getElementById('buildingDetails');
+        Array.from(temp.childNodes).forEach(node => {
+          if (node.tagName !== 'SCRIPT') {
+            interior.appendChild(node);
+          }
+        });
+
+        // evaluate scripts in global scope
+        Array.from(temp.querySelectorAll('script')).forEach(script => {
+          let newScript = document.createElement('script');
+          if (script.src) {
+            newScript.src = script.src;
+          } else {
+            newScript.textContent = script.textContent;
+          }
+          document.head.appendChild(newScript);
+        });
+      })
+      .then(() => {
+        console.log('rooms imported');
+          //generate rooms1
+  console.log('generating rooms');
+  severalRooms(3); // Default to 3 rooms
+      });
+  
+
+    
+  
+  
+
+
+
+
     };
 
 //MAIN CLICK DETECTOR    THIAGO

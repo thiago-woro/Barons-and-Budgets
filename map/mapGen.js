@@ -93,7 +93,6 @@ function generateTerrainMap(width, height, customNoiseScale) {
   groundCells = [];
   waterCells = [];
   noiseValues = [];
-  availableHouseCells = [];
   flatLandCells = [];
   pathCells = [];
   trees = [];
@@ -411,6 +410,8 @@ function drawHousePaths(cellArray, numRowsToSkip, pathCurveAmount) {   //wavy ho
     }
   }
 
+
+initializeDebugPanel();
   //drawCellsInArray(pathCells, 'rgba(128, 59, 190, 0.52)', pathCtx);
 }
 
