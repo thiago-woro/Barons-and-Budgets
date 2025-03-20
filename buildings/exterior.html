@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Exterior TEST</title>
+  <style>
+  </style>
+</head>
+<body>
+this file is for testing only.
+ <button id="importInterior">Import Interior</button>
+  <button id="generateRooms">Generate Rooms</button>
+  <div id="container"></div>
+  <div id="exterior"></div>
+  <div id="interior"></div>
+
+ 
+
+  <script>
+document.getElementById('generateRooms').addEventListener('click', generateRooms);
+
+function generateRooms () {
+  severalRooms(3); // Default to 3 rooms
+
+}
+
+
+
+    console.log('exterior.html');
+// Global array of NPCs
+  let npcs = [];
+
+  for (let i = 0; i < 10; i++) {
+    npcs.push({
+      id: i,
+      name: `NPC_${i}`,
+      x: Math.floor(Math.random() * 100),
+      y: Math.floor(Math.random() * 100),
+      health: 100
+    });
+  }
+
+  console.log(`Generated ${npcs.length} NPCs`);
+
+
+document.getElementById('importInterior').addEventListener('click', importInterior);
+
+function importInterior() {
+document.getElementById('importInterior').style.display = 'none';
+
+
+    fetch('interior.html')
+      .then(res => res.text())
+      .then(html => {
+        let temp = document.createElement('div');
+        temp.innerHTML = html;
+
+        // move non-script nodes into existing #interior
+        let interior = document.getElementById('interior');
+        Array.from(temp.childNodes).forEach(node => {
+          if (node.tagName !== 'SCRIPT') {
+            interior.appendChild(node);
+          }
+        });
+
+        // evaluate scripts in global scope
+        Array.from(temp.querySelectorAll('script')).forEach(script => {
+          let newScript = document.createElement('script');
+          if (script.src) {
+            newScript.src = script.src;
+          } else {
+            newScript.textContent = script.textContent;
+          }
+          document.head.appendChild(newScript);
+        });
+      });
+  }
+  </script>
+
+</body>
+</html>
