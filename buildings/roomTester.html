@@ -1,20 +1,89 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Room Generator</title>
+<title>For tests only</title>
+<style>
+ 
+  .rowClass {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+  }
 
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    background-color: #0d0d0d; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  input {
+    background-color: #444444;
+    color: #fff;
+    border: 0px solid #fff;
+    padding: 8px 16px;
+    border-radius: 5px;
+    width: 100px;
+  }
+
+  #generateButton, #randomButton {
+    padding: 8px 16px;
+    cursor: pointer;
+    border: 0px solid #fff;
+    color: #fff;
+    border-radius: 5px;
+  }
+
+  #generateButton {
+    background-color: #2cf16eaa;
+  }
+
+  #randomButton {
+    background-color: #2f7ccad6;
+  }
+
+  div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 10px;
+    background-color: #0d0d0d;
+    padding: 10px;
+    border-radius: 5px;
+  }
+
+  select {
+    background-color: #444444;
+    color: #fff;
+    border: 0px solid #fff;
+    padding: 8px 16px;
+    border-radius: 5px;
+  }
+</style>
 </head>
 <body>
-<div id="interiorRoomContainer" class="rowClass" style="display: block;">
-<canvas id="interiorRoomCanvas"></canvas>
-</div>
-<div style="display: none;">
- <input type="number" id="tilesizeInput" value="32" min="16" max="64">
+
+<div class="rowClass">
+  <label for="roomsInput" style="color: white;">Rooms:</label>
+  <input type="number" id="roomsInput" value="3" min="1" max="10">
+
+  <label for="tilesizeInput" style="color: white;">Tile Size:</label>
+  <input type="number" id="tilesizeInput" value="32" min="16" max="64">
+
   <button id="generateButton">Generate</button>
   <button id="randomButton">Random</button>
 </div>
-<!-- loads the Sprites only. -->
-<div class="rowClass" id="tiles" style="display: none;" >
+
+<canvas id="interiorRoomCanvas"></canvas>
+
+<div class="rowClass" id="tiles">
   <img id="tile1" src="../assets/buildings/house_interior/tile1.png" data-width="32" data-height="32" style="display: block;">
   <img id="tile2" src="../assets/buildings/house_interior/tile2.png" data-width="32" data-height="32" style="display: block;">
   <img id="tile3" src="../assets/buildings/house_interior/tile3.png" data-width="32" data-height="32" style="display: block;">
@@ -424,6 +493,11 @@ function severalRooms(roomsAmount) {
   
   // Create doorways between rooms
   createDoorways(ctx, tileSize);
+  
+  // Draw debug info
+  ctx.fillStyle = "white";
+  ctx.font = "14px Arial";
+  ctx.fillText(`Rooms: ${allRooms.length}`, 10, 20);
 }
 
 // Event listeners

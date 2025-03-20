@@ -3,6 +3,10 @@ const numGrassImages = 32;
 
 let grassCells = []
 
+
+//TODO copy the same sprite importer function from furniture.html
+
+
 // Function to get a random grass image file name
 function getRandomGrassImage() {
   const randomIndex = Math.floor(Math.random() * numGrassImages) + 1;

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Furniture Sprite Sheet Test</title>
+    <style>
+        body {
+            background-color: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        canvas {
+            border: 1px solid #fff;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="furnitureCanvas"></canvas>
+
+<script>
+    // Global variables
+    const CELL_SIZE = 32; // 32px per cell
+    const GRID_WIDTH = 20; // Number of cells wide
+    const GRID_HEIGHT = 20; // Number of cells tall
+    let occupiedCells = {}; // Track occupied cells
+
+    // Function to load and return a sprite sheet object
+    function loadSpriteSheet(filePath, sprites) {
+        const spriteSheetData = {
+            image: filePath,
+            sprites: sprites
+        };
+
+        const spriteSheet = new Image();
+        spriteSheet.src = spriteSheetData.image;
+
+        return {
+            image: spriteSheet,
+            data: spriteSheetData
+        };
+    }
+
+    // Example sprite sheet data (edit the sprites object as needed)
+    const interiorSpriteSheet = loadSpriteSheet(
+        '../assets/buildings/house_interior/interior.png',
+      {
+  "window_frame": { "x": 0, "y": 0, "width": 64, "height": 64 },
+  "window_glass": { "x": 64, "y": 0, "width": 32, "height": 32 },
+  "key": { "x": 96, "y": 0, "width": 32, "height": 32 },
+  "sword": { "x": 128, "y": 0, "width": 32, "height": 32 },
+  "axe": { "x": 160, "y": 0, "width": 32, "height": 32 },
+  "pretzel": { "x": 192, "y": 0, "width": 32, "height": 32 },
+  "potion_green": { "x": 224, "y": 0, "width": 32, "height": 32 },
+  "potion_red": { "x": 256, "y": 0, "width": 32, "height": 32 },
+  "potion_blue": { "x": 288, "y": 0, "width": 32, "height": 32 },
+  "potion_purple": { "x": 320, "y": 0, "width": 32, "height": 32 },
+  "potion_yellow": { "x": 352, "y": 0, "width": 32, "height": 32 },
+  "potion_orange": { "x": 384, "y": 0, "width": 32, "height": 32 },
+  "potion_empty": { "x": 416, "y": 0, "width": 32, "height": 32 },
+  "barrel_top": { "x": 448, "y": 0, "width": 32, "height": 32 },
+  "bed_top": { "x": 480, "y": 0, "width": 32, "height": 32 },
+  "gear": { "x": 0, "y": 32, "width": 32, "height": 32 },
+  "shield": { "x": 32, "y": 32, "width": 32, "height": 32 },
+  "skull": { "x": 64, "y": 32, "width": 32, "height": 32 },
+  "lantern": { "x": 96, "y": 32, "width": 32, "height": 32 },
+  "hay_bale": { "x": 128, "y": 32, "width": 64, "height": 64 },
+  "bed_bottom": { "x": 192, "y": 32, "width": 32, "height": 64 },
+  "stool": { "x": 224, "y": 32, "width": 32, "height": 32 },
+  "carpet_corner_ul": { "x": 0, "y": 64, "width": 32, "height": 32 },
+  "carpet_corner_ur": { "x": 32, "y": 64, "width": 32, "height": 32 },
+  "carpet_corner_dl": { "x": 64, "y": 64, "width": 32, "height": 32 },
+  "carpet_corner_dr": { "x": 96, "y": 64, "width": 32, "height": 32 },
+  "carpet_edge_top": { "x": 128, "y": 64, "width": 32, "height": 32 },
+  "carpet_edge_bottom": { "x": 160, "y": 64, "width": 32, "height": 32 },
+  "carpet_edge_left": { "x": 192, "y": 64, "width": 32, "height": 32 },
+  "carpet_edge_right": { "x": 224, "y": 64, "width": 32, "height": 32 },
+  "carpet_middle": { "x": 256, "y": 64, "width": 32, "height": 32 },
+  "paper_stack": { "x": 288, "y": 64, "width": 32, "height": 32 },
+  "jar_small": { "x": 320, "y": 64, "width": 32, "height": 32 },
+  "jar_large": { "x": 352, "y": 64, "width": 32, "height": 64 },
+  "fireplace_top": { "x": 384, "y": 64, "width": 96, "height": 64 },
+  "kitchen_counter_left": { "x": 0, "y": 96, "width": 32, "height": 64 },
+  "kitchen_counter_middle": { "x": 32, "y": 96, "width": 32, "height": 64 },
+  "kitchen_counter_right": { "x": 64, "y": 96, "width": 32, "height": 64 },
+  "helmet_1": { "x": 96, "y": 96, "width": 32, "height": 32 },
+  "helmet_2": { "x": 128, "y": 96, "width": 32, "height": 32 },
+  "helmet_3": { "x": 160, "y": 96, "width": 32, "height": 32 },
+  "helmet_4": { "x": 192, "y": 96, "width": 32, "height": 32 },
+  "helmet_5": { "x": 224, "y": 96, "width": 32, "height": 32 },
+  "fireplace_bottom": { "x": 384, "y": 128, "width": 96, "height": 64 },
+  "cupboard_left": { "x": 0, "y": 160, "width": 32, "height": 96 },
+  "cupboard_right": { "x": 32, "y": 160, "width": 32, "height": 96 },
+  "cupboard_middle": { "x": 64, "y": 160, "width": 32, "height": 96 },
+  "bowl": { "x": 96, "y": 160, "width": 32, "height": 32 },
+  "bread_stack": { "x": 128, "y": 160, "width": 32, "height": 32 },
+  "book_stack": { "x": 160, "y": 160, "width": 32, "height": 32 },
+  "rope": { "x": 192, "y": 160, "width": 32, "height": 32 },
+  "pipe_vertical": { "x": 224, "y": 160, "width": 32, "height": 128 },
+  "stove_left": { "x": 256, "y": 160, "width": 32, "height": 96 },
+  "stove_middle": { "x": 288, "y": 160, "width": 32, "height": 96 },
+  "stove_right": { "x": 320, "y": 160, "width": 32, "height": 96 },
+  "barrel_side": { "x": 0, "y": 256, "width": 32, "height": 32 }
+    }
+    );
+
+    // Load the sprite sheet and initialize canvas when ready
+    interiorSpriteSheet.image.onload = () => {
+        console.log("Interior sprite sheet loaded successfully");
+        initCanvas(interiorSpriteSheet);
+    };
+
+    interiorSpriteSheet.image.onerror = () => {
+        console.error("Failed to load interior sprite sheet. Check the file path.");
+    };
+
+    // Initialize the canvas with a specific sprite sheet
+    function initCanvas(spriteSheetObj) {
+        const canvas = document.getElementById("furnitureCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // Set canvas size based on grid
+        canvas.width = GRID_WIDTH * CELL_SIZE;
+        canvas.height = GRID_HEIGHT * CELL_SIZE;
+
+        // Clear canvas with a background color
+        ctx.fillStyle = "#333"; // Dark gray background
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Reset occupied cells
+        occupiedCells = {};
+
+        // Draw all furniture from the provided sprite sheet
+        drawAllFurniture(ctx, spriteSheetObj);
+    }
+
+    // Check if a cell is occupied
+    function isCellOccupied(cellCol, cellRow) {
+        return occupiedCells[`${cellCol},${cellRow}`] === true;
+    }
+
+    // Mark a cell as occupied
+    function markCellOccupied(cellCol, cellRow) {
+        occupiedCells[`${cellCol},${cellRow}`] = true;
+    }
+
+    // Draw a single furniture sprite at the specified cell
+    function drawFurniture(ctx, spriteSheetObj, spriteName, cellCol, cellRow) {
+        const sprite = spriteSheetObj.data.sprites[spriteName];
+        if (!sprite) {
+            console.log(`Sprite ${spriteName} not found in spriteSheetData`);
+            return;
+        }
+
+        // Convert cell coordinates to pixel coordinates
+        const pixelX = cellCol * CELL_SIZE;
+        const pixelY = cellRow * CELL_SIZE;
+
+        // Draw the sprite from the sheet
+        ctx.drawImage(
+            spriteSheetObj.image, // Image source
+            sprite.x, sprite.y,   // Source x, y in the sprite sheet
+            sprite.width, sprite.height, // Source width, height
+            pixelX, pixelY,       // Destination x, y on canvas
+            sprite.width, sprite.height  // Destination width, height
+        );
+
+        // Mark occupied cells based on sprite size
+        const widthInCells = Math.ceil(sprite.width / CELL_SIZE);
+        const heightInCells = Math.ceil(sprite.height / CELL_SIZE);
+        for (let x = cellCol; x < cellCol + widthInCells; x++) {
+            for (let y = cellRow; y < cellRow + heightInCells; y++) {
+                markCellOccupied(x, y);
+                console.log(`Cell X ${x}, Y ${y} occupied by ${spriteName}`);
+            }
+        }
+    }
+
+    // Draw all furniture items from the sprite sheet across the canvas
+    function drawAllFurniture(ctx, spriteSheetObj) {
+        let currentCol = 0; // Start at column 0
+        let currentRow = 0; // Start at row 0
+        const maxCols = GRID_WIDTH; // Max columns in the grid
+
+        Object.keys(spriteSheetObj.data.sprites).forEach((spriteName) => {
+            const sprite = spriteSheetObj.data.sprites[spriteName];
+            const widthInCells = Math.ceil(sprite.width / CELL_SIZE);
+
+            // Check if there's enough space in the current row
+            if (currentCol + widthInCells > maxCols) {
+                currentCol = 0; // Reset to start of next row
+                currentRow += Math.ceil(sprite.height / CELL_SIZE); // Move down by sprite height
+            }
+
+            // Ensure we don’t exceed grid height
+            if (currentRow < GRID_HEIGHT) {
+                drawFurniture(ctx, spriteSheetObj, spriteName, currentCol, currentRow);
+                currentCol += widthInCells + 1; // Move to next position with 1 cell padding
+            } else {
+                console.log(`No more space to place ${spriteName}`);
+            }
+        });
+    }
+</script>
+</body>
+</html>
