@@ -224,7 +224,7 @@ function drawTerrainLayer(ctx, cellArray, cellSize) {
   }
 }
 
-function afterMapGen() {
+function afterMapGen() { //after basic terrain generation, adds enviromental details to map.
   generateWavyWaterCanvas(waterCtx, rows);
 
   // Calculate the total number of cells
@@ -274,6 +274,9 @@ function afterMapGen() {
   // adjacentOreCells are already in grid coordinates
   console.log(`after ore deposits: emptyCells.length: ${emptyCells.length}`);
   modifyWalkableCells(adjacentOreCells, "remove");
+
+    drawGrass(treeCtx, 0.45);
+
 }
 
 function drawHousePaths(cellArray, numRowsToSkip, pathCurveAmount) {   //wavy house paths
@@ -674,6 +677,115 @@ function placeLakes() {
     });
 
     console.log(`Created a lake with ${lakeCells.length} cells centered at (${centerX}, ${centerY})`);
+
+    // 1. Find and store lake border cells
+    const outsideRingLakeBorders = [];
+    
+    // Create a Set of lake cell coordinates for faster lookups
+    const lakeCellSet = new Set(lakeCells.map(cell => `${cell.x},${cell.y}`));
+    
+    // Check each lake cell's neighbors to find borders
+    lakeCells.forEach(lakeCell => {
+        // Check all 8 adjacent cells around this lake cell
+        for (let dx = -1; dx <= 1; dx++) {
+            for (let dy = -1; dy <= 1; dy++) {
+                // Skip the center cell (the lake cell itself)
+                if (dx === 0 && dy === 0) continue;
+                
+                const neighborX = lakeCell.x + dx;
+                const neighborY = lakeCell.y + dy;
+                const neighborKey = `${neighborX},${neighborY}`;
+                
+                // If this neighbor is not part of the lake
+                if (!lakeCellSet.has(neighborKey)) {
+                    // Check if it's a valid ground cell
+                    const groundCell = groundCells.find(gc => 
+                        gc.x === neighborX && 
+                        gc.y === neighborY && 
+                        parseFloat(gc.noise) > 0
+                    );
+                    
+                    // If it's a valid ground cell and not already in our borders array
+                    if (groundCell && !outsideRingLakeBorders.some(b => b.x === neighborX && b.y === neighborY)) {
+                        outsideRingLakeBorders.push({
+                            x: neighborX,
+                            y: neighborY,
+                            noise: groundCell.noise
+                        });
+                    }
+                }
+            }
+        }
+    });
+    
+    console.log(`Found ${outsideRingLakeBorders.length} border cells around the lake`);
+    
+    // 3. Remove trees and ore from border cells
+    
+    // Remove trees from border cells
+    if (treePositions && treePositions.length > 0) {
+        // Convert border cells to a Set for faster lookup
+        const borderCellSet = new Set(outsideRingLakeBorders.map(cell => `${cell.x},${cell.y}`));
+        
+        // Filter out trees on border cells
+        treePositions = treePositions.filter(tree => {
+            // Get grid coordinates from tree
+            const treeGridX = Math.floor(tree.x / cellSize);
+            const treeGridY = Math.floor(tree.y / cellSize);
+            // Keep tree if it's not on a border cell
+            return !borderCellSet.has(`${treeGridX},${treeGridY}`);
+        });
+        
+        // Redraw trees after modification
+        drawTrees(treeCtx, treePositions);
+    }
+    
+    // Remove ore deposits from border cells
+    if (adjacentOreCells && adjacentOreCells.length > 0) {
+        // Convert border cells to a Set for faster lookup
+        const borderCellSet = new Set(outsideRingLakeBorders.map(cell => `${cell.x},${cell.y}`));
+        
+        // Filter out ore deposits on border cells
+        adjacentOreCells = adjacentOreCells.filter(oreCell => {
+            return !borderCellSet.has(`${oreCell.x},${oreCell.y}`);
+        });
+    }
+    
+    // 4. Add grass to lake borders
+    if (outsideRingLakeBorders.length > 0) {
+        // Draw grass on ~85% of border cells
+        const grassDensity = 0.85;
+        
+        for (const borderCell of outsideRingLakeBorders) {
+            // Randomly determine whether to place grass based on density
+            if (Math.random() < grassDensity) {
+                const x = borderCell.x;
+                const y = borderCell.y;
+                
+                const grassImage = new Image();
+                grassImage.src = getRandomGrassImage();
+                
+                // Create a grass cell entry
+                const grassCell = {
+                    x: x,
+                    y: y,
+                    image: grassImage.src
+                };
+                
+                // Add to grassCells array if it exists
+                if (typeof grassCells !== 'undefined') {
+                    grassCells.push(grassCell);
+                }
+                
+                // Draw the grass when image loads
+                grassImage.onload = () => {
+                    treeCtx.drawImage(grassImage, x * cellSize, y * cellSize, cellSize, cellSize);
+                };
+            }
+        }
+        
+        console.log(`Added grass to lake borders`);
+    }
 
     // Redraw the terrain layer to reflect the changes
     drawTerrainLayer(groundCtx, groundCells, cellSize);

@@ -96,7 +96,6 @@ function startTrees(ctx, cellSize) {
     
     treePositions = newTreePositions;
     drawTrees(treeCtx, treePositions);
-    drawGrass(treeCtx, 0.05);
 
     // Create an array of grid coordinates from treePositions for modifyWalkableCells
     const gridCoords = treePositions.map(tree => ({ x: tree.gridX, y: tree.gridY }));

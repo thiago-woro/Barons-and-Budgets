@@ -322,7 +322,7 @@ function logCellOnClick(container, ctx, cellSize) { //same things as getClickCoo
       // Calculate cell indices (row and column) based on world position.
       const cellRow = Math.floor(worldY / cellSize);
       const cellCol = Math.floor(worldX / cellSize);
-      console.log(`logCellOnClick - Cell clicked: X = ${cellCol}, Y = ${cellRow}`);
+      console.log(`Cell: ${cellCol},${cellRow}`);
 
 
 
