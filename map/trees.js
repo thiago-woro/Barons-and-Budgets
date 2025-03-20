@@ -8,6 +8,21 @@ const TREE_LIFECYCLE = {
     MIN_TREES: 20
 };
 
+// Helper functions for coordinate conversion
+function gridToPixel(gridX, gridY) {
+    return {
+        x: (gridX + 0.5) * cellSize,
+        y: (gridY + 0.5) * cellSize
+    };
+}
+
+function pixelToGrid(pixelX, pixelY) {
+    return {
+        x: Math.floor(pixelX / cellSize),
+        y: Math.floor(pixelY / cellSize)
+    };
+}
+
 function modifyWalkableCells(cells, operation) {
     if (!Array.isArray(cells)) {
         console.error("modifyWalkableCells: cells argument must be an array.");
@@ -32,13 +47,6 @@ function modifyWalkableCells(cells, operation) {
 
     console.log(`🌲 ${operation}ed ${cells.length} cells. emptyCells.length: ${emptyCells.length}`);
 }
-
-
-
-
-
-
-
 
 function startTrees(ctx, cellSize) {
     clearCanvas(ctx);
@@ -67,24 +75,32 @@ function startTrees(ctx, cellSize) {
         }
     });
 
-const newTreePositions = [];
-for (let i = 0; i < treeCount; i++) {
-    const selectedTreeEmoji = Object.keys(treeEmojis)[i % 4];
-    if (treeEmojis[selectedTreeEmoji].length > 0) {
-        const randomIndex = Math.floor(Math.random() * treeEmojis[selectedTreeEmoji].length);
-        const selectedCell = treeEmojis[selectedTreeEmoji].splice(randomIndex, 1)[0];
-        const x = (selectedCell.x + 0.5) * cellSize;
-        const y = (selectedCell.y + 0.5) * cellSize;
-        let scale = 1;
-
-        newTreePositions.push({ x, y, emoji: selectedTreeEmoji, scale: scale, opacity: 1, rotation: 0 });
+    const newTreePositions = [];
+    for (let i = 0; i < treeCount; i++) {
+        const selectedTreeEmoji = Object.keys(treeEmojis)[i % 4];
+        if (treeEmojis[selectedTreeEmoji].length > 0) {
+            const randomIndex = Math.floor(Math.random() * treeEmojis[selectedTreeEmoji].length);
+            const selectedCell = treeEmojis[selectedTreeEmoji].splice(randomIndex, 1)[0];
+            
+            // Store grid coordinates directly in the treePositions
+            newTreePositions.push({ 
+                gridX: selectedCell.x, 
+                gridY: selectedCell.y, 
+                emoji: selectedTreeEmoji, 
+                scale: 1, 
+                opacity: 1, 
+                rotation: 0 
+            });
+        }
     }
-}
+    
     treePositions = newTreePositions;
     drawTrees(treeCtx, treePositions);
     drawGrass(treeCtx, 0.05);
 
-    modifyWalkableCells(treePositions, "remove");
+    // Create an array of grid coordinates from treePositions for modifyWalkableCells
+    const gridCoords = treePositions.map(tree => ({ x: tree.gridX, y: tree.gridY }));
+    modifyWalkableCells(gridCoords, "remove");
 
     //initTreeLifecycle(); // its causing weird animations on dead trees redraws
     return treePositions;
@@ -92,45 +108,46 @@ for (let i = 0; i < treeCount; i++) {
 
 function drawTrees(ctx, treePositions) {
     clearCanvas(ctx);
-      console.log('drawTrees 😍');
-/*   
-    // Generate a stack trace
-    let err = new Error();
-    console.log(`Call stack:\n${err.stack}`);
- */
-    treePositions.sort((a, b) => a.y === b.y ? b.x - a.x : a.y - b.y);
+    console.log('drawTrees 😍');
+
+    // Sort trees by Y position for proper rendering order
+    treePositions.sort((a, b) => a.gridY === b.gridY ? b.gridX - a.gridX : a.gridY - b.gridY);
 
     treePositions.forEach(tree => {
-    const { x, y, emoji, scale = 1, opacity = 1, rotation = 0, color = `rgba(0, 0, 0, ${opacity})` } = tree;
+        const { gridX, gridY, emoji, scale = 1, opacity = 1, rotation = 0, color = `rgba(0, 0, 0, ${opacity})` } = tree;
+        
+        // Convert grid to pixel coordinates for drawing
+        const { x, y } = gridToPixel(gridX, gridY);
 
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(rotation);
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(rotation);
 
-   /*  const yscale = Math.random() < 0.3 ? scale + (Math.random() * 0.1 + 0.3) : scale; // 50% chance to vary yscale slightly
-    ctx.scale(scale, yscale); // Apply scaling
- */
-    ctx.beginPath();
-    ctx.arc(0, 5, 7, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(0, 0, 0, ${0.3})`;
-    ctx.fill();
+        ctx.beginPath();
+        ctx.arc(0, 5, 7, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(0, 0, 0, ${0.3})`;
+        ctx.fill();
 
-    ctx.fillStyle = color;
-    ctx.textAlign = "center";
-    ctx.font = `bold ${20}px Arial`;
-    ctx.fillText(emoji, 0, 0);
+        ctx.fillStyle = color;
+        ctx.textAlign = "center";
+        ctx.font = `bold ${20}px Arial`;
+        ctx.fillText(emoji, 0, 0);
 
-    ctx.restore();
-});
+        ctx.restore();
+    });
 }
 
-
-
-
-
-
-function animateNewTree(x, y, emoji, callback) {
-    const tree = { x, y, emoji, scale: 0, opacity: 0, rotation: 0 };
+function animateNewTree(gridX, gridY, emoji, callback) {
+    // Create a new tree with grid coordinates
+    const tree = { 
+        gridX, 
+        gridY, 
+        emoji, 
+        scale: 0, 
+        opacity: 0, 
+        rotation: 0 
+    };
+    
     treePositions.push(tree);
 
     if (!treePopSound.lastPlayed || (Date.now() - treePopSound.lastPlayed) > 5000) {
@@ -139,6 +156,8 @@ function animateNewTree(x, y, emoji, callback) {
         treePopSound.lastPlayed = Date.now();
     }
 
+    // Convert to pixel coordinates for drawing circle
+    const { x, y } = gridToPixel(gridX, gridY);
     const color = 'rgba(129, 178, 86, 0.37)';
     drawCircle(groundCtx, x, y, 10, color);
 
@@ -165,6 +184,9 @@ function animateNewTree(x, y, emoji, callback) {
     }
 
     requestAnimationFrame(animate);
+    
+    // Update emptyCells to remove this grid position
+    modifyWalkableCells([{ x: gridX, y: gridY }], "remove");
 }
 
 function dyingTreeAnimation(treeIndex, callback) {
@@ -202,7 +224,14 @@ function dyingTreeAnimation(treeIndex, callback) {
         } else {
             const finalIndex = treePositions.findIndex(t => t === tree);
             if (finalIndex !== -1) {
+                // Get the grid coords before removing
+                const { gridX, gridY } = treePositions[finalIndex];
+                
+                // Remove from treePositions
                 treePositions.splice(finalIndex, 1);
+                
+                // Add back to emptyCells if needed
+                modifyWalkableCells([{ x: gridX, y: gridY }], "add");
             }
             if (callback) callback();
             drawTrees(treeCtx, treePositions); // Draw once animation is complete
@@ -236,8 +265,11 @@ function distributeOreDeposits(ctx) {
         const randomClusterX = randomGroundCell.x;
         const randomClusterY = randomGroundCell.y;
 
+        // Convert to pixel for drawing circle
+        const { x: pixelX, y: pixelY } = gridToPixel(randomClusterX, randomClusterY);
+        
         let color = 'rgba(127, 115, 121, 0.4)';
-        drawCircle(groundCtx, randomClusterX * cellSize, randomClusterY * cellSize, 40, color);
+        drawCircle(groundCtx, pixelX, pixelY, 40, color);
 
         drawOreDeposit(ctx, randomClusterX, randomClusterY);
 
@@ -256,16 +288,8 @@ function distributeOreDeposits(ctx) {
         }
     }
 
-    // Filter out cells with ore deposits from groundCells
-    // emptyCells = groundCells.filter((cell) => {
-    //     // Check if the cell coordinates are occupied by an ore deposit
-    //     return !adjacentOreCells.some(
-    //         (coords) =>
-    //             coords.x === cell.x && coords.y === cell.y
-    //     );
-    // });
-
     // Use modifyWalkableCells to remove ore deposit cells from emptyCells
+    // adjacentOreCells are already in grid coordinates
     console.log(`after ore deposits: emptyCells.length: ${emptyCells.length}`);
     modifyWalkableCells(adjacentOreCells, "remove");
 
@@ -273,27 +297,18 @@ function distributeOreDeposits(ctx) {
     startTrees(treeCtx, cellSize);
 }
 
-
-
-
-
-
-
-
-
-
-
-
 function initTreeLifecycle() {
     setInterval(() => {
         if (treePositions.length < TREE_LIFECYCLE.MAX_TREES) {
             const randomEmptyCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
             if (randomEmptyCell) {
-                const x = randomEmptyCell.x * cellSize;
-                const y = randomEmptyCell.y * cellSize;
+                const gridX = randomEmptyCell.x;
+                const gridY = randomEmptyCell.y;
                 const treeTypes = ["🌴", "🌵", "🌳", "🌲"];
                 const randomTree = treeTypes[Math.floor(Math.random() * treeTypes.length)];
-                animateNewTree(x, y, randomTree);
+                
+                // Pass grid coordinates directly
+                animateNewTree(gridX, gridY, randomTree);
             }
         }
     }, TREE_LIFECYCLE.NEW_TREE_INTERVAL);
@@ -323,28 +338,27 @@ function initTreeLifecycle() {
     }, TREE_LIFECYCLE.DEATH_CHECK_INTERVAL);
 }
 
-
-function placeTree(x, y, emoji) {
-      const newTree = {
-        x: (x + 0.5) * cellSize, // Center X
-        y: (y + 0.5) * cellSize, // Center Y
-        emoji: emoji,
+function placeTree(gridX, gridY, emoji) {
+    // Create a new tree object using grid coordinates
+    const newTree = {
+        gridX,
+        gridY,
+        emoji,
         scale: 1,
         opacity: 1,
         rotation: 0
     };
 
-    treePositions.push(newTree); // Assuming treePositions is a global array
+    treePositions.push(newTree);
     
-    // Update emptyCells
-    modifyWalkableCells([{ x: x, y: y }], "remove");
+    // Update emptyCells - we can pass grid coordinates directly
+    modifyWalkableCells([{ x: gridX, y: gridY }], "remove");
     
     // Redraw trees
-    drawTrees(treeCtx, treePositions); // Assuming treeCtx and drawTrees are defined
+    drawTrees(treeCtx, treePositions);
 
-    console.log(`🌲 Tree placed at (${x}, ${y}) with emoji: ${emoji}`);
+    console.log(`🌲 Tree placed at (${gridX}, ${gridY}) with emoji: ${emoji}`);
 }
-
 
 /* 
 // Add this function to visualize the path (for debugging)
