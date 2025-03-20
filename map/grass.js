@@ -27,14 +27,30 @@ function drawGrass(ctx, grassDensity) {
     return noiseValue >= 0.15 && noiseValue <= 0.37;
   });
 
-  // Additional check to make sure we're not drawing on water cells
-  // This ensures lakes created after initial terrain generation are excluded
+  // Create a set of tree positions for faster lookups
+  const treePositionsSet = new Set();
+  if (treePositions && treePositions.length > 0) {
+    treePositions.forEach(tree => {
+      treePositionsSet.add(`${tree.gridX},${tree.gridY}`);
+    });
+  }
+
+  // Create a set of water positions for faster lookups
+  const waterCellsSet = new Set();
+  if (waterCells && waterCells.length > 0) {
+    waterCells.forEach(cell => {
+      waterCellsSet.add(`${cell.x},${cell.y}`);
+    });
+  }
+
+  // Additional check to make sure we're not drawing on water cells or tree positions
   grasslands = grasslands.filter(cell => {
-    // Make sure this cell is not in waterCells
-    return !waterCells.some(waterCell => 
-      waterCell.x === cell.x && waterCell.y === cell.y
-    );
+    // Make sure this cell is not in waterCells and not where a tree is
+    return !waterCellsSet.has(`${cell.x},${cell.y}`) && 
+           !treePositionsSet.has(`${cell.x},${cell.y}`);
   });
+
+  console.log(`Found ${grasslands.length} potential grass cells after filtering water and trees`);
 
   for (const cell of grasslands) {
     // Randomly determine whether to draw grass based on grassDensity

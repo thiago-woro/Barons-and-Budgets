@@ -235,10 +235,16 @@ function afterMapGen() { //after basic terrain generation, adds enviromental det
 
   drawTerrainLayer(groundCtx, groundCells, cellSize);
   drawTerrainLayer(waterCtx, waterCells, cellSize); //water map
+  
+  // Place ore deposits first
   distributeOreDeposits(oreDepositsCtx);
+  
+  // Place lakes BEFORE trees to prevent trees from being placed on water
+  console.log("Placing lakes before trees...");
   placeLakes();
   
   // Generate trees AFTER lakes are placed to prevent trees on water
+  console.log("Starting trees after lakes...");
   startTrees(treeCtx, cellSize);
   
   // Draw sand texture after drawing the terrain layer
@@ -259,7 +265,6 @@ function afterMapGen() { //after basic terrain generation, adds enviromental det
     return noiseValue >= 0.14 && noiseValue <= 0.445;
   });
 
-
   console.log(
     `From ${groundCells.length} ground cells, down to ${flatLandCells.length} usable, flat lands cells`
   );
@@ -270,13 +275,8 @@ function afterMapGen() { //after basic terrain generation, adds enviromental det
   // Initialize animal populations after everything else is set up
   starterAnimalPopulations(10);  //animpop
   
-  // Use modifyWalkableCells to remove ore deposit cells from emptyCells
-  // adjacentOreCells are already in grid coordinates
-  console.log(`after ore deposits: emptyCells.length: ${emptyCells.length}`);
-  modifyWalkableCells(adjacentOreCells, "remove");
-
-    drawGrass(treeCtx, 0.45);
-
+  // Draw grass patches at the end
+  drawGrass(treeCtx, 0.45);
 }
 
 function drawHousePaths(cellArray, numRowsToSkip, pathCurveAmount) {   //wavy house paths
@@ -502,7 +502,7 @@ function clearNPC() {
 // Function to draw sand texture on beach/sand tiles
 function drawSandTexture(ctx) {
   // Get all sand cells (cells with noise below 0.04)
-   sandCells = groundCells.filter(cell => {
+   sandCells = emptyCells.filter(cell => {
     return cell.noise && parseFloat(cell.noise) < 0.09;
   });
   
@@ -543,6 +543,7 @@ function drawMountainTexture(ctx) {
     return cell.noise && parseFloat(cell.noise) > 0.24;
   });
   
+  console.log(`Mountain Cells: ${mountainCells.length}`);
   // Colors for mountain texture - changed to shades of green
   const darkGreen = "#1a4d1a";  // Dark forest green
   const mediumGreen = "#2e7d32"; // Medium forest green
@@ -583,7 +584,7 @@ function drawMountainTexture(ctx) {
         // Draw a pixel with more random variations in size
         const randomValue = Math.random();
         let pixelSize;
-        if (randomValue < 0.3) {
+        if (randomValue < 0.5) {
           pixelSize = 0.5;  // 30% chance of 0.5px
         } else if (randomValue < 0.6) {
           pixelSize = 0.7;  // 30% chance of 1px
@@ -671,13 +672,6 @@ function placeLakes() {
         });
     });
 
-    // Re-filter emptyCells to exclude lake cells
-    emptyCells = groundCells.filter(cell => {
-        return !lakeCells.some(lakeCell => lakeCell.x === cell.x && lakeCell.y === cell.y);
-    });
-
-    console.log(`Created a lake with ${lakeCells.length} cells centered at (${centerX}, ${centerY})`);
-
     // 1. Find and store lake border cells
     const outsideRingLakeBorders = [];
     
@@ -720,36 +714,37 @@ function placeLakes() {
     
     console.log(`Found ${outsideRingLakeBorders.length} border cells around the lake`);
     
-    // 3. Remove trees and ore from border cells
+    // Important: Remove all trees from lake borders BEFORE drawing grass
+    // First, get all gridX/gridY positions as a Set for quick lookup
+    const borderPositions = new Set();
+    outsideRingLakeBorders.forEach(cell => {
+        borderPositions.add(`${cell.x},${cell.y}`);
+    });
     
-    // Remove trees from border cells
+    // Remove any trees at these positions - using a comprehensive approach
     if (treePositions && treePositions.length > 0) {
-        // Convert border cells to a Set for faster lookup
-        const borderCellSet = new Set(outsideRingLakeBorders.map(cell => `${cell.x},${cell.y}`));
+        console.log(`Before removing trees: ${treePositions.length} trees`);
         
-        // Filter out trees on border cells
+        // Keep only trees that are NOT on border cells
         treePositions = treePositions.filter(tree => {
-            // Get grid coordinates from tree
-            const treeGridX = Math.floor(tree.x / cellSize);
-            const treeGridY = Math.floor(tree.y / cellSize);
-            // Keep tree if it's not on a border cell
-            return !borderCellSet.has(`${treeGridX},${treeGridY}`);
+            return !borderPositions.has(`${tree.gridX},${tree.gridY}`);
         });
         
-        // Redraw trees after modification
+        console.log(`After removing trees: ${treePositions.length} trees`);
+        
+        // Redraw trees after filtering
         drawTrees(treeCtx, treePositions);
     }
     
     // Remove ore deposits from border cells
     if (adjacentOreCells && adjacentOreCells.length > 0) {
-        // Convert border cells to a Set for faster lookup
-        const borderCellSet = new Set(outsideRingLakeBorders.map(cell => `${cell.x},${cell.y}`));
-        
-        // Filter out ore deposits on border cells
         adjacentOreCells = adjacentOreCells.filter(oreCell => {
-            return !borderCellSet.has(`${oreCell.x},${oreCell.y}`);
+            return !borderPositions.has(`${oreCell.x},${oreCell.y}`);
         });
     }
+    
+    // Add the border cells to modifyWalkableCells to ensure they're not used for future trees
+    modifyWalkableCells(outsideRingLakeBorders.map(cell => ({ x: cell.x, y: cell.y })), "remove");
     
     // 4. Add grass to lake borders
     if (outsideRingLakeBorders.length > 0) {
@@ -786,6 +781,13 @@ function placeLakes() {
         
         console.log(`Added grass to lake borders`);
     }
+
+    // Re-filter emptyCells to exclude lake cells AND border cells
+    emptyCells = groundCells.filter(cell => {
+        // Not a lake cell AND not a border cell
+        return !lakeCells.some(lakeCell => lakeCell.x === cell.x && lakeCell.y === cell.y) && 
+               !borderPositions.has(`${cell.x},${cell.y}`);
+    });
 
     // Redraw the terrain layer to reflect the changes
     drawTerrainLayer(groundCtx, groundCells, cellSize);

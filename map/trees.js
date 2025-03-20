@@ -51,6 +51,7 @@ function modifyWalkableCells(cells, operation) {
 function startTrees(ctx, cellSize) {
     clearCanvas(ctx);
     let treeCount = groundCells.length * treePercentageofLand;
+    console.log(`Starting tree placement: target ${treeCount} trees`);
 
     const treeEmojis = {
         "🌴": [],
@@ -65,7 +66,20 @@ function startTrees(ctx, cellSize) {
         "🌲": (noise) => noise >= 0.45,
     };
 
-    emptyCells.forEach((cell) => {
+    // Make sure we're placing trees only in valid cells
+    // First create a Set of water cells for faster lookups
+    const waterCellsSet = new Set(waterCells.map(cell => `${cell.x},${cell.y}`));
+    
+    // Now filter emptyCells to exclude water cells
+    const validCells = emptyCells.filter(cell => {
+        // Check if it's not a water cell
+        return !waterCellsSet.has(`${cell.x},${cell.y}`);
+    });
+    
+    console.log(`Valid cells for tree placement: ${validCells.length} out of ${emptyCells.length} empty cells`);
+
+    // Sort valid cells by noise for tree type selection
+    validCells.forEach((cell) => {
         const noise = cell.noise;
         for (const emoji in noiseToEmoji) {
             if (noiseToEmoji[emoji](noise)) {
@@ -95,6 +109,8 @@ function startTrees(ctx, cellSize) {
     }
     
     treePositions = newTreePositions;
+    console.log(`Created ${treePositions.length} new trees`);
+    
     drawTrees(treeCtx, treePositions);
 
     // Create an array of grid coordinates from treePositions for modifyWalkableCells
@@ -250,12 +266,15 @@ function distributeOreDeposits(ctx) {
     });
 
     if (betterOreCellsDistribution.length === 0) {
-        startTrees(treeCtx, cellSize);
+        console.log("No suitable locations found for ore deposits");
         return;
     }
 
     const clusterCount = 5;
     const depositsPerCluster = 3;
+    
+    // Initialize/reset adjacentOreCells array
+    adjacentOreCells = [];
 
     for (let cluster = 0; cluster < clusterCount; cluster++) {
         const randomGroundCell =
@@ -289,11 +308,9 @@ function distributeOreDeposits(ctx) {
 
     // Use modifyWalkableCells to remove ore deposit cells from emptyCells
     // adjacentOreCells are already in grid coordinates
-    console.log(`after ore deposits: emptyCells.length: ${emptyCells.length}`);
+    console.log(`Ore deposits: ${adjacentOreCells.length} cells, emptyCells before: ${emptyCells.length}`);
     modifyWalkableCells(adjacentOreCells, "remove");
-
-    //only starts trees after ore deposits!
-    startTrees(treeCtx, cellSize);
+    console.log(`emptyCells after ore removal: ${emptyCells.length}`);
 }
 
 function initTreeLifecycle() {

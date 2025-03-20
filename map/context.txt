@@ -2,3 +2,4 @@ project context:
 this is a Javascript 2D game, with a grid coordinates system. 
 always use the Cell (x,y) row, column to refer to a cell. never use world coordinates. 
       console.log(`Cell X ${cellCol}, Y${cellRow}`);
+never try to test the file. I will check manually.
