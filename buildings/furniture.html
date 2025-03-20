@@ -19,14 +19,17 @@
     </style>
 </head>
 <body>
+<button id="toggleGridButton">Toggle Grid</button>
     <canvas id="furnitureCanvas"></canvas>
 
 <script>
-    // Global variables
-    const CELL_SIZE = 32; // 32px per cell
-    const GRID_WIDTH = 20; // Number of cells wide
-    const GRID_HEIGHT = 20; // Number of cells tall
-    let occupiedCells = {}; // Track occupied cells
+// Global variables
+        const CELL_SIZE = 32; // 32px per cell
+        const GRID_WIDTH = 20; // Number of cells wide
+        const GRID_HEIGHT = 20; // Number of cells tall
+        let interiorOccupiedCells = {}; // Track occupied cells
+        let showGrid = false; // Track grid visibility state
+        let spritePositions = []; // Store sprite positions for labeling
 
     // Function to load and return a sprite sheet object
     function loadSpriteSheet(filePath, sprites) {
@@ -47,6 +50,9 @@
     // Example sprite sheet data (edit the sprites object as needed)
     const interiorSpriteSheet = loadSpriteSheet(
         '../assets/buildings/house_interior/interior.png',
+
+
+        
       {
   "window_frame": { "x": 0, "y": 0, "width": 64, "height": 64 },
   "window_glass": { "x": 64, "y": 0, "width": 32, "height": 32 },
@@ -117,10 +123,12 @@
         console.error("Failed to load interior sprite sheet. Check the file path.");
     };
 
+
+let ctx;
     // Initialize the canvas with a specific sprite sheet
     function initCanvas(spriteSheetObj) {
         const canvas = document.getElementById("furnitureCanvas");
-        const ctx = canvas.getContext("2d");
+         ctx = canvas.getContext("2d");
 
         // Set canvas size based on grid
         canvas.width = GRID_WIDTH * CELL_SIZE;
@@ -131,7 +139,7 @@
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         // Reset occupied cells
-        occupiedCells = {};
+        interiorOccupiedCells = {};
 
         // Draw all furniture from the provided sprite sheet
         drawAllFurniture(ctx, spriteSheetObj);
@@ -139,12 +147,12 @@
 
     // Check if a cell is occupied
     function isCellOccupied(cellCol, cellRow) {
-        return occupiedCells[`${cellCol},${cellRow}`] === true;
+        return interiorOccupiedCells[`${cellCol},${cellRow}`] === true;
     }
 
     // Mark a cell as occupied
     function markCellOccupied(cellCol, cellRow) {
-        occupiedCells[`${cellCol},${cellRow}`] = true;
+        interiorOccupiedCells[`${cellCol},${cellRow}`] = true;
     }
 
     // Draw a single furniture sprite at the specified cell
@@ -200,10 +208,55 @@
                 drawFurniture(ctx, spriteSheetObj, spriteName, currentCol, currentRow);
                 currentCol += widthInCells + 1; // Move to next position with 1 cell padding
             } else {
-                console.log(`No more space to place ${spriteName}`);
+                alert(`No more space to place ${spriteName}`);
             }
         });
     }
+
+
+
+/* listen to button click */
+toggleGridButton.addEventListener('click', () => {
+    drawGridAndLabels(ctx);
+});
+
+
+    // Auxiliary function to draw the grid and sprite labels
+        function drawGridAndLabels(ctx) {
+            // Draw magenta grid lines
+            ctx.strokeStyle = "magenta";
+            ctx.lineWidth = 0.3;
+
+            // Vertical lines
+            for (let col = 0; col <= GRID_WIDTH; col++) {
+                const x = col * CELL_SIZE;
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, GRID_HEIGHT * CELL_SIZE);
+                ctx.stroke();
+            }
+
+            // Horizontal lines
+            for (let row = 0; row <= GRID_HEIGHT; row++) {
+                const y = row * CELL_SIZE;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(GRID_WIDTH * CELL_SIZE, y);
+                ctx.stroke();
+            }
+
+            // Draw sprite names above each sprite
+            ctx.fillStyle = "white";
+            ctx.font = "12px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "bottom";
+
+            spritePositions.forEach(({ name, cellCol, cellRow }) => {
+                const pixelX = cellCol * CELL_SIZE + CELL_SIZE / 2; // Center of the cell
+                const pixelY = cellRow * CELL_SIZE - 2; // Just above the cell
+                ctx.fillText(name, pixelX, pixelY);
+            });
+        }
 </script>
 </body>
 </html>
