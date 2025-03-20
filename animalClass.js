@@ -2,6 +2,8 @@
 // import { Animation } from './animations.js';
 // Animation class will be loaded via script tag
 
+/* PROBLEM INTRODUCTION: */
+
 class Animal {
   // Static speed settings
   static PREY_BASE_SPEED = 1000;  // Base movement interval for prey
@@ -36,8 +38,6 @@ class Animal {
     this.birthDate = Date.now(); // Initialize birth date for all animals
     this.fontSize = this.getSpeciesFontSize(); // Get species-specific font size
     
-    //console.log(`Animal created at cell (${x}, ${y}), world position (${this.x}, ${this.y}), type: ${type}, emoji: ${this.emoji}`);
-    
     // Set movement speed based on predator/prey status
     this.moveInterval = this.isPredator ? 
       Animal.PREY_BASE_SPEED / Animal.PREDATOR_SPEED_MULTIPLIER : 
@@ -55,8 +55,18 @@ class Animal {
     // Additional speed modifiers for chase/flee
     this.normalSpeed = this.moveInterval;
     this.chaseSpeed = this.moveInterval * 0.8;  // 20% faster when chasing/fleeing
+    //console.log(`Animal created at cell (${x}, ${y}), world position (${this.x}, ${this.y}), type: ${type}, emoji: ${this.emoji}`);
+
   }
 
+
+
+/* 
+    herbivoreFindFood( foodType) {
+   //future task
+    let foodType = '🌴'
+} 
+ */
   // Get species-specific font size
   getSpeciesFontSize() {
     const fontSizeMap = {
@@ -462,8 +472,10 @@ class Animal {
       }
     }
   }
-} 
 
+
+
+}
 
 function starterAnimalPopulations(amount = 20) {
   // Clear existing animals

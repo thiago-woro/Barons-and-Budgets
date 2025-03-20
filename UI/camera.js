@@ -147,10 +147,12 @@ updateHoveredCell(event, emoji) {
 
     if (selectedEmoji) {
         // Draw the emoji on the canvas
+         boatCtx.globalAlpha = 0.7;
         boatCtx.font = `${cellSize}px sans-serif`; // Adjust font size as needed
         boatCtx.textAlign = 'center';
         boatCtx.textBaseline = 'middle';
         boatCtx.fillText(selectedEmoji, (cellCol + 0.5) * cellSize, (cellRow + 0.5) * cellSize);
+        boatCtx.globalAlpha = 1.0; // Reset to default
     } else {
         // Draw the highlight rectangle
         boatCtx.fillStyle = 'blue';

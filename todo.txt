@@ -12,6 +12,7 @@ FOCUS ON WHAT I ASKED ONLY.
 3.3 change professions to use a cycle of possible tasks.
 
 4. sheeps should move between lakes and cherry bushes. add animal inventory. Add availableItemDrops for animals.
+task details: 
 
 5. new Class Task -> contains a set of other tasks to do. variables: npc, duration, 
 
