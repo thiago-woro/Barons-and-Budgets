@@ -608,21 +608,53 @@ function placeLakes() {
         return;
     }
 
-    // Select a random cell from the filtered list
+    // Select a random cell from the filtered list as the lake center
     const randomLakeCell = potentialLakeCells[Math.floor(Math.random() * potentialLakeCells.length)];
-    const lakeX = randomLakeCell.x;
-    const lakeY = randomLakeCell.y;
+    const centerX = randomLakeCell.x;
+    const centerY = randomLakeCell.y;
+    
+    // Determine lake size (random between small and medium)
+    const lakeSize = 3 + Math.floor(Math.random() * 3); // Base radius of 3-5 cells
+    
+    // Determine oval shape by varying x and y radii
+    // Randomly decide if wider or taller
+    const isWider = Math.random() > 0.5;
+    const xRadius = isWider ? lakeSize * 1.5 : lakeSize;
+    const yRadius = isWider ? lakeSize : lakeSize * 1.5;
+    
+    // Get cells within the oval shape
+    const lakeCells = [];
+    
+    // Scan a square area that would contain our oval
+    const scanRadius = Math.ceil(Math.max(xRadius, yRadius));
+    for (let y = centerY - scanRadius; y <= centerY + scanRadius; y++) {
+        for (let x = centerX - scanRadius; x <= centerX + scanRadius; x++) {
+            // Check if the cell is within the oval formula: (x-h)²/a² + (y-k)²/b² <= 1
+            // Where (h,k) is the center, a is x-radius, b is y-radius
+            const normalizedX = (x - centerX) / xRadius;
+            const normalizedY = (y - centerY) / yRadius;
+            const isInOval = (normalizedX * normalizedX + normalizedY * normalizedY) <= 1;
+            
+            // Add some slight randomness to the edge to make it less perfect
+            const edgeRandomness = Math.random() * 0.2 - 0.1; // -0.1 to 0.1
+            const isInOvalWithNoise = (normalizedX * normalizedX + normalizedY * normalizedY) <= (1 + edgeRandomness);
+            
+            if (isInOvalWithNoise) {
+                // Check if this cell exists in groundCells
+                const groundCell = groundCells.find(gc => gc.x === x && gc.y === y);
+                if (groundCell) {
+                    lakeCells.push({ x, y });
+                }
+            }
+        }
+    }
 
-    // Get adjacent cells
-    const adjacentCells = calculateAdjacentCells(lakeX, lakeY);
-
-    // Update noise values of the selected cell and its adjacent cells
-    const lakeCells = [{ x: lakeX, y: lakeY }, ...adjacentCells];
+    // Update noise values of the lake cells
     lakeCells.forEach(cell => {
         const groundCell = groundCells.find(gc => gc.x === cell.x && gc.y === cell.y);
         if (groundCell) {
-            groundCell.noise = "-0.9"; // Set noise to -0.4 to make it water
-            groundCell.color = WATER_SHADES[7]; // Optional: Change color to water color
+            groundCell.noise = "-0.9"; // Set noise to make it water
+            groundCell.color = WATER_SHADES[7]; // Set to deep water color
         }
     });
 
@@ -640,6 +672,8 @@ function placeLakes() {
     emptyCells = groundCells.filter(cell => {
         return !lakeCells.some(lakeCell => lakeCell.x === cell.x && lakeCell.y === cell.y);
     });
+
+    console.log(`Created a lake with ${lakeCells.length} cells centered at (${centerX}, ${centerY})`);
 
     // Redraw the terrain layer to reflect the changes
     drawTerrainLayer(groundCtx, groundCells, cellSize);
