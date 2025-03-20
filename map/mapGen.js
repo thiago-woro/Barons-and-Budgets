@@ -1,12 +1,93 @@
 document.getElementById("gen2").addEventListener("click", function () {
-  trees = [];
-  treePositions = [];
-  //startTrees(treeCtx, cellSize)
-  generateTerrainMap();
+  startMapGeneration();
 });
 
+// Central function to start map generation with loading screen
+function startMapGeneration(width, height, noiseScale) {
+  trees = [];
+  treePositions = [];
+  
+  showLoadingScreen().then(() => {
+    generateTerrainMap(width, height, noiseScale);
+  });
+}
+
+// Function to show loading screen
+function showLoadingScreen() {
+  return new Promise((resolve) => {
+    // Create loading screen container
+    const loadingContainer = document.createElement('div');
+    loadingContainer.id = 'mapLoadingScreen';
+    loadingContainer.style.position = 'fixed';
+    loadingContainer.style.top = '0';
+    loadingContainer.style.left = '0';
+    loadingContainer.style.width = '100vw';
+    loadingContainer.style.height = '100vh';
+    loadingContainer.style.backgroundColor = '#0d0d0d';
+    loadingContainer.style.zIndex = '9999';
+    loadingContainer.style.display = 'flex';
+    loadingContainer.style.alignItems = 'center';
+    loadingContainer.style.justifyContent = 'center';
+
+    // Fetch the loading.html content
+    fetch('UI/loading.html')
+      .then(response => response.text())
+      .then(html => {
+        // Extract the content between <body> tags
+        const bodyContent = html.match(/<body>([\s\S]*?)<\/body>/i);
+        if (bodyContent && bodyContent[1]) {
+          loadingContainer.innerHTML = bodyContent[1];
+        } else {
+          // Fallback if we can't extract body content
+          loadingContainer.innerHTML = '<div class="loader"></div><div style="position: absolute; top: 120px; width: 100%; text-align: center; color: #888; font-family: monospace; font-size: 1rem; letter-spacing: 2px; opacity: 0.6;">Generating World...</div>';
+        }
+        
+        // Also add the styles from loading.html
+        const styleContent = html.match(/<style>([\s\S]*?)<\/style>/i);
+        if (styleContent && styleContent[1]) {
+          const styleElement = document.createElement('style');
+          styleElement.textContent = styleContent[1];
+          document.head.appendChild(styleElement);
+        }
+        
+        document.body.appendChild(loadingContainer);
+        
+        // Small delay to ensure the loading screen is visible before starting the heavy work
+        setTimeout(resolve, 100);
+      })
+      .catch(error => {
+        console.error('Error loading the loading screen:', error);
+        // Create a simple fallback loading screen
+        loadingContainer.innerHTML = '<div style="color: white; font-size: 24px;">Generating World...</div>';
+        document.body.appendChild(loadingContainer);
+        
+        setTimeout(resolve, 100);
+      });
+  });
+}
+
+// Function to remove loading screen
+function removeLoadingScreen() {
+  const loadingScreen = document.getElementById('mapLoadingScreen');
+  if (loadingScreen) {
+    // Add fade-out effect
+    loadingScreen.style.transition = 'opacity 1.5s ease-out';
+    loadingScreen.style.opacity = '0';
+    
+    // Remove after transition
+    setTimeout(() => {
+      loadingScreen.remove();
+    }, 500);
+  }
+}
+
 //main terrain map generator function
-function generateTerrainMap() {
+function generateTerrainMap(width, height, customNoiseScale) {
+  // Use parameters if provided, otherwise use default values
+  const useWidth = width || gridSize;
+  const useHeight = height || gridSize;
+  const useNoiseScale = customNoiseScale || perlinNoiseScale;
+  
   // Clear all arrays before generating new terrain
   terrainMap = [];
   groundCells = [];
@@ -31,7 +112,7 @@ function generateTerrainMap() {
   clearCanvas(oreDepositsCtx);
   
   const perlinInstance = Object.create(perlin);
-  noiseValues = new Array(gridSize);
+  noiseValues = new Array(useWidth);
   perlin.seed();
 
   const center = { x: rows / 2, y: rows / 2 };
@@ -41,7 +122,7 @@ function generateTerrainMap() {
 
     for (let x = 0; x < rows; x++) {
       const noiseValue =
-        perlinInstance.get(x * perlinNoiseScale, y * perlinNoiseScale) -
+        perlinInstance.get(x * useNoiseScale, y * useNoiseScale) -
         0.5 +
         offset;
 
@@ -277,6 +358,9 @@ function afterMapGen() { //after basic terrain generation, adds enviromental det
   
   // Draw grass patches at the end
   drawGrass(treeCtx, 0.45);
+  
+  // Remove loading screen after everything is complete
+  removeLoadingScreen();
 }
 
 function drawHousePaths(cellArray, numRowsToSkip, pathCurveAmount) {   //wavy house paths

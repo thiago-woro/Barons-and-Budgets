@@ -272,9 +272,8 @@ document
   });
 
 newGameWelcomeScreen.addEventListener("click", function () {
-  
   hideWelcomeScreen();
-  generateTerrainMap(gridSize, gridSize, perlinNoiseScale);
+  startMapGeneration(gridSize, gridSize, perlinNoiseScale);
 });
 
 const raceCards = document.querySelectorAll(".race-card");
@@ -304,7 +303,7 @@ raceCards.forEach((raceCard) => {
 
     startTrees(treeCtx, cellSize)
     hideWelcomeScreen();
-    generateTerrainMap(gridSize, gridSize, perlinNoiseScale);
+    startMapGeneration(gridSize, gridSize, perlinNoiseScale);
     console.log("Race card clicked!");
   });
 });
@@ -319,7 +318,7 @@ newGameCustomWelcomeScreen.addEventListener("click", function () {
 
 loadGameWelcomeScreen.addEventListener("click", function () {
   hideWelcomeScreen();
-  generateTerrainMap(gridSize, gridSize, perlinNoiseScale);
+  startMapGeneration(gridSize, gridSize, perlinNoiseScale);
 });
 
 function hideWelcomeScreen() {

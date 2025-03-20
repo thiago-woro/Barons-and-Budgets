@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Room Generator</title>
+<style>
+  #gameCanvas {
+    border: 1px solid black;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    background-color: #0d0d0d; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  #generateButton {
+    padding: 8px 16px;
+    cursor: pointer;
+  }
+  div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 10px;
+    background-color: #0d0d0d;
+    padding: 10px;
+    border-radius: 5px;
+  }
+</style>
+</head>
+<body>
+
+  <div id="roomContainer"> 
+    <input type="number" id="roomSize" value="20" style="background-color: #141414; color: #fff; border: 0px solid #fff; padding: 8px 16px; cursor: pointer; border-radius: 5px; width: 100px;"  placeholder="Room Size">
+  </div>
+
+  <button id="generateButton" style="background-color: #2cf16eaa; color: #fff; border: 0px solid #fff; padding: 8px 16px; cursor: pointer; border-radius: 5px;">Generate</button>
+  <canvas id="gameCanvas"></canvas>
+
+  <img id="tile1" src="assets/buildings/tile1.png" style="display: none;">
+  <img id="tile2" src="assets/buildings/tile2.png" style="display: none;">
+
+  <script>
+    // 🎨🎨🎨 Global Color Variables 🎨🎨🎨
+    const colorOutsideCells = '#0d0d0d'; // Dark background for outside
+    const colorInnerTiles = '#377993'; // Default floor tile color
+    const colorWalls = '#8B4513'; // Brown wooden walls
+
+    // 🧱🧱🧱 Floor Types 🧱🧱🧱
+    const FLOOR_NORMAL = 1; // Standard floor tile
+
+    // 🏠🏠🏠 Room Generation Function 🏠🏠🏠
+    function generateRoomLayout(rooms = 1, rows = 10, race = "Elfs", type = "House", cellSize = 30) {
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+      const tileImage1 = document.getElementById("tile1");
+      const tileImage2 = document.getElementById("tile2"); // Using tile2 for checkerboard pattern
+
+      // 📏📏📏 Room Dimensions 📏📏📏
+      const widthToHeightRatio = 1.5; // Fixed width-to-height ratio for rectangular rooms
+      const totalArea = rows * rows; // Calculate total area based on input rows
+      const roomHeight = Math.floor(Math.sqrt(totalArea / widthToHeightRatio)); // Calculate room height
+      const roomWidth = Math.floor(roomHeight * widthToHeightRatio); // Calculate room width
+
+      // 📐📐📐 Canvas Setup 📐📐📐
+      canvas.width = roomWidth * cellSize; // Set canvas width
+      canvas.height = roomHeight * cellSize; // Set canvas height
+
+      // ⬛⬛⬛ Initialize Canvas ⬛⬛⬛
+      ctx.fillStyle = colorOutsideCells; // Set background color
+      ctx.fillRect(0, 0, canvas.width, canvas.height); // Fill canvas with background color
+
+      // 🗺️🗺️🗺️ Grid Initialization 🗺️🗺️🗺️
+      const grid = [];
+      for (let row = 0; row < roomHeight; row++) {
+        const rowArray = new Array(roomWidth).fill(0); // Fill row with outside cells
+        grid.push(rowArray); // Add row to grid
+      }
+
+      // 🖌️🖌️🖌️ Draw Cell Function 🖌️🖌️🖌️
+      function drawCell(x, y, cellType) {
+        if (cellType === FLOOR_NORMAL) { // Standard floor tile
+          const tileImage = tileImage1;
+          ctx.drawImage(tileImage, x * cellSize, y * cellSize, cellSize, cellSize); // Draw tile image
+        } else if (cellType === 2) { // Wall
+          ctx.fillStyle = colorWalls; // Set wall color
+          ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize); // Draw wall
+        } else if (cellType === 0) { // Outside
+          ctx.fillStyle = colorOutsideCells; // Set outside color
+          ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize); // Draw outside
+        } else { // Other types (e.g., furniture)
+          ctx.fillStyle = cellType; // Set color
+          ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize); // Draw cell
+        }
+      }
+
+      // 🧱🧱🧱 Draw Room Function 🧱🧱🧱
+      function drawRoom(startX, startY, width, height) {
+        // Mark cells as floor
+        for (let y = startY; y < startY + height; y++) {
+          for (let x = startX; x < startX + width; x++) {
+            if (y < grid.length && x < grid[0].length) {
+              grid[y][x] = FLOOR_NORMAL; // Set cell to floor type
+            }
+          }
+        }
+        // Add walls around perimeter
+        for (let y = startY; y < startY + height; y++) {
+          for (let x = startX; x < startX + width; x++) {
+            if (y < grid.length && x < grid[0].length) {
+              // This code creates walls around the room's perimeter:
+              // - When x equals startX: creates the left wall
+              // - When x equals startX + width - 1: creates the right wall
+              // - When y equals startY: creates the top wall
+              // - When y equals startY + height - 1: creates the bottom wall
+              // The if statement checks if the current position is on any edge of the room
+              if (x === startX || x === startX + width - 1 || y === startY || y === startY + height - 1) {
+                grid[y][x] = 2; // Set cell to wall (value 2 represents walls)
+                // Wall color is defined in global variables as colorWalls = '#8B4513' (Brown wooden walls)
+              }
+            }
+          }
+        }
+
+        // Draw cells based on type
+        for (let y = startY; y < startY + height; y++) {
+          for (let x = startX; x < startX + width; x++) {
+            if (y < grid.length && x < grid[0].length) {
+              drawCell(x, y, grid[y][x]); // Draw cell
+            }
+          }
+        }
+      }
+
+      // 🏠🏠🏠 Draw Main Room 🏠🏠🏠
+      const mainRoomPadding = 1; // Leave space around edge
+      drawRoom(mainRoomPadding, mainRoomPadding, roomWidth - (mainRoomPadding * 2), roomHeight - (mainRoomPadding * 2)); // Draw main room
+    }
+
+    // 🖱️🖱️🖱️ Generate Button Click Event 🖱️🖱️🖱️
+    document.getElementById("generateButton").addEventListener("click", function() {
+      const races = ["Elfs", "Purries"]; // Available races
+      const types = ["House", "Bar"]; // Available building types
+      const randomRace = races[Math.floor(Math.random() * races.length)]; // Random race
+      const randomType = types[Math.floor(Math.random() * types.length)]; // Random type
+      const rows = document.getElementById("roomSize").value; // Get room size from input
+
+      generateRoomLayout(1, rows, randomRace, randomType, 25); // Generate room layout
+    });
+
+    // 🖼️🖼️🖼️ Image Loading 🖼️🖼️🖼️
+    window.onload = function() {
+      const tileImage1 = document.getElementById('tile1'); // Get tile1 image
+      const tileImage2 = document.getElementById('tile2'); // Get tile2 image
+
+      let loadedImages = 0; // Counter for loaded images
+      const totalImages = 2; // Total number of images
+
+      function checkAllImagesLoaded() {
+        loadedImages++; // Increment loaded images counter
+        if (loadedImages >= totalImages) { // Check if all images are loaded
+          document.getElementById("generateButton").click(); // Trigger generation
+        }
+      }
+
+      // Error handling for image loading
+      tileImage1.onerror = tileImage2.onerror = function() {
+        console.warn('Failed to load tile image, using fallback color'); // Log warning
+        checkAllImagesLoaded(); // Proceed with generation
+      };
+
+
+    };
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Room Generator</title>
+<style>
+  #gameCanvas {
+    border: 1px solid black;
+  }
+
+  .rowClass {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    background-color: #0d0d0d; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  input {
+    background-color: #444444;
+    color: #fff;
+    border: 0px solid #fff;
+    padding: 8px 16px;
+    border-radius: 5px;
+    width: 100px;
+  }
+
+  #generateButton, #randomButton {
+    padding: 8px 16px;
+    cursor: pointer;
+    border: 0px solid #fff;
+    color: #fff;
+    border-radius: 5px;
+  }
+
+  #generateButton {
+    background-color: #2cf16eaa;
+  }
+
+  #randomButton {
+    background-color: #2f7ccad6;
+  }
+
+  div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 10px;
+    background-color: #0d0d0d;
+    padding: 10px;
+    border-radius: 5px;
+  }
+
+  select {
+    background-color: #444444;
+    color: #fff;
+    border: 0px solid #fff;
+    padding: 8px 16px;
+    border-radius: 5px;
+  }
+</style>
+</head>
+<body>
+
+<div class="rowClass">
+  <label for="roomsInput" style="color: white;">Rooms:</label>
+  <input type="number" id="roomsInput" value="3" min="1" max="10">
+
+  <label for="tilesizeInput" style="color: white;">Tile Size:</label>
+  <input type="number" id="tilesizeInput" value="32" min="16" max="64">
+
+  <button id="generateButton">Generate</button>
+  <button id="randomButton">Random</button>
+</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<div class="rowClass" id="tiles">
+  <img id="tile1" src="../assets/buildings/house_interior/tile1.png" data-width="32" data-height="32" style="display: block;">
+  <img id="tile2" src="../assets/buildings/house_interior/tile2.png" data-width="32" data-height="32" style="display: block;">
+  <img id="tile3" src="../assets/buildings/house_interior/tile3.png" data-width="32" data-height="32" style="display: block;">
+  <img id="wall" src="../assets/buildings/house_interior/wall.png" data-width="32" data-height="128" style="display: block;">
+  <img id="door" src="../assets/buildings/house_interior/door.png" data-width="32" data-height="62" style="display: block;">
+</div>
+
+<script>
+// Global color variables
+const colorOutsideCells = 'black';
+const colorInnerTiles = 'brown';
+const colorWalls = 'grey';
+
+// Global variable to store all occupied cells
+let occupiedCells = {};
+let allRooms = [];
+
+// Game grid size
+const GRID_WIDTH = 40;
+const GRID_HEIGHT = 30;
+
+function initCanvas() {
+  const canvas = document.getElementById("gameCanvas");
+  const ctx = canvas.getContext("2d");
+  
+  // Set canvas size
+  canvas.width = GRID_WIDTH * 32;
+  canvas.height = GRID_HEIGHT * 32;
+  
+  // Fill with black background
+  ctx.fillStyle = colorOutsideCells;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Reset occupied cells and rooms
+  occupiedCells = {};
+  allRooms = [];
+  
+  return { canvas, ctx };
+}
+
+// Function to check if a cell is already occupied
+function isCellOccupied(x, y) {
+  return occupiedCells[`${x},${y}`] === true;
+}
+
+// Function to mark a cell as occupied
+function markCellOccupied(x, y) {
+  occupiedCells[`${x},${y}`] = true;
+}
+
+// Function to get random tile image
+function getRandomTile() {
+  const tileNumber = Math.floor(Math.random() * 3) + 1;
+  return document.getElementById(`tile${tileNumber}`);
+}
+
+// Function to calculate adjacent cells to existing rooms
+function findAdjacentPlacement(width, height) {
+  // If no rooms yet, place in the center
+  if (allRooms.length === 0) {
+    return {
+      x: Math.floor((GRID_WIDTH - width) / 2),
+      y: Math.floor((GRID_HEIGHT - height) / 2)
+    };
+  }
+  
+  // Find the largest room dimensions for collision checking
+  let maxWidth = width;
+  let maxHeight = height;
+  
+  for (const room of allRooms) {
+    maxWidth = Math.max(maxWidth, room.width);
+    maxHeight = Math.max(maxHeight, room.height);
+  }
+  
+  // Get a random existing room to place adjacent to
+  const targetRoom = allRooms[Math.floor(Math.random() * allRooms.length)];
+  
+  // Consistent spacing between rooms (corridor size)
+  const corridorSize = 3; // 3 tiles between rooms
+  
+  // Possible directions: top, right, bottom, left
+  const directions = [
+    { dx: 0, dy: -height - corridorSize }, // top
+    { dx: targetRoom.width + corridorSize, dy: 0 }, // right
+    { dx: 0, dy: targetRoom.height + corridorSize }, // bottom
+    { dx: -width - corridorSize, dy: 0 } // left
+  ];
+  
+  // Shuffle directions
+  for (let i = directions.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [directions[i], directions[j]] = [directions[j], directions[i]];
+  }
+  
+  // Try each direction
+  for (const dir of directions) {
+    const x = targetRoom.x + dir.dx;
+    const y = targetRoom.y + dir.dy;
+    
+    // Check if the new position is within grid bounds
+    if (x < 0 || y < 0 || x + width > GRID_WIDTH || y + height > GRID_HEIGHT) {
+      continue;
+    }
+    
+    // Check if the new position overlaps with any existing room
+    // Using a larger buffer area around each room to prevent partial overlaps
+    let canPlace = true;
+    
+    // Calculate buffer zone based on max room size
+    const bufferSize = 2; // Buffer distance
+    
+    for (let checkY = y - bufferSize; checkY <= y + maxHeight; checkY++) {
+      for (let checkX = x - bufferSize; checkX <= x + maxWidth; checkX++) {
+        if (checkX >= 0 && checkY >= 0 && checkX < GRID_WIDTH && checkY < GRID_HEIGHT) {
+          if (isCellOccupied(checkX, checkY)) {
+            canPlace = false;
+            break;
+          }
+        }
+      }
+      if (!canPlace) break;
+    }
+    
+    if (canPlace) {
+      return { x, y };
+    }
+  }
+  
+  // If no adjacent placement works, try a random position
+  return findRandomPlacement(width, height);
+}
+
+// Function to find a random valid placement for a room
+function findRandomPlacement(width, height) {
+  let attempts = 0;
+  const maxAttempts = 100;
+  
+  while (attempts < maxAttempts) {
+    attempts++;
+    
+    // Generate random position
+    const x = Math.floor(Math.random() * (GRID_WIDTH - width));
+    const y = Math.floor(Math.random() * (GRID_HEIGHT - height));
+    
+    // Check if position is valid
+    let canPlace = true;
+    for (let checkY = y - 1; checkY <= y + height; checkY++) {
+      for (let checkX = x - 1; checkX <= x + width; checkX++) {
+        if (checkX >= 0 && checkY >= 0 && checkX < GRID_WIDTH && checkY < GRID_HEIGHT) {
+          if (isCellOccupied(checkX, checkY)) {
+            canPlace = false;
+            break;
+          }
+        }
+      }
+      if (!canPlace) break;
+    }
+    
+    if (canPlace) {
+      return { x, y };
+    }
+  }
+  
+  // If we couldn't find a spot after many attempts, return null
+  console.log("Failed to find placement");
+  return null;
+}
+
+// Function to draw a room
+function drawRoom(ctx, tileSize) {
+  // Generate random room dimensions (with minimums for better visuals)
+  const width = Math.floor(Math.random() * 6) + 5;  // 5-10 tiles wide
+  const height = Math.floor(Math.random() * 6) + 5; // 5-10 tiles tall
+  
+  // Find a valid placement for the room
+  const placement = allRooms.length === 0 ? 
+    findRandomPlacement(width, height) : 
+    findAdjacentPlacement(width, height);
+  
+  if (!placement) {
+    console.log("Couldn't place room");
+    return null;
+  }
+  
+  const { x, y } = placement;
+  
+  // Pick a random tile for the floor
+  const selectedTile = getRandomTile();
+  
+  // Create room object to store data
+  const room = {
+    x: x,
+    y: y,
+    width: width,
+    height: height,
+    cells: [],
+    tileType: selectedTile.id
+  };
+  
+  // Draw floor tiles
+  for (let roomY = 0; roomY < height; roomY++) {
+    for (let roomX = 0; roomX < width; roomX++) {
+      const cellX = x + roomX;
+      const cellY = y + roomY;
+      
+      // Draw floor tile
+      ctx.drawImage(selectedTile, cellX * tileSize, cellY * tileSize, tileSize, tileSize);
+      
+      // Mark cell as occupied
+      markCellOccupied(cellX, cellY);
+      
+      // Add to room cells
+      room.cells.push({ x: cellX, y: cellY });
+    }
+  }
+  
+  // Draw walls separately after floor
+  for (let roomY = 0; roomY < height; roomY++) {
+    for (let roomX = 0; roomX < width; roomX++) {
+      const cellX = x + roomX;
+      const cellY = y + roomY;
+      
+      // Draw walls around the border
+      if (roomX === 0 || roomX === width - 1 || roomY === 0 || roomY === height - 1) {
+        // Top wall - use the wall image (32x128)
+        if (roomY === 0) {
+          const wallImage = document.getElementById("wall");
+          ctx.drawImage(wallImage, cellX * tileSize, (cellY * tileSize) - 96, 32, 128);
+        } 
+        // Other walls - use grey rectangles
+        else {
+          ctx.fillStyle = colorWalls;
+          if (roomY === height - 1) { // Bottom wall
+            ctx.fillRect(cellX * tileSize, (cellY * tileSize) + tileSize - 5, tileSize, 5);
+          }
+          
+          if (roomX === 0) { // Left wall
+            ctx.fillRect(cellX * tileSize, cellY * tileSize, 5, tileSize);
+          } else if (roomX === width - 1) { // Right wall
+            ctx.fillRect((cellX * tileSize) + tileSize - 5, cellY * tileSize, 5, tileSize);
+          }
+        }
+      }
+    }
+  }
+  
+  // Add room object to rooms array
+  allRooms.push(room);
+  console.log(`Cell X ${x}, Y${y} - Room size: ${width}x${height}`);
+  
+  return room;
+}
+
+// Function to create doorways between rooms
+function createDoorways(ctx, tileSize) {
+  if (allRooms.length <= 1) return; // Need at least 2 rooms
+  
+  // For each room (except the first), create a doorway to a previous room
+  for (let i = 1; i < allRooms.length; i++) {
+    const currentRoom = allRooms[i];
+    
+    // Find closest room to connect to
+    let closestRoom = null;
+    let shortestDistance = Infinity;
+    
+    for (let j = 0; j < i; j++) {
+      const otherRoom = allRooms[j];
+      const distance = Math.sqrt(
+        Math.pow((currentRoom.x + currentRoom.width/2) - (otherRoom.x + otherRoom.width/2), 2) +
+        Math.pow((currentRoom.y + currentRoom.height/2) - (otherRoom.y + otherRoom.height/2), 2)
+      );
+      
+      if (distance < shortestDistance) {
+        shortestDistance = distance;
+        closestRoom = otherRoom;
+      }
+    }
+    
+    if (closestRoom) {
+      // Determine which sides are closest between the two rooms
+      const currentCenterX = currentRoom.x + currentRoom.width/2;
+      const currentCenterY = currentRoom.y + currentRoom.height/2;
+      const otherCenterX = closestRoom.x + closestRoom.width/2;
+      const otherCenterY = closestRoom.y + closestRoom.height/2;
+      
+      // Use random floor tile for corridors
+      const corridorTile = getRandomTile();
+      
+      // Check if rooms are horizontally or vertically aligned
+      if (Math.abs(currentCenterX - otherCenterX) > Math.abs(currentCenterY - otherCenterY)) {
+        // Horizontal corridor
+        const corridorY = Math.floor((currentCenterY + otherCenterY) / 2);
+        
+        // Determine start and end X correctly
+        let startX, endX;
+        if (currentRoom.x < closestRoom.x) {
+          // Current room is to the left of closest room
+          startX = currentRoom.x + currentRoom.width;
+          endX = closestRoom.x;
+        } else {
+          // Current room is to the right of closest room
+          startX = closestRoom.x + closestRoom.width;
+          endX = currentRoom.x;
+        }
+        
+        // Draw corridor - only between rooms, not intruding
+        for (let x = startX; x < endX; x++) {
+          ctx.drawImage(corridorTile, x * tileSize, corridorY * tileSize, tileSize, tileSize);
+          markCellOccupied(x, corridorY);
+        }
+        
+        // For horizontal corridors, don't create doorways that intrude into the rooms
+        // We just connect up to the borders
+      } else {
+        // Vertical corridor
+        const corridorX = Math.floor((currentCenterX + otherCenterX) / 2);
+        
+        // Determine start and end Y correctly
+        let startY, endY;
+        if (currentRoom.y < closestRoom.y) {
+          // Current room is above closest room
+          startY = currentRoom.y + currentRoom.height;
+          endY = closestRoom.y;
+        } else {
+          // Current room is below closest room
+          startY = closestRoom.y + closestRoom.height;
+          endY = currentRoom.y;
+        }
+        
+        // Draw corridor (extend to ensure connection)
+        for (let y = startY; y < endY; y++) {
+          ctx.drawImage(corridorTile, corridorX * tileSize, y * tileSize, tileSize, tileSize);
+          markCellOccupied(corridorX, y);
+        }
+        
+        // Add a doorway at each end of the corridor
+        if (currentRoom.y < closestRoom.y) {
+          ctx.drawImage(corridorTile, corridorX * tileSize, (currentRoom.y + currentRoom.height - 1) * tileSize, tileSize, tileSize);
+          ctx.drawImage(corridorTile, corridorX * tileSize, closestRoom.y * tileSize, tileSize, tileSize);
+        } else {
+          ctx.drawImage(corridorTile, corridorX * tileSize, currentRoom.y * tileSize, tileSize, tileSize);
+          ctx.drawImage(corridorTile, corridorX * tileSize, (closestRoom.y + closestRoom.height - 1) * tileSize, tileSize, tileSize);
+        }
+      }
+    }
+  }
+}
+
+// Function to generate several rooms
+function severalRooms(roomsAmount) {
+  // Initialize canvas
+  const { canvas, ctx } = initCanvas();
+  const tileSize = parseInt(document.getElementById("tilesizeInput").value) || 32;
+  
+  console.log(`Generating ${roomsAmount} rooms with tile size ${tileSize}`);
+  
+  // Draw each room
+  for (let i = 0; i < roomsAmount; i++) {
+    const room = drawRoom(ctx, tileSize);
+    if (!room) {
+      console.log(`Could only place ${i} rooms`);
+      break;
+    }
+  }
+  
+  // Create doorways between rooms
+  createDoorways(ctx, tileSize);
+  
+  // Draw debug info
+  ctx.fillStyle = "white";
+  ctx.font = "14px Arial";
+  ctx.fillText(`Rooms: ${allRooms.length}`, 10, 20);
+}
+
+// Event listeners
+document.getElementById("randomButton").addEventListener("click", function() {
+  const roomsAmount = Math.floor(Math.random() * 5) + 2; // 2-6 rooms
+  document.getElementById("roomsInput").value = roomsAmount;
+  severalRooms(roomsAmount);
+});
+
+document.getElementById("generateButton").addEventListener("click", function() {
+  const roomsAmount = parseInt(document.getElementById("roomsInput").value) || 3;
+  severalRooms(roomsAmount);
+});
+
+// Initialize on page load
+window.onload = function() {
+  severalRooms(3); // Default to 3 rooms
+};
+</script>
+
+</body>
+</html>
