@@ -612,6 +612,14 @@ function placeLakes() {
         return;
     }
 
+    // Lake colors - from shallow to deep
+    const LAKE_COLORS = [
+        "#377993",  // Muddy shore color (greenish brown)
+        "#5388a0",  // Shallow water (teal blue)
+        "#4d7ea8",  // Medium depth (medium blue)
+        //"#2d5a8a"   // Deep water (deep blue)
+    ];
+
     // Select a random cell from the filtered list as the lake center
     const randomLakeCell = potentialLakeCells[Math.floor(Math.random() * potentialLakeCells.length)];
     const centerX = randomLakeCell.x;
@@ -637,46 +645,114 @@ function placeLakes() {
             // Where (h,k) is the center, a is x-radius, b is y-radius
             const normalizedX = (x - centerX) / xRadius;
             const normalizedY = (y - centerY) / yRadius;
-            const isInOval = (normalizedX * normalizedX + normalizedY * normalizedY) <= 1;
+            const distanceFromCenter = Math.sqrt(normalizedX * normalizedX + normalizedY * normalizedY);
+            const isInOval = distanceFromCenter <= 1;
             
             // Add some slight randomness to the edge to make it less perfect
             const edgeRandomness = Math.random() * 0.2 - 0.1; // -0.1 to 0.1
-            const isInOvalWithNoise = (normalizedX * normalizedX + normalizedY * normalizedY) <= (1 + edgeRandomness);
+            const isInOvalWithNoise = distanceFromCenter <= (1 + edgeRandomness);
             
             if (isInOvalWithNoise) {
                 // Check if this cell exists in groundCells
                 const groundCell = groundCells.find(gc => gc.x === x && gc.y === y);
                 if (groundCell) {
-                    lakeCells.push({ x, y });
+                    // Add to lake cells with distance info for gradient coloring
+                    lakeCells.push({ 
+                        x, 
+                        y, 
+                        distanceFromCenter: distanceFromCenter // Save for depth calculation
+                    });
                 }
             }
         }
     }
 
-    // Update noise values of the lake cells
+    // Find all lake borders first for depth calculation
+    const lakeBorders = new Set();
+    
+    // Create a Set of lake cell coordinates for faster lookups
+    const lakeCellSet = new Set(lakeCells.map(cell => `${cell.x},${cell.y}`));
+    
+    // Check each lake cell to find borders
+    lakeCells.forEach(lakeCell => {
+        // Check all 8 adjacent cells around this lake cell
+        for (let dx = -1; dx <= 1; dx++) {
+            for (let dy = -1; dy <= 1; dy++) {
+                // Skip the center cell (the lake cell itself)
+                if (dx === 0 && dy === 0) continue;
+                
+                const neighborX = lakeCell.x + dx;
+                const neighborY = lakeCell.y + dy;
+                const neighborKey = `${neighborX},${neighborY}`;
+                
+                // If this neighbor is not part of the lake, then the original cell is a border
+                if (!lakeCellSet.has(neighborKey)) {
+                    lakeBorders.add(`${lakeCell.x},${lakeCell.y}`);
+                    break; // Found a non-lake neighbor, so this is a border cell
+                }
+            }
+            if (lakeBorders.has(`${lakeCell.x},${lakeCell.y}`)) break;
+        }
+    });
+
+    // Update noise values and colors of the lake cells with depth gradient
     lakeCells.forEach(cell => {
         const groundCell = groundCells.find(gc => gc.x === cell.x && gc.y === cell.y);
         if (groundCell) {
-            groundCell.noise = "-0.9"; // Set noise to make it water
-            groundCell.color = WATER_SHADES[7]; // Set to deep water color
+            // Start with default deep value
+            let depthLevel = -0.9;
+            let colorIndex = 3; // Deep by default
+            
+            // Check if this is a border cell (shallow)
+            if (lakeBorders.has(`${cell.x},${cell.y}`)) {
+                depthLevel = -0.2; // Shallow water
+                colorIndex = 0; // Muddy shore color
+            } 
+            // Otherwise calculate depth based on distance from center
+            else {
+                // Get normalized distance (0 to 1) where 0 is center, 1 is farthest edge
+                const normalizedDistance = cell.distanceFromCenter;
+                
+                // For non-border cells in the inner areas
+                if (normalizedDistance <= 0.3) {
+                    // Deep middle
+                    depthLevel = -0.9;
+                    colorIndex = 3;
+                } else if (normalizedDistance <= 0.6) {
+                    // Medium depth
+                    depthLevel = -0.7;
+                    colorIndex = 2;
+                } else {
+                    // Shallow but not border
+                    depthLevel = -0.4;
+                    colorIndex = 1;
+                }
+                
+                // Add slight randomness to depth
+                depthLevel += (Math.random() * 0.1) - 0.05;
+            }
+            
+            // Set new values
+            groundCell.noise = depthLevel.toFixed(5);
+            groundCell.color = LAKE_COLORS[colorIndex];
         }
     });
 
     // Update waterCells array
     lakeCells.forEach(cell => {
-        waterCells.push({
-            x: cell.x,
-            y: cell.y,
-            color: WATER_SHADES[0],
-            noise: "-0.9"
-        });
+        const groundCell = groundCells.find(gc => gc.x === cell.x && gc.y === cell.y);
+        if (groundCell) {
+            waterCells.push({
+                x: cell.x,
+                y: cell.y,
+                color: groundCell.color,
+                noise: groundCell.noise
+            });
+        }
     });
 
-    // 1. Find and store lake border cells
+    // 1. Find and store lake border cells (cells adjacent to lake)
     const outsideRingLakeBorders = [];
-    
-    // Create a Set of lake cell coordinates for faster lookups
-    const lakeCellSet = new Set(lakeCells.map(cell => `${cell.x},${cell.y}`));
     
     // Check each lake cell's neighbors to find borders
     lakeCells.forEach(lakeCell => {
