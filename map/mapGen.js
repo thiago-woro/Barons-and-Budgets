@@ -238,6 +238,9 @@ function afterMapGen() {
   distributeOreDeposits(oreDepositsCtx);
   placeLakes();
   
+  // Generate trees AFTER lakes are placed to prevent trees on water
+  startTrees(treeCtx, cellSize);
+  
   // Draw sand texture after drawing the terrain layer
   drawSandTexture(groundCtx);
   
@@ -267,6 +270,10 @@ function afterMapGen() {
   // Initialize animal populations after everything else is set up
   starterAnimalPopulations(10);  //animpop
   
+  // Use modifyWalkableCells to remove ore deposit cells from emptyCells
+  // adjacentOreCells are already in grid coordinates
+  console.log(`after ore deposits: emptyCells.length: ${emptyCells.length}`);
+  modifyWalkableCells(adjacentOreCells, "remove");
 }
 
 function drawHousePaths(cellArray, numRowsToSkip, pathCurveAmount) {   //wavy house paths
