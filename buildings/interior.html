@@ -100,6 +100,47 @@ const colorOutsideCells = 'black';
 const colorInnerTiles = 'brown';
 const colorWalls = 'grey';
 
+furnitureSprites = [
+  {
+    name: 'table',
+    sprite: '../assets/buildings/house_interior/table.png',
+  },
+  {
+    name: 'desk',
+    sprite: '../assets/buildings/house_interior/desk.png',
+  },
+  
+]
+
+interiorParameters = [
+  {
+    buildingType: 'House',
+    hostRace: 'Elf',
+    maxRooms: 3,
+    minRoomSize: 5,
+    maxRoomSize: 10,
+    corridorSize: 3,
+  },
+  {
+    buildingType: 'Bar',
+    hostRace: 'Purries',
+    maxRooms: 1,
+    minRoomSize: 10,
+    maxRoomSize: 20,
+    furnitureAllowed: [ 'bar', 'chair', 'table', 'desk', 'bed', 'bookshelf', 'cabinet', 'couch', 'stool', 'table', 'desk', 'bed', 'bookshelf', 'cabinet', 'couch', 'stool' ],
+    furnitureRequired: [ 'bar' ],
+  },
+   {
+    buildingType: 'Shop',
+    hostRace: 'Purries',
+    maxRooms: 1,
+    minRoomSize: 10,
+    maxRoomSize: 20,
+    furnitureAllowed: [ 'chair', 'table', 'desk', 'bed', 'bookshelf', 'cabinet', 'couch', 'stool', 'table', 'desk', 'bed', 'bookshelf', 'cabinet', 'couch', 'stool' ],
+    furnitureRequired: [ 'table', 'desk', 'potionsShelf', 'itemsShelf', 'armorShelf', 'weaponShelf', 'bookShelf', 'alchemyShelf', 'smithyShelf', 'jewelerShelf', 'tailorShelf', 'bookShelf', 'alchemyShelf', 'smithyShelf', 'jewelerShelf', 'tailorShelf' ],
+  }
+]
+
 // Global variable to store all occupied cells
 let occupiedCells = {};
 let allRooms = [];
