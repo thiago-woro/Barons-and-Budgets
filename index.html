@@ -35,23 +35,24 @@
 
 
 <!-- debug panel -->
-<div id="debugPanel" style="display: none; position: fixed; top: 10%; left: 10%; width: 80%; height: 80%; background-color: rgba(40, 44, 52, 0.95); color: white; z-index: 9999; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.5); overflow: auto;">
+<div id="debugPanel" style="display: none; width: 100%; height: 100%; background-color: rgb(17, 17, 17); color: white; z-index: 9999; overflow: auto; padding-bottom: 20px;">
 <!-- icon x to close -->
-    <div id="debugPanelContent" style="padding: 20px;">
-<i class="fas fa-times" id="closeDebugPanel" style="position: absolute; top: 15px; right: 15px; font-size: 20px; cursor: pointer;"></i>
-
+    <div id="debugPanelContent" >
+<span id="closeDebugPanel">X</span>
         <h2 style="margin-top: 0; color: white;">Debug Panel</h2>
-        <div style="display: flex; align-items: center; margin-bottom: 15px;">
+        <div style="display: flex; align-items: center; margin-bottom: 5px;">
             <label for="arrays" style="margin-right: 10px;">Choose an array:</label>
             <select name="arrays" id="arrays" style="padding: 5px; background-color: #3a3f4b; color: white; border: 1px solid #555; border-radius: 4px;">
             <!-- fill with javascript dinamically -->
             </select>
-            <i class="fas fa-redo-alt" id="refreshDebugPanel" style="margin-left: 10px; cursor: pointer; font-size: 16px; color: #4d9cf6;"></i>
+            <i class="fas fa-redo-alt" id="refreshDebugPanel" style="margin-left: 10px; cursor: pointer; font-size: 16px; color: #4d9cf6;" title="Refresh array list"></i>
+            <span id="refreshVariables" style="margin-left: 15px; cursor: pointer; color: #4d9cf6; display: flex; align-items: center;"><i class="fas fa-sync-alt" style="margin-right: 5px;"></i> Refresh variables</span>
             <div style="flex-grow: 1;"></div>
+<span id="debuggerTableCount"></span>
             <input type="text" id="debugSearchInput" placeholder="Search..." style="padding: 5px; background-color: #3a3f4b; color: white; border: 1px solid #555; border-radius: 4px; width: 200px;">
         </div>
 
-        <div id="debugInfo" style="max-height: calc(100% - 100px); overflow: auto;">
+        <div id="debugInfo" style="max-height: calc(100% - 50px); overflow: auto;">
         <!-- insert dinamic table here -->
         </div>
     </div>
@@ -314,7 +315,7 @@
 
 				<button class="secondaryBtn" id="placeHomes">Place homes</button>
                   <button id="resetCameraButton" class="secondaryBtn">Reset Camera</button>
-  <button class="secondaryBtn"  id="toggleDebugger" >Toggle Debugger</button>
+  <button class="secondaryBtn"  id="toggleDebugger" >Debugger</button>
 
             </div>         
         </div>
@@ -530,6 +531,7 @@ function updateDebugPanel(arraysList) {
     // Get the select element
     const arraySelect = document.getElementById('arrays');
     const debugInfo = document.getElementById('debugInfo');
+    const debuggerTableCount = document.getElementById('debuggerTableCount');
 
     // Debug: Check if DOM elements are found
     if (!arraySelect || !debugInfo) {
@@ -580,29 +582,54 @@ function updateDebugPanel(arraysList) {
         background-color: #383d49;
     `;
     
-    const trHoverStyle = `
-        background-color: #454b59;
+    const buttonStyle = `
+        background-color: #4d9cf6;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        margin: 10px 0;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     `;
+    
+    // Track displayed rows for pagination
+    let currentDisplayLimit = 50;
 
     // Add change event listener to show selected array contents
     arraySelect.addEventListener('change', function() {
-        const selectedArrayName = this.value;
+        displayArrayData(this.value, currentDisplayLimit);
+    });
+    
+    // Function to display array data with pagination
+    function displayArrayData(selectedArrayName, limit) {
         const selectedArray = arraysList[selectedArrayName];
-
+        currentDisplayLimit = limit;
+        
         // Handle different array types
         if (!selectedArray) {
             debugInfo.innerHTML = `<p>Array "${selectedArrayName}" is undefined</p>`;
+            if (debuggerTableCount) debuggerTableCount.textContent = '';
             return;
         }
 
         if (!Array.isArray(selectedArray)) {
             debugInfo.innerHTML = `<p>Not an array. Type: ${typeof selectedArray}</p>`;
+            if (debuggerTableCount) debuggerTableCount.textContent = '';
             return;
         } 
         
         if (selectedArray.length === 0) {
             debugInfo.innerHTML = '<p>Array is empty (length: 0)</p>';
+            if (debuggerTableCount) debuggerTableCount.textContent = '';
             return;
+        }
+        
+        if (debuggerTableCount) {
+            debuggerTableCount.textContent = `${selectedArray.length} items`;
         }
 
         // For objects, create a dynamic table with columns for each property
@@ -626,8 +653,9 @@ function updateDebugPanel(arraysList) {
             });
             tableHTML += '</tr></thead><tbody>';
             
-            // Create table rows
-            selectedArray.forEach((item, index) => {
+            // Create table rows with pagination limit
+            const displayRows = selectedArray.slice(0, limit);
+            displayRows.forEach((item, index) => {
                 tableHTML += `<tr style="${trStyle}" onmouseover="this.style.backgroundColor='#454b59'" onmouseout="this.style.backgroundColor='#383d49'">`;
                 keys.forEach(key => {
                     let cellValue = '';
@@ -650,25 +678,68 @@ function updateDebugPanel(arraysList) {
             });
             
             tableHTML += '</tbody></table>';
-            tableHTML += `<div style="margin-top: 10px; font-size: 12px; color: #aaa;">Total: ${selectedArray.length} items</div>`;
+            
+            // Add "Load More" button if there are more rows
+            if (selectedArray.length > limit) {
+                tableHTML += `
+                <div style="display: flex; justify-content: center; margin-top: 10px;">
+                    <button id="loadMoreBtn" style="${buttonStyle}">
+                        <i class="fas fa-plus-circle" style="margin-right: 5px;"></i> Load More (${limit}/${selectedArray.length})
+                    </button>
+                </div>`;
+            }
+            
             debugInfo.innerHTML = tableHTML;
+            
+            // Add event listener to "Load More" button
+            const loadMoreBtn = document.getElementById('loadMoreBtn');
+            if (loadMoreBtn) {
+                loadMoreBtn.addEventListener('click', function() {
+                    // Increase limit by 50 and redisplay
+                    displayArrayData(selectedArrayName, limit + 50);
+                });
+            }
         } else {
             // For primitive arrays, use a simple table
             let tableHTML = `<table style="${tableStyle}"><thead><tr><th style="${thStyle}">Value</th></tr></thead><tbody>`;
-            selectedArray.forEach(item => {
+            
+            // Apply pagination
+            const displayRows = selectedArray.slice(0, limit);
+            displayRows.forEach(item => {
                 tableHTML += `<tr style="${trStyle}" onmouseover="this.style.backgroundColor='#454b59'" onmouseout="this.style.backgroundColor='#383d49'"><td style="${tdStyle}">${String(item || '')}</td></tr>`;
             });
+            
             tableHTML += '</tbody></table>';
-            tableHTML += `<div style="margin-top: 10px; font-size: 12px; color: #aaa;">Total: ${selectedArray.length} items</div>`;
+            
+            // Add "Load More" button if there are more rows
+            if (selectedArray.length > limit) {
+                tableHTML += `
+                <div style="display: flex; justify-content: center; margin-top: 10px;">
+                    <button id="loadMoreBtn" style="${buttonStyle}">
+                        <i class="fas fa-plus-circle" style="margin-right: 5px;"></i> Load More (${limit}/${selectedArray.length})
+                    </button>
+                </div>`;
+            }
+            
             debugInfo.innerHTML = tableHTML;
+            
+            // Add event listener to "Load More" button
+            const loadMoreBtn = document.getElementById('loadMoreBtn');
+            if (loadMoreBtn) {
+                loadMoreBtn.addEventListener('click', function() {
+                    // Increase limit by 50 and redisplay
+                    displayArrayData(selectedArrayName, limit + 50);
+                });
+            }
         }
-    });
+    }
 
     // Trigger change event to show first array by default
     if (arraySelect.options.length > 0) {
         arraySelect.dispatchEvent(new Event('change'));
     }
 }
+
 // Function to get the current state of all game arrays
 function getGameArrays() {
     return {
@@ -742,11 +813,13 @@ window.addEventListener('load', function() {
 });
 
 document.getElementById("closeDebugPanel").addEventListener("click", function() {
+    console.log("Closing debug panel");
     document.getElementById("debugPanel").style.display = "none";
 });
+
 document.getElementById("refreshDebugPanel").addEventListener("click", function() {
-    console.log("Refreshing debug panel with latest data");
-    // Get fresh data
+    console.log("Refreshing debug panel array list");
+    // Get fresh data and rebuild select dropdown
     initializeDebugPanel();
     
     // Show a temporary indicator that refresh happened
@@ -759,6 +832,36 @@ document.getElementById("refreshDebugPanel").addEventListener("click", function(
     }, 500);
 });
 
+document.getElementById("refreshVariables").addEventListener("click", function() {
+    console.log("Refreshing current array variables");
+    
+    // Get the currently selected array name
+    const arraySelect = document.getElementById('arrays');
+    const selectedArrayName = arraySelect.value;
+    
+    // Get fresh data
+    const freshArrays = getGameArrays();
+    
+    // Show simple visual feedback
+    this.style.backgroundColor = "#2a5885";
+    this.innerHTML = "<i class='fas fa-sync-alt' style='margin-right: 5px;'></i> Refreshed!";
+    
+    // Find the function in the scope and call it
+    if (arraySelect && typeof displayArrayData === 'function') {
+        // Keep current limit instead of resetting to 50
+        const currentDisplayLimit = 50; // This would ideally come from the current state
+        displayArrayData(selectedArrayName, currentDisplayLimit);
+    } else {
+        // Fallback if function not found
+        updateDebugPanel(freshArrays);
+    }
+    
+    // Reset the button after a short delay
+    setTimeout(() => {
+        this.style.backgroundColor = "";
+        this.innerHTML = "<i class='fas fa-sync-alt' style='margin-right: 5px;'></i> Refresh variables";
+    }, 1000);
+});
 
   </script>
 
