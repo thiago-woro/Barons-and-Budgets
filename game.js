@@ -11,6 +11,11 @@ const cycleLength = 3; // Added: Controls major activity cycles (every 3rd simul
 let loopCounter = 0;
 let isPaused = true; // Start paused
 
+
+
+
+
+
 gameSpeedSlider.addEventListener("input", function () {
   gameLoopSpeed = parseInt(this.value); // 1 (slow) to 100 (fast)
   gameSpeedValue.textContent = `Game Speed: ${gameLoopSpeed}`;
@@ -92,6 +97,7 @@ function renderLoop(timestamp) {
 
 // Slow simulation loop (custom rate)
 function updateSimulation() {
+  console.time("simulation");
   if (isPaused) return;
 
   loopCounter = (loopCounter + 1) % cycleLength; // Line 96: Now defined
@@ -148,6 +154,7 @@ function updateSimulation() {
   animals.forEach(animal => {
     animal.update(simulationBaseInterval / (gameLoopSpeed / 50)); // Scaled deltaTime
   });
+  console.timeEnd("simulation");
 }
 
 // Start the render loop

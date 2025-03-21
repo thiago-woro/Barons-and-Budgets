@@ -287,7 +287,7 @@ class FindBerriesTask extends Task {
 
 class Animal {
   // Static speed settings
-  static PREY_BASE_SPEED = 1000;  // Base movement interval for prey
+  static PREY_BASE_SPEED = 2000;  // Base movement interval for prey
   static PREDATOR_SPEED_MULTIPLIER = 2;  // How much faster predators are
   static KILL_DISTANCE = 1;  // Distance in cells required for a kill
   static REPRODUCTION_INTERVAL = 15000;  // Time between reproduction attempts (15 seconds)
