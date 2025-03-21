@@ -1,5 +1,12 @@
 const treePopSound = new Audio('/assets/sounds/3pop.mp3');
 
+
+let gPalmTreesPositions = [];    //🌴
+let gCactiPositions = [];        //🌵                   
+let gBushesPositions = [];       //🌳
+let gMatureTreesPositions = [];  //🌲
+
+
 const TREE_LIFECYCLE = {
     NEW_TREE_INTERVAL: 15000,
     TREE_DEATH_CHANCE: 0.002,
@@ -54,10 +61,10 @@ function startTrees(ctx, cellSize) {
     console.log(`Starting tree placement: target ${treeCount} trees`);
 
     const treeEmojis = {
-        "🌴": [],
-        "🌵": [],
-        "🌳": [],
-        "🌲": [],
+        "🌴": [],  //Palm trees
+        "🌵": [],  //Cacti
+        "🌳": [],  //Bushes
+        "🌲": [],  //Mature Trees
     };
     const noiseToEmoji = {
         "🌴": (noise) => noise > 0.01 && noise <= 0.03,
@@ -105,6 +112,31 @@ function startTrees(ctx, cellSize) {
                 opacity: 1, 
                 rotation: 0 
             });
+
+            if (selectedTreeEmoji === "🌴") {
+                gPalmTreesPositions.push({
+                    gridX: selectedCell.x,
+                    gridY: selectedCell.y,      
+                });
+            }
+            else if (selectedTreeEmoji === "🌵") {  
+                gCactiPositions.push({
+                    gridX: selectedCell.x,
+                    gridY: selectedCell.y,
+                });
+            }   
+            else if (selectedTreeEmoji === "🌳") {  
+                gBushesPositions.push({
+                    gridX: selectedCell.x,
+                    gridY: selectedCell.y,
+                });
+            }   
+            else if (selectedTreeEmoji === "🌲") {          
+                gMatureTreesPositions.push({
+                    gridX: selectedCell.x,
+                    gridY: selectedCell.y,
+                });
+            }               
         }
     }
     

@@ -203,14 +203,15 @@ function gameLoop(timestamp) {
 
 
 
-function updateDebuggerOverlay() {
-  const debuggerOverlay = document.getElementById("debuggerOverlay");
+function updateZoomTrackerUI() {
+  return;
+  const debuggerOverlay = document.getElementById("zoomUItracker");
   
   // Get counts of trees and houses
   const treeCount = treePositions ? treePositions.length : 0;
   const houseCount = houses ? houses.length : 0;
   
-  debuggerOverlay.innerHTML = `
+  zoomUItracker.innerHTML = `
     Zoom Level: ${zoomLevel.toFixed(2)}<br>
     Canvas X: ${canvasX.toFixed(2)}<br>
     Canvas Y: ${canvasY.toFixed(2)}<br>
