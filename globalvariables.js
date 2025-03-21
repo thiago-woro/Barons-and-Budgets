@@ -44,7 +44,6 @@ let huntedAnimalsCount = 0; // Track number of animals hunted by Hunter NPCs
 let year = 2700;
 const startingPopulation = 25;
 const populationIncreaseSpeed = 0.15;
-let isPaused = false;
 var deathRate = 0.001;
 let npcSize = cellSize;
 let babies = [];

@@ -1,205 +1,157 @@
-//game loop
-//game loop speed control
+// Game loop speed control
 const gameSpeedSlider = document.getElementById("gameSpeedSlider");
 const gameSpeedValue = document.getElementById("gameSpeedValue");
 let gameLoopInterval = null;
-let gameLoopSpeed = 6000 / parseInt(gameSpeedSlider.value); //300 = super fast  //30000 super slow
-
+let simulationInterval = null; // New: for simulation updates
+let gameLoopSpeed = parseInt(gameSpeedSlider.value); // Slider value (1-100)
 let lastTimestamp = 0;
-const targetFrameRate = 1; // Adjust this value to your desired frame rate (e.g., 30 FPS)
-const cycleLength = 3; // Controls how many steps in the movement cycle (0 to cycleLength-1)
-
-
-
-let loopCounter = 0; // Add at the top with other variables
-
-
+const targetFrameRate = 60; // 60 FPS for smooth rendering
+const simulationBaseInterval = 1000; // Base simulation update every 1s
+const cycleLength = 3; // Added: Controls major activity cycles (every 3rd simulation tick)
+let loopCounter = 0;
+let isPaused = true; // Start paused
 
 gameSpeedSlider.addEventListener("input", function () {
-  const newGameSpeed = parseInt(this.value);
-  gameLoopSpeed = 10000 / newGameSpeed;
-  gameSpeedValue.textContent = `Game Speed: ${newGameSpeed}`;
+  gameLoopSpeed = parseInt(this.value); // 1 (slow) to 100 (fast)
+  gameSpeedValue.textContent = `Game Speed: ${gameLoopSpeed}`;
+  // Adjust simulation interval dynamically
+  clearInterval(simulationInterval);
+  simulationInterval = setInterval(updateSimulation, simulationBaseInterval / (gameLoopSpeed / 50));
 });
 
 startButton.addEventListener("click", function () {
   if (gameLoopInterval === null) {
-
-   
-    gameLoopInterval = requestAnimationFrame(gameLoop);
+    gameLoopInterval = requestAnimationFrame(renderLoop);
+    simulationInterval = setInterval(updateSimulation, simulationBaseInterval / (gameLoopSpeed / 50));
     startButton.textContent = "⏸ Pause Game";
+    isPaused = false;
   } else {
     cancelAnimationFrame(gameLoopInterval);
+    clearInterval(simulationInterval);
     gameLoopInterval = null;
+    simulationInterval = null;
     startButton.textContent = "⏯ Play";
+    isPaused = true;
   }
 });
 
 startColony.addEventListener("click", function () {
   startNPCs(npcCtx, cellSize);
-    initializeFishingResources();
+  initializeFishingResources();
   startButton.removeAttribute("disabled");
 });
 
-//f9
-function gameLoop(timestamp) {
-  // Request the next frame immediately to ensure continuous animation
-  gameLoopInterval = requestAnimationFrame(gameLoop);
-  
-  // Calculate the time elapsed since the last frame
-  const elapsed = timestamp - lastTimestamp;
+// Fast render loop (60 FPS)
+function renderLoop(timestamp) {
+  gameLoopInterval = requestAnimationFrame(renderLoop);
 
-  if (elapsed >= 1000) {
-    lastTimestamp = timestamp; // Update the last timestamp
+  const deltaTime = timestamp - lastTimestamp;
+  lastTimestamp = timestamp;
 
-    // Add loop counter (0 to cycleLength-1)
-    loopCounter = (loopCounter + 1) % cycleLength;
+  if (deltaTime < 1000 / targetFrameRate) return; // Cap at 60 FPS
 
-    // Your game logic and rendering code goes here
-    if (isPaused) {
-      playStatusImg.style.display = "none";
-      return;
-    } else {
-      playStatusImg.style.display = "block";
-    }
-
-    // Determine if this is a "major activities" loop
-    // Only run major activities (marriage, babies, etc.) every 5th loop
-    const isMajorActivitiesLoop = loopCounter % 5 === 0;
-    
-    // Always update year counter but only on major activities loop
-    if (isMajorActivitiesLoop) {
-      year++;
-      updatePopulationChart(year, npcs.length);
-      npcTableHeader.textContent = `Total Population ${npcs.length}`;
-    }
-
-    // Always clear canvases for redrawing
-    clearCanvas(npcCtx);
-    clearCanvas(npcInfoOverlayCtx);
-
-    // This section runs on EVERY loop - movement happens 5x more often
-    const onScreenNPCS = npcs.slice(0, onScreenNPCSlimit);
-    onScreenNPCS.forEach((npc) => {
-      // Update NPC state based on profession
-      npc.update();
-      
-      // Only move NPCs if they're not in a stationary state
-      const stationaryStates = ["cuttingTree", "restingAtHome", "constructingHarbor", "constructingFarm", "constructing"];
-      if (npc.shouldMove() && !stationaryStates.includes(npc.state) && !npc.state.includes("constructing")) {
-        npc.move();
-      }
-      
-      // Draw the NPC and its info
-      drawNPC(npc, npcCtx);
-      npc.drawNPCInfo(npcCtx);
-      
-      // Optionally draw the path for debugging
-      if (npc.currentPath) {
-         drawPath(npcCtx, npc.currentPath);
-      }
-    });
-
-    // Update and draw fishing boats if the fisher module is loaded
-    if (typeof updateAndDrawFishingBoats === 'function') {
-      updateAndDrawFishingBoats(npcCtx);
-    }
-
-    // Draw all buildings
-    if (buildings && buildings.length > 0) {
-      buildings.forEach(building => {
-        if (typeof building.draw === 'function') {
-          building.draw(npcCtx);
-        }
-      });
-    }
-
-    // Only run these activities on major activities loops (every 5th loop)
-    if (isMajorActivitiesLoop) {
-      let totalSalaries = 0;
-      let salaryCount = 0;
-      deathsThisLoop = 0; // Reset the deaths count for this loop
-      
-      npcs.forEach((npc) => {
-        npc.ageAndDie();
-
-        // Check if NPC is older than 20 and has an empty profession
-        if (!npc.profession || (npc.age >= 20 && npc.profession === "novice")) {
-          // Use the generateProfession method to assign a profession
-          npc.profession = npc.generateProfession(npc.age);
-          npc.salary = npc.calculateSalary();
-
-          addNotification(
-            "Economy",
-            `🔨 ${npc.name} is now a ${npc.profession}`,
-            `Salary: $${npc.salary}`,
-            npc,
-            "#4a7ba8"
-          );
-        }
-
-        if (npc.salary > 0) {
-          totalSalaries += npc.salary;
-          salaryCount++;
-        }
-      });
-
-      // Calculate the medium salary (average salary) if at least one NPC has a salary
-      let mediumSalary = salaryCount > 0 ? totalSalaries / salaryCount : 0;
-      updateUIbottomToolbar(totalSalaries);
-
-      // Run social activities only on major activities loops
-      coupleMaker(npcs);
-      babyMaker(npcs);
-      
-      // Update UI elements
-      currentPopulation.textContent = npcs.length;
-      gameSpeed.textContent = "x " + gameLoopSpeed.toFixed(0);
-
-      // Game over condition
-      if (npcs.length < 2) {
-        console.log("Game over! Population reached below 2.");
-        isPaused = true;
-      }
-    }
-    
-
+  if (isPaused) {
+    playStatusImg.style.display = "none";
+    return;
+  } else {
+    playStatusImg.style.display = "block";
   }
 
+  // Clear canvases every frame
+  clearCanvas(npcCtx);
+  clearCanvas(npcInfoOverlayCtx);
+  animalCtx.clearRect(0, 0, animalCanvas.width, animalCanvas.height);
 
-  
+  // Draw NPCs
+  const onScreenNPCS = npcs.slice(0, onScreenNPCSlimit);
+  onScreenNPCS.forEach((npc) => {
+    drawNPC(npc, npcCtx);
+    npc.drawNPCInfo(npcCtx);
+    if (npc.currentPath) drawPath(npcCtx, npc.currentPath);
+  });
+
+  // Draw fishing boats
+  if (typeof updateAndDrawFishingBoats === 'function') {
+    updateAndDrawFishingBoats(npcCtx);
+  }
+
+  // Draw buildings
+  if (buildings && buildings.length > 0) {
+    buildings.forEach(building => {
+      if (typeof building.draw === 'function') {
+        building.draw(npcCtx);
+      }
+    });
+  }
+
+  // Draw animals
+  animals.forEach(animal => {
+    animal.draw(animalCtx);
+  });
 }
- // Start the animation loop
-  requestAnimationFrame(updateAnimals);
 
+// Slow simulation loop (custom rate)
+function updateSimulation() {
+  if (isPaused) return;
 
+  loopCounter = (loopCounter + 1) % cycleLength; // Line 96: Now defined
+  const isMajorActivitiesLoop = loopCounter === 0;
 
+  // Major activities (e.g., every 3rd simulation tick)
+  if (isMajorActivitiesLoop) {
+    year++;
+    updatePopulationChart(year, npcs.length);
+    npcTableHeader.textContent = `Total Population ${npcs.length}`;
 
-  let lastTime = performance.now();
+    let totalSalaries = 0;
+    let salaryCount = 0;
+    deathsThisLoop = 0;
 
-  // Animation loop for animals
-  function updateAnimals(currentTime) {
-    // Calculate time passed since last frame
-    const deltaTime = currentTime - lastTime;
-    lastTime = currentTime;
-    
-    // Clear previous positions
-    animalCtx.clearRect(0, 0, animalCanvas.width, animalCanvas.height);
-    
-    // Update and draw each animal
-    animals.forEach(animal => {
-      animal.move(deltaTime);
-      animal.draw(animalCtx);
+    npcs.forEach((npc) => {
+      npc.ageAndDie();
+      if (!npc.profession || (npc.age >= 20 && npc.profession === "novice")) {
+        npc.profession = npc.generateProfession(npc.age);
+        npc.salary = npc.calculateSalary();
+        addNotification(
+          "Economy",
+          `🔨 ${npc.name} is now a ${npc.profession}`,
+          `Salary: $${npc.salary}`,
+          npc,
+          "#4a7ba8"
+        );
+      }
+      if (npc.salary > 0) {
+        totalSalaries += npc.salary;
+        salaryCount++;
+      }
     });
 
-    requestAnimationFrame(updateAnimals);
+    let mediumSalary = salaryCount > 0 ? totalSalaries / salaryCount : 0;
+    updateUIbottomToolbar(totalSalaries);
+    coupleMaker(npcs);
+    babyMaker(npcs);
+    currentPopulation.textContent = npcs.length;
+    gameSpeed.textContent = "x " + gameLoopSpeed;
   }
 
+  // NPC simulation updates
+  const onScreenNPCS = npcs.slice(0, onScreenNPCSlimit);
+  onScreenNPCS.forEach((npc) => {
+    npc.update(); // Profession logic
+    const stationaryStates = ["cuttingTree", "restingAtHome", "constructingHarbor", "constructingFarm", "constructing"];
+    if (npc.shouldMove() && !stationaryStates.includes(npc.state) && !npc.state.includes("constructing")) {
+      npc.move();
+    }
+  });
 
+  // Animal simulation updates
+  animals.forEach(animal => {
+    animal.update(simulationBaseInterval / (gameLoopSpeed / 50)); // Scaled deltaTime
+  });
+}
 
-
-
-
-
+// Start the render loop
+requestAnimationFrame(renderLoop);
 
 
 

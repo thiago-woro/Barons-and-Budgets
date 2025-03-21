@@ -1,0 +1,56 @@
+// filepath: j:\BaronsBudgets\context.txt
+Project Context:
+This is a pure JavaScript, browser-only, 2D game with a grid coordinate system. Always use the Cell (x, y) row, column format to refer to a cell. Example: (`Cell X ${cellCol}, Y${cellRow}`).
+
+Core Files Overview:
+1. globalvariables.js:
+   - Stores global constants and variables used across the game.
+
+2. index.html:
+   - Main entry point for the game. Links all scripts and initializes the canvas.
+
+3. npcClass.js & npcs.js:
+   - Defines NPC behavior and interactions. Includes movement, actions, and lifecycle logic.
+
+4. mapGen.js:
+   - Handles procedural generation of the game map, including terrain and structures.
+
+5. camera.js:
+   - Implements camera controls for panning and zooming within the game grid.
+
+6. UI/toolManager.js & uitools.js:
+   - Manages UI interactions and tools for modifying the game state.
+
+7. homes.js:
+   - Defines house and building logic, including placement, upgrades, and inhabitants.
+
+8. animalClass.js:
+   - Manages animal behavior, including movement, reproduction, and interactions with the environment.
+
+9. professions/fisher.js & professions/woodcutter.js:
+   - Implements profession-specific logic for NPCs, such as resource gathering.
+
+10. game.js:
+    - Core game loop and state management. Handles saving/loading, updates, and rendering.
+
+11. utils.js:
+    - Utility functions for common operations like randomization and data manipulation.
+
+12. trees.js:
+    - Manages tree placement, growth, and interactions with NPCs and animals.
+
+Code Patterns & Logic:
+- Modular design with separate files for distinct functionalities.
+- Object-oriented programming for entities like NPCs, animals, and buildings.
+- Procedural generation for dynamic map creation.
+- Event-driven UI interactions.
+- Grid-based logic for movement and placement.
+
+Technologies:
+- JavaScript for game logic.
+- HTML5 Canvas for rendering.
+- CSS.
+
+Important Notes:
+- Testing is manual; avoid automated tests.
+- Do not modify style.css.

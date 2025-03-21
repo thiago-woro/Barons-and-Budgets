@@ -1,0 +1,89 @@
+//game loop
+
+let gameLoopInterval = null;
+let gameLoopSpeed = 6000 / parseInt(gameSpeedSlider.value); 
+
+let lastTimestamp = 0;
+const targetFrameRate = 1; // Adjust this value to your desired frame rate (e.g., 30 FPS)
+const cycleLength = 3; // Controls how many steps in the movement cycle (0 to cycleLength-1)
+let loopCounter = 0; // Add at the top with other variables
+
+
+startButton.addEventListener("click", function () {
+  if (gameLoopInterval === null) {
+   
+    gameLoopInterval = requestAnimationFrame(gameLoop);
+    startButton.textContent = "⏸ Pause Game";
+  } else {
+    cancelAnimationFrame(gameLoopInterval);
+    gameLoopInterval = null;
+    startButton.textContent = "⏯ Play";
+  }
+});
+
+
+function gameLoop(timestamp) {
+  // Request the next frame immediately to ensure continuous animation
+  gameLoopInterval = requestAnimationFrame(gameLoop);
+  
+  // Calculate the time elapsed since the last frame
+  const elapsed = timestamp - lastTimestamp;
+
+  if (elapsed >= 1000) {
+    lastTimestamp = timestamp; // Update the last timestamp
+
+    // Add loop counter (0 to cycleLength-1)
+    loopCounter = (loopCounter + 1) % cycleLength;
+
+    // Your game logic and rendering code goes here
+    if (isPaused) {
+      playStatusImg.style.display = "none";
+      return;
+    } else {
+      playStatusImg.style.display = "block";
+    }
+
+    // Determine if this is a "major activities" loop
+
+    // Always update year counter but only on major activities loop
+    if (isMajorActivitiesLoop) {
+      year++;
+      updatePopulationChart(year, npcs.length);
+      npcTableHeader.textContent = `Total Population ${npcs.length}`;
+    }
+
+    // Always clear canvases for redrawing
+    clearCanvas(npcCtx);
+    clearCanvas(npcInfoOverlayCtx);
+
+    }
+    
+
+  }
+
+
+  
+}
+ // Start the animation loop
+  requestAnimationFrame(updateAnimals);
+
+  let lastTime = performance.now();
+
+  // Animation loop for animals
+  function updateAnimals(currentTime) {
+    // Calculate time passed since last frame
+    const deltaTime = currentTime - lastTime;
+    lastTime = currentTime;
+    
+    // Clear previous positions
+    animalCtx.clearRect(0, 0, animalCanvas.width, animalCanvas.height);
+    
+    // Update and draw each animal
+    animals.forEach(animal => {
+      animal.move(deltaTime);
+      animal.draw(animalCtx);
+    });
+
+    requestAnimationFrame(updateAnimals);
+  }
+
