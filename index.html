@@ -35,20 +35,23 @@
 
 
 <!-- debug panel -->
-<div id="debugPanel" style="width: 100vw; height: 100vh; position: absolute; display: none; z-index: 2000; left: 0; top: 0;">
-    <div id="debugPanelContent">
-        <h2>Debug Panel</h2>
-        <label for="arrays">Choose an array:</label>
+<div id="debugPanel" style="display: none; position: fixed; top: 10%; left: 10%; width: 80%; height: 80%; background-color: rgba(40, 44, 52, 0.95); color: white; z-index: 9999; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.5); overflow: auto;">
+<!-- icon x to close -->
+    <div id="debugPanelContent" style="padding: 20px;">
+<i class="fas fa-times" id="closeDebugPanel" style="position: absolute; top: 15px; right: 15px; font-size: 20px; cursor: pointer;"></i>
 
-<select name="arrays" id="arrays">
-<!-- fill with javascript dinamically -->
-  <option value="array name here">Terrain</option>
-  <option value="creatures">Creatures</option>
-  <option value="animals">Animals</option>
-  <option value="budgets">Budgets</option>
-  <option value="buildings">Buildings</option>
-</select>
-        <div id="debugInfo">
+        <h2 style="margin-top: 0; color: white;">Debug Panel</h2>
+        <div style="display: flex; align-items: center; margin-bottom: 15px;">
+            <label for="arrays" style="margin-right: 10px;">Choose an array:</label>
+            <select name="arrays" id="arrays" style="padding: 5px; background-color: #3a3f4b; color: white; border: 1px solid #555; border-radius: 4px;">
+            <!-- fill with javascript dinamically -->
+            </select>
+            <i class="fas fa-redo-alt" id="refreshDebugPanel" style="margin-left: 10px; cursor: pointer; font-size: 16px; color: #4d9cf6;"></i>
+            <div style="flex-grow: 1;"></div>
+            <input type="text" id="debugSearchInput" placeholder="Search..." style="padding: 5px; background-color: #3a3f4b; color: white; border: 1px solid #555; border-radius: 4px; width: 200px;">
+        </div>
+
+        <div id="debugInfo" style="max-height: calc(100% - 100px); overflow: auto;">
         <!-- insert dinamic table here -->
         </div>
     </div>
@@ -514,7 +517,12 @@
   <script>
     document.getElementById("toggleDebugger").addEventListener("click", function() {
       const debuggerOverlay = document.getElementById("debugPanel");
-      debuggerOverlay.style.display = debuggerOverlay.style.display === "none" ? "block" : "none";
+      if (debuggerOverlay.style.display === "none") {
+        debuggerOverlay.style.display = "block";
+        initializeDebugPanel(); // Initialize debug panel when opening
+      } else {
+        debuggerOverlay.style.display = "none";
+      }
     });
 
     // Function to update debug panel with array information
@@ -522,10 +530,16 @@ function updateDebugPanel(arraysList) {
     // Get the select element
     const arraySelect = document.getElementById('arrays');
     const debugInfo = document.getElementById('debugInfo');
-    
+
+    // Debug: Check if DOM elements are found
+    if (!arraySelect || !debugInfo) {
+        console.error('DOM elements not found:', { arraySelect, debugInfo });
+        return;
+    }
+
     // Clear existing options
     arraySelect.innerHTML = '';
-    
+
     // Add all arrays as options
     Object.keys(arraysList).forEach(arrayName => {
         const option = document.createElement('option');
@@ -534,47 +548,216 @@ function updateDebugPanel(arraysList) {
         arraySelect.appendChild(option);
     });
     
+    // Apply table styles
+    const tableStyle = `
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+    `;
+    
+    const thStyle = `
+        background-color: #2c313a;
+        color: #ddd;
+        padding: 8px;
+        text-align: left;
+        position: sticky;
+        top: 0;
+        box-shadow: 0 2px 2px rgba(0,0,0,0.1);
+    `;
+    
+    const tdStyle = `
+        padding: 6px 8px;
+        border-bottom: 1px solid #444;
+        max-width: 250px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    `;
+    
+    const trStyle = `
+        background-color: #383d49;
+    `;
+    
+    const trHoverStyle = `
+        background-color: #454b59;
+    `;
+
     // Add change event listener to show selected array contents
     arraySelect.addEventListener('change', function() {
         const selectedArrayName = this.value;
         const selectedArray = arraysList[selectedArrayName];
-        
-        // Create a table to display array contents
-        let tableHTML = '<table border="1"><thead><tr><th>Index</th><th>Value</th></tr></thead><tbody>';
-        
-        selectedArray.forEach((item, index) => {
-            // Handle different types of values
-            let displayValue = '';
-            if (typeof item === 'object' && item !== null) {
-                displayValue = JSON.stringify(item);
-            } else {
-                displayValue = item;
-            }
-            
-            tableHTML += `<tr><td>${index}</td><td>${displayValue}</td></tr>`;
-        });
-        
-        tableHTML += '</tbody></table>';
-        debugInfo.innerHTML = tableHTML;
-    });
-    
-    // Trigger change event to show first array by default
-    arraySelect.dispatchEvent(new Event('change'));
-}
 
-// Usage example with your arrays
-const gameArrays = {
-    groundCells,
-    waterCells,
- 
-};
+        // Handle different array types
+        if (!selectedArray) {
+            debugInfo.innerHTML = `<p>Array "${selectedArrayName}" is undefined</p>`;
+            return;
+        }
+
+        if (!Array.isArray(selectedArray)) {
+            debugInfo.innerHTML = `<p>Not an array. Type: ${typeof selectedArray}</p>`;
+            return;
+        } 
+        
+        if (selectedArray.length === 0) {
+            debugInfo.innerHTML = '<p>Array is empty (length: 0)</p>';
+            return;
+        }
+
+        // For objects, create a dynamic table with columns for each property
+        const sampleItem = selectedArray[0];
+        if (typeof sampleItem === 'object' && sampleItem !== null) {
+            // Get all unique keys from all objects in the array
+            const allKeys = new Set();
+            selectedArray.forEach(item => {
+                if (item && typeof item === 'object') {
+                    Object.keys(item).forEach(key => allKeys.add(key));
+                }
+            });
+            
+            // Convert Set to Array and sort alphabetically
+            const keys = Array.from(allKeys).sort();
+            
+            // Create table header
+            let tableHTML = `<table style="${tableStyle}"><thead><tr>`;
+            keys.forEach(key => {
+                tableHTML += `<th style="${thStyle}">${key}</th>`;
+            });
+            tableHTML += '</tr></thead><tbody>';
+            
+            // Create table rows
+            selectedArray.forEach((item, index) => {
+                tableHTML += `<tr style="${trStyle}" onmouseover="this.style.backgroundColor='#454b59'" onmouseout="this.style.backgroundColor='#383d49'">`;
+                keys.forEach(key => {
+                    let cellValue = '';
+                    if (item && typeof item === 'object' && key in item) {
+                        const value = item[key];
+                        if (typeof value === 'object' && value !== null) {
+                            try {
+                                cellValue = JSON.stringify(value).substring(0, 50);
+                                if (JSON.stringify(value).length > 50) cellValue += '...';
+                            } catch (e) {
+                                cellValue = '[Complex Object]';
+                            }
+                        } else {
+                            cellValue = String(value || '');
+                        }
+                    }
+                    tableHTML += `<td style="${tdStyle}" title="${cellValue}">${cellValue}</td>`;
+                });
+                tableHTML += '</tr>';
+            });
+            
+            tableHTML += '</tbody></table>';
+            tableHTML += `<div style="margin-top: 10px; font-size: 12px; color: #aaa;">Total: ${selectedArray.length} items</div>`;
+            debugInfo.innerHTML = tableHTML;
+        } else {
+            // For primitive arrays, use a simple table
+            let tableHTML = `<table style="${tableStyle}"><thead><tr><th style="${thStyle}">Value</th></tr></thead><tbody>`;
+            selectedArray.forEach(item => {
+                tableHTML += `<tr style="${trStyle}" onmouseover="this.style.backgroundColor='#454b59'" onmouseout="this.style.backgroundColor='#383d49'"><td style="${tdStyle}">${String(item || '')}</td></tr>`;
+            });
+            tableHTML += '</tbody></table>';
+            tableHTML += `<div style="margin-top: 10px; font-size: 12px; color: #aaa;">Total: ${selectedArray.length} items</div>`;
+            debugInfo.innerHTML = tableHTML;
+        }
+    });
+
+    // Trigger change event to show first array by default
+    if (arraySelect.options.length > 0) {
+        arraySelect.dispatchEvent(new Event('change'));
+    }
+}
+// Function to get the current state of all game arrays
+function getGameArrays() {
+    return {
+        groundCells,
+        waterCells,
+        npcs,
+        buildings,
+        homes,
+        trees,
+        animals,
+        pathCells,
+        oreDeposits,
+        occupiedCells,
+        treePositions,
+        validCells,
+        // Add any other arrays you want to debug
+    };
+}
 
 // Call this function when you want to initialize the debug panel
-// For example, after your terrain generation or when debug panel is opened
 function initializeDebugPanel() {
-    updateDebugPanel(gameArrays);
+    updateDebugPanel(getGameArrays());
+    
+    // Add search functionality
+    const searchInput = document.getElementById('debugSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            filterDebugTable(searchTerm);
+        });
+    }
 }
 
+// Function to filter the debug table based on search term
+function filterDebugTable(searchTerm) {
+    const debugInfo = document.getElementById('debugInfo');
+    if (!debugInfo) return;
+    
+    const rows = debugInfo.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+        const textContent = row.textContent.toLowerCase();
+        if (searchTerm === '' || textContent.includes(searchTerm)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    
+    // Update the item count to show filtered results
+    const totalItems = rows.length;
+    const visibleItems = Array.from(rows).filter(row => row.style.display !== 'none').length;
+    
+    const countElem = debugInfo.querySelector('div[style*="margin-top: 10px"]');
+    if (countElem) {
+        if (searchTerm && visibleItems !== totalItems) {
+            countElem.textContent = `Showing ${visibleItems} of ${totalItems} items (filtered)`;
+        } else {
+            countElem.textContent = `Total: ${totalItems} items`;
+        }
+    }
+}
+
+// Initialize debug panel on page load
+window.addEventListener('load', function() {
+    // Set a timeout to ensure game variables are initialized first
+    setTimeout(function() {
+        // Pre-initialize the debug panel once
+        initializeDebugPanel();
+    }, 1000); // 1 second delay
+});
+
+document.getElementById("closeDebugPanel").addEventListener("click", function() {
+    document.getElementById("debugPanel").style.display = "none";
+});
+document.getElementById("refreshDebugPanel").addEventListener("click", function() {
+    console.log("Refreshing debug panel with latest data");
+    // Get fresh data
+    initializeDebugPanel();
+    
+    // Show a temporary indicator that refresh happened
+    const refreshIcon = this;
+    refreshIcon.style.transform = "rotate(360deg)";
+    refreshIcon.style.transition = "transform 0.5s";
+    
+    setTimeout(() => {
+        refreshIcon.style.transform = "rotate(0deg)";
+    }, 500);
+});
 
 
   </script>
