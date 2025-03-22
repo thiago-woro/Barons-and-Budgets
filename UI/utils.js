@@ -130,6 +130,11 @@ function isLandCell(x, y) {
  * @returns {Array|null} - Array of path coordinates or null if no path found
  */
 function findPathTo(npc, target) {
+
+    console.warn(`@utils.js USED OLD FN : findPathTo: ${npc.name} - Target: (${target.x}, ${target.y})`);
+
+
+    
     // Skip non-woodcutters
     if (npc.profession !== 'Woodcutter') {
         return null;
@@ -143,7 +148,7 @@ function findPathTo(npc, target) {
 
     const startX = Math.floor(npc.x / cellSize);
     const startY = Math.floor(npc.y / cellSize);
-    console.log(`findPathTo: ${npc.name} - Start: (${startX}, ${startY}), Target: (${target.x}, ${target.y})`);
+    console.warn(`@utils.js  findPathTo: ${npc.name} - Start: (${startX}, ${startY}), Target: (${target.x}, ${target.y})`);
 
     // A* pathfinding implementation
     const openSet = [];

@@ -30,9 +30,11 @@ Do not change style.css
 be careful, some objects X,Y are stored as the rows, columns * cellsize, and others are stored with X,Y coords not multiplied by cellsize
 npc object sample:
 {
-  "x": 2520,
-  "y": 3000,
-  "currentPath": null,
+  "x": 1300,
+  "y": 1680,
+  "gridX": 65,
+  "gridY": 84,
+
 }
 
  tree object sample:

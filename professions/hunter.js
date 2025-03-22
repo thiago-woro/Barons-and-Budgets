@@ -3,6 +3,7 @@
 
 // State machine for hunter behavior
 function updateHunter(npc) {
+  return;
   switch (npc.state) {
     case "idle":
       npc.setState("findingPrey");

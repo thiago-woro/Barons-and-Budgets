@@ -3,6 +3,7 @@
 
 // State machine for farmer behavior
 function updateFarmer(npc) {
+  return;
   switch (npc.state) {
     case "idle":
       // First check if we have a farm, if not, try to build one

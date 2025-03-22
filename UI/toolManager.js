@@ -459,3 +459,4 @@ function viewPath(coords) {
         pathStart = null;
     }
 }
+

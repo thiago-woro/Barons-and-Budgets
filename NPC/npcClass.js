@@ -99,6 +99,8 @@ class NPC {
   constructor(x, y, myNumber, parents, age) {
     this.x = x * cellSize;
     this.y = y * cellSize;
+    this.gridX = x,
+    this.gridY = y,
     this.race = this.chooseRace();
     this.age = 0;
     this.sex = Math.random() < 0.5 ? "male" : "female";
@@ -135,22 +137,30 @@ class NPC {
   update() {
     // Call the appropriate profession update function
     if (this.profession === "Woodcutter") {
-    console.log(`moving a: ${this.profession}`);
+   //console.log(`moving a: ${this.profession}`);
 
       updateWoodcutter(this);
     } else if (this.profession === "Hunter") {
       updateHunter(this);
+      return;
     console.log(`moving a: ${this.profession}`);
 
     } else if (this.profession === "Fisher") {
     console.log(`moving a: ${this.profession}`);
 
         updateFisher(this);
+      return;
+  
     } else if (this.profession === "Miner") {
       updateMiner(this);
+      return;
     } else if (this.profession === "Farmer") {
       updateFarmer(this);
+      return;
+
     } else {
+      return;
+
       // Default behavior for NPCs without specific profession handlers
       // this.move();
     }
@@ -334,6 +344,7 @@ class NPC {
 
   // Draw info based on state
   drawNPCInfo(ctx) {
+    return;
     if (this.profession === 'Woodcutter') {
       drawWoodcutterInfo(this, ctx);
     } else if (this.profession === 'Hunter') {
