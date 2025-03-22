@@ -263,6 +263,23 @@ class NPC {
     if (!this.children) {
       this.children = [];
     }
+    
+    // Check for circular reference before adding
+    if (childNPC === this) {
+      console.error("Attempted to add NPC as its own child:", this.name);
+      return;
+    }
+    
+    // Optional: Check if this NPC is already in the child's ancestry
+    if (childNPC.parents && 
+        childNPC.parents.some(parent => 
+          parent === this || 
+          (parent.parents && parent.parents.includes(this))
+        )) {
+      console.error("Circular reference detected when adding child:", childNPC.name, "to parent:", this.name);
+      return;
+    }
+    
     this.children.push(childNPC);
   }
 

@@ -129,15 +129,13 @@ class House {
     const randomIndex = Math.floor(Math.random() * houseImages.length);
     const selectedHouseImage = houseImages[randomIndex];
 
-    
-    // Draw house image - positioned to be centered horizontally and aligned to top border of cell
-    // Using cellSize for width and height
+    // Move the house up by one cellSize to position it in the correct cell
     ctx.drawImage(
       selectedHouseImage, 
-      this.x,       // X position 
-      this.y,          // Y position
-      cellSize,      // Width
-      cellSize       // Height
+      this.x,          // X position 
+      this.y - cellSize,  // Y position (subtract cellSize to move it up one cell)
+      cellSize,        // Width
+      cellSize         // Height
     );
 
     // draw house shadow

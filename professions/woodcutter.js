@@ -37,159 +37,278 @@ function findNearestTree(npc) {
   if (typeof treePositions === 'undefined' || !treePositions || treePositions.length === 0) {
     return null;
   }
+
+  // Convert npc world coordinates to grid coordinates
+  const npcGridX = Math.floor(npc.x / cellSize);
+  const npcGridY = Math.floor(npc.y / cellSize);
+  
+  console.log(`NPC at Cell X ${npcGridX}, Y ${npcGridY}`);
   
   treePositions.forEach(tree => {
-    // Convert tree coordinates to grid coordinates
-    const treeX = Math.floor(tree.x / cellSize);
-    const treeY = Math.floor(tree.y / cellSize);
+    // Tree positions are already in grid coordinates
+    const treeGridX = tree.gridX;
+    const treeGridY = tree.gridY;
     
-    const npcX = Math.floor(npc.x / cellSize);
-    const npcY = Math.floor(npc.y / cellSize);
-    
-    const distance = Math.sqrt(
-      Math.pow(treeX - npcX, 2) + 
-      Math.pow(treeY - npcY, 2)
-    );
+    // Use Manhattan distance for grid-based movement
+    const distance = Math.abs(treeGridX - npcGridX) + Math.abs(treeGridY - npcGridY);
     
     if (distance < minDistance) {
       minDistance = distance;
       nearestTree = {
-        x: treeX,
-        y: treeY,
+        x: treeGridX * cellSize, // Convert back to world coordinates for pathfinding
+        y: treeGridY * cellSize,
+        gridX: treeGridX,
+        gridY: treeGridY,
         originalTree: tree
       };
     }
   });
   
+  if (nearestTree) {
+    console.log(`Found nearest tree at Cell X ${nearestTree.gridX}, Y ${nearestTree.gridY}, distance: ${minDistance}`);
+  } else {
+    console.log(`No trees found within range`);
+  }
+  
   return nearestTree;
 }
 
-// Simplified state machine for woodcutter behavior
+// Woodcutter update flow with path finding logging
 function updateWoodcutter(npc) {
-  // Set canMove flag based on state - woodcutters can't move while actively cutting
-  npc.canMove = npc.state !== "activelyCutting";
-  
-  switch (npc.state) {
-    case "idle":
-      npc.setState("cuttingTrees");
-      break;
-      
-    case "cuttingTrees":
-      // If we don't have a path or target tree, find one
-      if (!npc.currentPath || !npc.stateData.targetTree) {
-        const tree = findNearestTree(npc);
-        if (tree) {
-          npc.currentPath = findPathTo(npc, tree);
-          npc.pathIndex = 0;
-          npc.stateData.targetTree = tree;
-        } else {
-          // No trees found, go idle
-          npc.setState("idle");
-          break;
-        }
-      }
-      
-      // Follow the path to the tree
-      const pathCompleted = followPath(npc);
-      
-      // If we've reached the tree, start cutting
-      if (pathCompleted) {
-        npc.waitTime = npc.maxWaitTime;
-        
-        // Store the tree index for animation later
-        if (npc.stateData.targetTree && npc.stateData.targetTree.originalTree) {
-          const treeIndex = treePositions.indexOf(npc.stateData.targetTree.originalTree);
-          if (treeIndex !== -1) {
-            npc.stateData.targetTreeIndex = treeIndex;
-          }
-        }
-        
-        // Start the cutting process
-        npc.setState("activelyCutting");
-        // Explicitly set canMove to false when cutting starts
-        npc.canMove = false;
-      }
-      break;
-      
-    case "activelyCutting":
-      // Ensure NPC doesn't move while cutting
-      npc.canMove = false;
-      
-      if (npc.waitTime > 0) {
-        npc.waitTime--;
-        
-        // Add visual feedback for tree cutting (chopping animation)
-        if (npc.waitTime % 2 === 0) {
-          // Alternate between normal position and "chopping" position
-          npc.animationState = "chopping";
-        } else {
-          npc.animationState = "normal";
-        }
-        
-        // Start tree animation when we're about halfway through cutting
-        if (npc.waitTime === Math.floor(npc.maxWaitTime / 2) && npc.stateData.targetTreeIndex !== undefined) {
-          dyingTreeAnimation(npc.stateData.targetTreeIndex, () => {
-            //add wood to the wood count
-            elfWoodCount += 1;
+    // Current state tracking
+    console.log(`Woodcutter ${npc.id} (${npc.name}) at Cell X ${npc.x}, Y${npc.y} - State: ${npc.state}`);
+    
+    // State machine for woodcutter behavior
+    switch(npc.state) {
+        case 'idle':
+            // Find nearest tree and decide to cut it
+            const nearestTree = findNearestTree(npc);
+            if (nearestTree) {
+                npc.targetTree = nearestTree;
+                npc.state = 'moving_to_tree';
+                console.log(`Woodcutter ${npc.id} found tree at Cell X ${Math.floor(nearestTree.x/cellSize)}, Y${Math.floor(nearestTree.y/cellSize)}`);
+            } else {
+                console.log(`Woodcutter ${npc.id} couldn't find any trees, remaining idle`);
+            }
+            break;
+            
+        case 'moving_to_tree':
+            // Path finding to tree
+            if (!npc.path || npc.path.length === 0) {
+                console.log(`Woodcutter ${npc.id} calculating path to tree at Cell X ${Math.floor(npc.targetTree.x/cellSize)}, Y${Math.floor(npc.targetTree.y/cellSize)}`);
+                
+                // Convert tree world coordinates to grid coordinates
+                const treeGridX = Math.floor(npc.targetTree.x / cellSize);
+                const treeGridY = Math.floor(npc.targetTree.y / cellSize);
+                
+                // Find path using A* algorithm
+                npc.path = findPath(
+                    {x: npc.x, y: npc.y}, 
+                    {x: treeGridX, y: treeGridY}
+                );
+                
+                if (npc.path) {
+                    console.log(`Woodcutter ${npc.id} found path to tree with ${npc.path.length} steps`);
+                    logPathDetails(npc.path);
+                } else {
+                    console.log(`Woodcutter ${npc.id} couldn't find path to tree, looking for another tree`);
+                    npc.state = 'idle';
+                    npc.targetTree = null;
+                }
+            } else {
+                // Move along path
+                const nextStep = npc.path.shift();
+                console.log(`Woodcutter ${npc.id} moving to Cell X ${nextStep.x}, Y${nextStep.y}`);
+                
+                // Update position
+                npc.x = nextStep.x;
+                npc.y = nextStep.y;
+                
+                // Check if reached tree
+                if (npc.path.length === 0) {
+                    console.log(`Woodcutter ${npc.id} reached tree location`);
+                    npc.state = 'cutting_tree';
+                    npc.cuttingProgress = 0;
+                }
+            }
+            break;
+            
+        case 'cutting_tree':
+            // Cutting tree logic
+            npc.cuttingProgress += 1;
+            if (npc.cuttingProgress >= 10) { // 10 ticks to cut a tree
+                console.log(`Woodcutter ${npc.id} finished cutting tree`);
+                // Remove tree from world
+                removeTree(npc.targetTree);
+                // Add wood to inventory
+                npc.inventory.wood = (npc.inventory.wood || 0) + 1;
+                console.log(`Woodcutter ${npc.id} collected wood, now has ${npc.inventory.wood} wood`);
+                
+                // Check if inventory is full
+                if (npc.inventory.wood >= 5) {
+                    npc.state = 'returning_home';
+                    console.log(`Woodcutter ${npc.id} inventory full, returning home`);
+                } else {
+                    npc.state = 'idle';
+                    npc.targetTree = null;
+                }
+            }
+            break;
+            
+        case 'returning_home':
+            // Path finding to home
+            if (!npc.path || npc.path.length === 0) {
+                // Find house associated with this woodcutter
+                const home = findHomeForNPC(npc);
+                if (home) {
+                    console.log(`Woodcutter ${npc.id} calculating path to home at Cell X ${Math.floor(home.x/cellSize)}, Y${Math.floor(home.y/cellSize)}`);
+                    
+                    // Calculate path to home
+                    npc.path = findPath(
+                        {x: npc.x, y: npc.y}, 
+                        {x: Math.floor(home.x/cellSize), y: Math.floor(home.y/cellSize)}
+                    );
+                    
+                    if (npc.path) {
+                        console.log(`Woodcutter ${npc.id} found path to home with ${npc.path.length} steps`);
+                        logPathDetails(npc.path);
+                    } else {
+                        console.log(`Woodcutter ${npc.id} couldn't find path to home, wandering`);
+                        npc.state = 'wandering';
+                    }
+                } else {
+                    console.log(`Woodcutter ${npc.id} has no home, wandering`);
+                    npc.state = 'wandering';
+                }
+            } else {
+                // Move along path
+                const nextStep = npc.path.shift();
+                console.log(`Woodcutter ${npc.id} moving to Cell X ${nextStep.x}, Y${nextStep.y}`);
+                
+                // Update position
+                npc.x = nextStep.x;
+                npc.y = nextStep.y;
+                
+                // Check if reached home
+                if (npc.path.length === 0) {
+                    console.log(`Woodcutter ${npc.id} reached home, depositing ${npc.inventory.wood} wood`);
+                    // Deposit wood
+                    depositResources(npc);
+                    npc.inventory.wood = 0;
+                    npc.state = 'resting';
+                    npc.restingTime = 0;
+                }
+            }
+            break;
+            
+        case 'resting':
+            // Rest for a while
+            npc.restingTime += 1;
+            if (npc.restingTime >= 20) { // Rest for 20 ticks
+                console.log(`Woodcutter ${npc.id} finished resting, going back to work`);
+                npc.state = 'idle';
+            }
+            break;
+            
+        case 'wandering':
+            // Random movement when lost
+            if (!npc.path || npc.path.length === 0) {
+                // Generate random valid cell to move to
+                const randomCell = findRandomWalkableCell(npc.x, npc.y, 5); // Search within 5 cells radius
+                if (randomCell) {
+                    console.log(`Woodcutter ${npc.id} wandering to Cell X ${randomCell.x}, Y${randomCell.y}`);
+                    npc.path = findPath({x: npc.x, y: npc.y}, randomCell);
+                    
+                    if (npc.path) {
+                        console.log(`Woodcutter ${npc.id} found wandering path with ${npc.path.length} steps`);
+                    } else {
+                        console.log(`Woodcutter ${npc.id} couldn't find wandering path, remaining still`);
+                    }
+                }
+                
+                // After wandering, try to resume normal activities
+                npc.state = 'idle';
+            } else {
+                // Move along path
+                const nextStep = npc.path.shift();
+                console.log(`Woodcutter ${npc.id} wandering to Cell X ${nextStep.x}, Y${nextStep.y}`);
+                npc.x = nextStep.x;
+                npc.y = nextStep.y;
+            }
+            break;
+    }
+}
 
-            //update the wood count display
-            document.getElementById("woodCount").textContent = elfWoodCount + "/ " + treePositions.length;
-          });
-        }
-      } else {
-        npc.animationState = "normal"; // Reset animation state
-        // Tree has been cut, go back home
-        npc.setState("returningHome");
-        
-        // Clear the current path and target tree
-        npc.currentPath = null;
-        npc.stateData.targetTree = null;
-        // Allow movement again
-        npc.canMove = true;
-      }
-      break;
-      
-    case "returningHome":
-      // If we don't have a path or target home, find one
-      if (!npc.currentPath || !npc.stateData.targetHome) {
-        const home = findNearestHome(npc);
-        if (home) {
-          npc.currentPath = findPathTo(npc, home);
-          npc.pathIndex = 0;
-          npc.stateData.targetHome = home;
-        } else {
-          // No homes found, go back to cutting trees
+// Helper function to log path details
+function logPathDetails(path) {
+    if (!path || path.length === 0) return;
+    
+    console.log("Path details:");
+    path.forEach((step, index) => {
+        console.log(`  Step ${index+1}: Cell X ${step.x}, Y${step.y}`);
+    });
+}
 
-          console.warn("No homes found, going back to cutting trees");
-          npc.setState("idle");
-          break;
+// Helper to find a home for an NPC
+function findHomeForNPC(npc) {
+    for (const house of houses) {
+        if (house.inhabitants.includes(npc)) {
+            return house;
         }
-      }
-      
-      // Follow the path to home
-      const homePathCompleted = followPath(npc);
-      
-      // If we've reached home, rest briefly then go back to cutting trees
-      if (homePathCompleted) {
-        npc.waitTime = npc.maxWaitTime / 2; // Rest for half the time of cutting
-        npc.animationState = "sleeping";
-        npc.setState("resting");
+    }
+    return null;
+}
+
+// Helper to find a random walkable cell within radius
+function findRandomWalkableCell(x, y, radius) {
+    // Try up to 10 times to find a valid cell
+    for (let i = 0; i < 10; i++) {
+        const randomX = x + Math.floor(Math.random() * (radius * 2 + 1)) - radius;
+        const randomY = y + Math.floor(Math.random() * (radius * 2 + 1)) - radius;
         
-        // Clear the current path and target home
-        npc.currentPath = null;
-        npc.stateData.targetHome = null;
-      }
-      break;
-      
-    case "resting":
-      if (npc.waitTime > 0) {
-        npc.waitTime--;
-      } else {
-        npc.animationState = "normal"; // Reset animation state
-        npc.setState("cuttingTrees"); // Go back to cutting trees
-      }
-      break;
-  }
+        // Check if this cell is walkable (not water, not occupied by tree)
+        if (isWalkable(randomX, randomY)) {
+            return {x: randomX, y: randomY};
+        }
+    }
+    return null;
+}
+
+// Helper to deposit resources
+function depositResources(npc) {
+    // Track resources in global economy or house storage
+    const home = findHomeForNPC(npc);
+    if (home) {
+        home.resources = home.resources || {};
+        home.resources.wood = (home.resources.wood || 0) + npc.inventory.wood;
+        console.log(`House at Cell X ${Math.floor(home.x/cellSize)}, Y${Math.floor(home.y/cellSize)} now has ${home.resources.wood} wood`);
+    }
+}
+
+// Helper to remove a tree from the world
+function removeTree(tree) {
+    // Find index of tree in trees array
+    const index = trees.findIndex(t => t === tree);
+    if (index !== -1) {
+        trees.splice(index, 1);
+        console.log(`Tree removed at Cell X ${Math.floor(tree.x/cellSize)}, Y${Math.floor(tree.y/cellSize)}`);
+        
+        // Redraw trees
+        treeCtx.clearRect(0, 0, treeCanvas.width, treeCanvas.height);
+        trees.forEach(tree => tree.draw(treeCtx));
+    }
+}
+
+// Helper to check if a cell is walkable
+function isWalkable(x, y) {
+    // Already defined in your A* pathfinding
+    // Check bounds, water, trees, etc.
+    return emptyCells.some(cell => cell.x === x && cell.y === y) && 
+           !treePositions.some(tree => {
+               const treeGridX = Math.floor(tree.x / cellSize);
+               const treeGridY = Math.floor(tree.y / cellSize);
+               return treeGridX === x && treeGridY === y;
+           });
 }
 
 // Draw woodcutter info based on state

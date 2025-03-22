@@ -27,15 +27,26 @@ try to test the file. User checks manually.
 Do not change style.css
 
 
+be careful, some objects X,Y are stored as the rows, columns * cellsize, and others are stored with X,Y coords not multiplied by cellsize
+npc object sample:
+{
+  "x": 2520,
+  "y": 3000,
+  "currentPath": null,
+}
+
+ tree object sample:
+{
+  "gridX": 51,
+  "gridY": 31,
+  "emoji": "🌴",
+}
+     
 
 
 
 j:\BaronsBudgets/
-├── .cursor
-├── .git
-├── .gitignore
-├── .prettierrc
-├── .vscode
+
 ├── animalClass.js
 │   └── Definitions:
 │       ├── class Animal
