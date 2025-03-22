@@ -126,11 +126,11 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("Selecting buildings or houses at coords:", coords);
         
         // First, check in the houses array
-        const foundHouse = houses.find(house => 
-            Math.floor(house.x / cellSize) === coords.cellCol && 
-            Math.floor(house.y / cellSize) === coords.cellRow
-        );
-        
+        const foundHouse = houses.find(house => {
+            console.log(`Checking house at Cell X ${Math.floor(house.x / cellSize)}, Y${Math.floor(house.y / cellSize)}`);
+            return Math.floor(house.x / cellSize) === coords.cellCol && 
+                   Math.floor(house.y / cellSize) === coords.cellRow;
+        });
         // Then, check in the buildings array if no house was found
         const foundBuilding = !foundHouse ? buildings.find(building => 
             Math.floor(building.x / cellSize) === coords.cellCol && 

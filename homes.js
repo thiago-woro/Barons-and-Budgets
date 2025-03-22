@@ -129,19 +129,15 @@ class House {
     const randomIndex = Math.floor(Math.random() * houseImages.length);
     const selectedHouseImage = houseImages[randomIndex];
 
-    // Calculate position for proper alignment
-    // Center horizontally and align to bottom of cell
-    const centerX = this.x;
-    const bottomY = this.y;
     
-    // Draw house image - positioned to be centered horizontally and aligned to bottom of cell
-    // Using cellSize * 2 for width and height to maintain the same size
+    // Draw house image - positioned to be centered horizontally and aligned to top border of cell
+    // Using cellSize for width and height
     ctx.drawImage(
       selectedHouseImage, 
-      centerX,          // X position 
-      bottomY,          // Y position
-      cellSize * 2,     // Width
-      cellSize * 2      // Height
+      this.x,       // X position 
+      this.y,          // Y position
+      cellSize,      // Width
+      cellSize       // Height
     );
 
     // draw house shadow
@@ -313,10 +309,10 @@ function drawRectanglesBetweenHouses(houses, ctx) {
 //commercial buildings
 
 class Building {
-  constructor(x, y, cellSize, owner, type) {
+  constructor(x, y, cellSize, npc, type) {
     this.x = x * cellSize;
     this.y = y * cellSize;
-    this.owner = owner ?? null; // The NPC owner of the building
+    this.owner = npc ?? null; // The NPC owner of the building
     this.type = type ?? "House"; // Type of the building based on owner's profession
     this.inhabitants = []; // Array to store NPCs or characters in the building
     this.upgrades = []; // Array to store building upgrades

@@ -161,6 +161,7 @@ function createHouseForCouple(npc1, npc2) {
 
     newHouse.addInhabitant(npc1);
     newHouse.addInhabitant(npc2);
+    console.log(`newHouse: ${newHouse.x},${newHouse.y} , npc1:${npc1.x},${npc1.y} ${npc1.race}, ${npc1.profession} ${npc1.name} , npc2: ${npc2.x},${npc2.y} ${npc2.race} ${npc2.profession} ${npc2.name}`);
     houses.push(newHouse);
     newHouse.draw(homesCtx)
 
