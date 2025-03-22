@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const selectNPC = (coords) => {
-        console.log("Selecting NPC at", coords);
+        console.log("Selecting NPC at", coords.cellCol, coords.cellRow,  coords);
         for (const npc of npcs) {
             if (npc.x === coords.cellCol && npc.y === coords.cellRow) {
                 console.log("Found NPC at", coords);

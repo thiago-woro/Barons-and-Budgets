@@ -99,50 +99,11 @@ function drawWaterTexture() {
     addSubtleWaterPixels(wavesCtx);
   }
   
-  // Update FPS once per second
-  let now = performance.now();
-  if (now - fpsUpdateTime >= 1000) {
-    fps = fpsFrameCounter;
-    fpsFrameCounter = 0;
-    fpsUpdateTime = now;
-    console.log(`FPS: ${fps}`);
-  }
 
 
   // Request the next animation frame
   requestAnimationFrame(drawWaterTexture);
 }
-
-let fpsUpdateTime = 0;
-let lastFrameTime = performance.now();
-let fps = 0;
-let fpsFrameCounter = 0;
-
-/* 
-// Global variables
-
-
-// Call this inside your main game loop
-function updateFPS() {
-  let now = performance.now();
-  frameCount++;
-
-  if (now - fpsUpdateTime >= 1000) {
-    fps = frameCount;
-    frameCount = 0;
-    fpsUpdateTime = now;
-    console.log(`FPS: ${fps}`); // Log FPS once per second
-  }
-
-  lastFrameTime = now;
-}
-
- */
-
-
-
-
-
 
 
 

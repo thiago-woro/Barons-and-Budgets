@@ -2,18 +2,14 @@
 // This file contains all the logic for woodcutter NPCs
 
 
-/**
- * Finds the nearest tree to an NPC
- * @param {Object} npc - The NPC object
- * @returns {Object|null} - The nearest tree or null if none found
- */
 
+/* 
  // Add these helper functions at the top of the file
 function manhattan(point1, point2) {
     return Math.abs(point1.x - point2.x) + Math.abs(point1.y - point2.y);
 }
 
-function findNearestTree(startX, startY) {
+function findNearestPineTreeByCoords(startX, startY) {
     let nearest = null;
     let minDistance = Infinity;
 
@@ -31,7 +27,7 @@ function findNearestTree(startX, startY) {
 
     return nearest;
 }
-
+ */
 
 function findNearestTree(npc) {
   let nearestTree = null;

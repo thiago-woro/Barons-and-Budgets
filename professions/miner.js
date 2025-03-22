@@ -14,6 +14,13 @@ function updateMiner(npc) {
         const ore = findNearestOre(npc);
         if (ore) {
           npc.currentPath = findPathTo(npc, ore);
+
+          //log the result of findPathTo, if failed / null or empty or not empty!
+          if (npc.currentPath === null || npc.currentPath.length === 0) {
+            console.warn(`${npc.name} failed to find a path to the ore`);
+          } else {
+            console.warn(`${npc.name} found a path to the ore`);
+          }
           npc.pathIndex = 0;
           npc.stateData.targetOre = ore;
         } else {

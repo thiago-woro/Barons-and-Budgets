@@ -693,7 +693,6 @@ function placeLakes() {
 
     if (potentialLakeCells.length === 0) {
         console.log("No suitable locations found for lakes.");
-        alert("No suitable locations found for lakes.");
         return;
     }
 

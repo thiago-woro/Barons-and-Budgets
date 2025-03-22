@@ -1,6 +1,20 @@
 // Game loop speed control
-const gameSpeedSlider = document.getElementById("gameSpeedSlider");
-const gameSpeedValue = document.getElementById("gameSpeedValue");
+//after DOM loaded, get items
+document.addEventListener("DOMContentLoaded", function() {      
+  const gameSpeedSlider = document.getElementById("gameSpeedSlider");
+  const gameSpeedValue = document.getElementById("gameSpeedValue"); 
+  
+
+  gameSpeedSlider.addEventListener("input", function () {
+  gameLoopSpeed = parseInt(this.value); // 1 (slow) to 100 (fast)
+  gameSpeedValue.textContent = `Game Speed: ${gameLoopSpeed}`;
+  // Adjust simulation interval dynamically
+  clearInterval(simulationInterval);
+  simulationInterval = setInterval(updateSimulation, simulationBaseInterval / (gameLoopSpeed / 50));
+});
+
+});
+
 let gameLoopInterval = null;
 let simulationInterval = null; // New: for simulation updates
 let gameLoopSpeed = parseInt(gameSpeedSlider.value); // Slider value (1-100)
@@ -9,20 +23,13 @@ const targetFrameRate = 60; // 60 FPS for smooth rendering
 const simulationBaseInterval = 1000; // Base simulation update every 1s
 const cycleLength = 3; // Added: Controls major activity cycles (every 3rd simulation tick)
 let loopCounter = 0;
-let isPaused = true; // Start paused
+let isPaused = false; // Start paused
 
 
 
 
 
 
-gameSpeedSlider.addEventListener("input", function () {
-  gameLoopSpeed = parseInt(this.value); // 1 (slow) to 100 (fast)
-  gameSpeedValue.textContent = `Game Speed: ${gameLoopSpeed}`;
-  // Adjust simulation interval dynamically
-  clearInterval(simulationInterval);
-  simulationInterval = setInterval(updateSimulation, simulationBaseInterval / (gameLoopSpeed / 50));
-});
 
 startButton.addEventListener("click", function () {
   if (gameLoopInterval === null) {

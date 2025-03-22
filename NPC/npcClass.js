@@ -48,6 +48,8 @@ class Item {
  * @returns {boolean} - True if path is completed, false otherwise
  */
 function followPath(npc) {
+
+  
   // If NPC can't move (e.g., during cutting), don't follow path
   if (npc.canMove === false) {
     return false;
@@ -104,7 +106,7 @@ class NPC {
     this.isClickable = true; // Can be toggled on or off
     this.isAlive = true; // NPC is alive when created
     this.deathAge = Math.floor(Math.random() * 80 + 20); // Age at which NPC dies
-this.name = generateName(this); // Generate a name using global function
+    this.name = generateName(this); // Generate a name using global function
     this.spouse;
     this.profession = this.generateProfession(age, this.race);
     this.movementSpeed = 1;
@@ -133,26 +135,26 @@ this.name = generateName(this); // Generate a name using global function
   update() {
     // Call the appropriate profession update function
     if (this.profession === "Woodcutter") {
+    console.log(`moving a: ${this.profession}`);
+
       updateWoodcutter(this);
     } else if (this.profession === "Hunter") {
       updateHunter(this);
+    console.log(`moving a: ${this.profession}`);
+
     } else if (this.profession === "Fisher") {
-      if (typeof updateFisher === 'function') {
+    console.log(`moving a: ${this.profession}`);
+
         updateFisher(this);
-      } else if (typeof window.updateFisher === 'function') {
-        window.updateFisher(this);
-      } else {
-        console.warn("updateFisher function not available yet for NPC:", this.id);
-      }
     } else if (this.profession === "Miner") {
       updateMiner(this);
     } else if (this.profession === "Farmer") {
       updateFarmer(this);
     } else {
       // Default behavior for NPCs without specific profession handlers
-      this.move();
+      // this.move();
     }
-    this.updateInfoPanel(); // Update info panel with current position
+    this.updateInfoPanel(); // Update info panel TODO update only when infoPanel is opened
   }
 
   // Set the NPC's state and update the UI
@@ -168,9 +170,9 @@ this.name = generateName(this); // Generate a name using global function
     return true;
   }
 
-  // Regular movement method for non-woodcutter NPCs
+  // Regular movement method for remaning NPCS
   move() {
-    //console.log
+    return;
     console.log(`NPC ${this.name} is moving`);
     // If NPC can't move (e.g., during cutting), don't move
     if (this.canMove === false) {
