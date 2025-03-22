@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
 
-<div id="infoPanel" style="position: absolute; display: none;visibility: collapse; z-index: 2000; left: 0; top: 0;">
+<div id="infoPanel" style="position: absolute; display: none; z-index: 2000; left: 0; top: 0;">
 
 <img src="./assets/Races/purries/female/catgirl (4).png" style="height: 200px; width: 200px;">
 </div>
@@ -82,7 +82,7 @@
             <canvas id="path"  style="z-index: 15;"></canvas>
             <canvas id="oreDeposits"  style="z-index: 40;"></canvas>
             <canvas id="treeCanvas"  style="z-index: 41;"></canvas>
-            <canvas id="npcInfoOverlay"  style="z-index: 42; visibility: hidden;"></canvas>
+            <canvas id="npcInfoOverlay"  style="z-index: 90;"></canvas>
             <canvas id="boatCanvas"  style="z-index: 50;"></canvas>
             <canvas id="animalCanvas"  style="z-index: 51;"></canvas>
             <canvas id="npcCanvas"  style="z-index: 90;"></canvas>
@@ -158,6 +158,9 @@
     </div>
     <div class="bottomCard" id="creaturesCardPurrie">
             <h3>Purrie</h3>
+    </div>
+        <div  class="bottomCard disabled" id="creaturesCardMoveTo">
+            <h3>Move to</h3>
     </div>
 
     </div>

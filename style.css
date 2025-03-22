@@ -338,14 +338,14 @@ button {
     margin: 7px;
     background-color: #547637;
     border-radius: 8px;
-    height: 50px;
-    width: 200px;
+    height: 40px;
+    width: 150px;
     color: white;
     font-size: 20px;
     cursor: pointer;
     font-family: 'Press Start 2P';
     font-size: 1rem;
-    border: solid 3px var(--gold);
+    border: solid 1px var(--gold);
     transition: background-color 0.3s ease;
 cursor: url(./assets/cursor/glove1.cur), auto;
 
@@ -769,6 +769,10 @@ body {
     
 }
 
+.bottomCard.disabled {
+    background-color: #5f605e;
+    color: #eabe43a0;
+}
 
 /* span inside bottomTabs */
 .bottomTabs span {

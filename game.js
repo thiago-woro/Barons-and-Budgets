@@ -102,66 +102,70 @@ function renderLoop(timestamp) {
   });
 }
 
-// Slow simulation loop (custom rate)
 function updateSimulation() {
-  console.time("simulation");
   if (isPaused) return;
 
-  loopCounter = (loopCounter + 1) % cycleLength; // Line 96: Now defined
-  const isMajorActivitiesLoop = loopCounter === 0;
+  if (!window.isSimulationRunning) {
+    window.isSimulationRunning = true;
+    console.time("simulation");
+    
+    loopCounter = (loopCounter + 1) % cycleLength; // Line 96: Now defined
+    const isMajorActivitiesLoop = loopCounter === 0;
 
-  // Major activities (e.g., every 3rd simulation tick)
-  if (isMajorActivitiesLoop) {
-    year++;
-    updatePopulationChart(year, npcs.length);
-    npcTableHeader.textContent = `Total Population ${npcs.length}`;
+    // Major activities (e.g., every 3rd simulation tick)
+    if (isMajorActivitiesLoop) {
+      year++;
+      updatePopulationChart(year, npcs.length);
+      npcTableHeader.textContent = `Total Population ${npcs.length}`;
 
-    let totalSalaries = 0;
-    let salaryCount = 0;
-    deathsThisLoop = 0;
+      let totalSalaries = 0;
+      let salaryCount = 0;
+      deathsThisLoop = 0;
 
-    npcs.forEach((npc) => {
-      npc.ageAndDie();
-      if (!npc.profession || (npc.age >= 20 && npc.profession === "novice")) {
-        npc.profession = npc.generateProfession(npc.age);
-        npc.salary = npc.calculateSalary();
-        addNotification(
-          "Economy",
-          `🔨 ${npc.name} is now a ${npc.profession}`,
-          `Salary: $${npc.salary}`,
-          npc,
-          "#4a7ba8"
-        );
-      }
-      if (npc.salary > 0) {
-        totalSalaries += npc.salary;
-        salaryCount++;
+      npcs.forEach((npc) => {
+        npc.ageAndDie();
+        if (!npc.profession || (npc.age >= 20 && npc.profession === "novice")) {
+          npc.profession = npc.generateProfession(npc.age);
+          npc.salary = npc.calculateSalary();
+          addNotification(
+            "Economy",
+            `🔨 ${npc.name} is now a ${npc.profession}`,
+            `Salary: $${npc.salary}`,
+            npc,
+            "#4a7ba8"
+          );
+        }
+        if (npc.salary > 0) {
+          totalSalaries += npc.salary;
+          salaryCount++;
+        }
+      });
+
+      let mediumSalary = salaryCount > 0 ? totalSalaries / salaryCount : 0;
+      updateUIbottomToolbar(totalSalaries);
+      coupleMaker(npcs);
+      babyMaker(npcs);
+      currentPopulation.textContent = npcs.length;
+      gameSpeed.textContent = "x " + gameLoopSpeed;
+    }
+
+    // NPC simulation updates
+    const onScreenNPCS = npcs.slice(0, onScreenNPCSlimit);
+    onScreenNPCS.forEach((npc) => {
+      npc.update(); // Profession logic
+      const stationaryStates = ["cuttingTree", "restingAtHome", "constructingHarbor", "constructingFarm", "constructing"];
+      if (npc.shouldMove() && !stationaryStates.includes(npc.state) && !npc.state.includes("constructing")) {
+        npc.move();
       }
     });
 
-    let mediumSalary = salaryCount > 0 ? totalSalaries / salaryCount : 0;
-    updateUIbottomToolbar(totalSalaries);
-    coupleMaker(npcs);
-    babyMaker(npcs);
-    currentPopulation.textContent = npcs.length;
-    gameSpeed.textContent = "x " + gameLoopSpeed;
+    // Animal simulation updates
+    animals.forEach(animal => {
+      animal.update(simulationBaseInterval / (gameLoopSpeed / 50)); // Scaled deltaTime
+    });
+    console.timeEnd("simulation");
+    window.isSimulationRunning = false;
   }
-
-  // NPC simulation updates
-  const onScreenNPCS = npcs.slice(0, onScreenNPCSlimit);
-  onScreenNPCS.forEach((npc) => {
-    npc.update(); // Profession logic
-    const stationaryStates = ["cuttingTree", "restingAtHome", "constructingHarbor", "constructingFarm", "constructing"];
-    if (npc.shouldMove() && !stationaryStates.includes(npc.state) && !npc.state.includes("constructing")) {
-      npc.move();
-    }
-  });
-
-  // Animal simulation updates
-  animals.forEach(animal => {
-    animal.update(simulationBaseInterval / (gameLoopSpeed / 50)); // Scaled deltaTime
-  });
-  console.timeEnd("simulation");
 }
 
 // Start the render loop

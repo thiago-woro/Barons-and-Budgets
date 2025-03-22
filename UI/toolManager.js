@@ -13,28 +13,32 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentToolState = ToolState.SELECTING;
     let selectedTool = null;
 
- 
     const removeActiveClass = (selector) => document.querySelectorAll(selector).forEach(el => el.classList.remove('active'));
     const addActiveClass = (selector, id) => document.getElementById(id).classList.add('active');
 
-    document.querySelectorAll('.bottomCard').forEach(card => card.addEventListener('click', () => {
+    // Unified function to handle card clicks
+    const handleCardClick = (card) => {
         const cardId = card.id;
         selectedEmoji = card.dataset.emoji;
         selectedToolName = card.dataset.text;
         removeActiveClass('.bottomCard');
         addActiveClass('.bottomCard', cardId);
-
-        switch (window.activeTabBottomLeft) {
-            case 'animals': currentToolState = ToolState.PLACING_ANIMAL; break;
-            case 'buildings': currentToolState = ToolState.PLACING_BUILDING; break;
-            case 'terrain': currentToolState = ToolState.TERRAIN_TOOL; break;
-            case 'creatures': currentToolState = ToolState.SELECTING_NPC; break;
-        }
         selectedTool = cardId;
         document.body.style.cursor = 'auto';
-        //log tool
         console.log(`Tool selected: ${cardId}`);
-    }));
+
+        currentToolState = (() => {
+            switch (window.activeTabBottomLeft) {
+                case 'animals': return ToolState.PLACING_ANIMAL;
+                case 'buildings': return ToolState.PLACING_BUILDING;
+                case 'terrain': return ToolState.TERRAIN_TOOL;
+                case 'creatures': return ToolState.SELECTING_NPC;
+                default: return ToolState.SELECTING;
+            }
+        })();
+    };
+
+    document.querySelectorAll('.bottomCard').forEach(card => card.addEventListener('click', () => handleCardClick(card)));
 
     const getClickCoordinates = (event) => {
         const rect = container.getBoundingClientRect();
@@ -42,44 +46,37 @@ document.addEventListener('DOMContentLoaded', () => {
         return { cellRow: Math.floor(worldY / cellSize), cellCol: Math.floor(worldX / cellSize), worldX, worldY };
     };
 
-    const placeAnimal = (coords, toolId) => {
-        // Check if the placement is on water
-        if (!emptyCells.some(cell => cell.x === coords.cellCol && cell.y === coords.cellRow)) {
-            console.log("Animal drowning in water!");
-            
-            // Create a temporary animal for drowning animation
-            const drowningAnimal = new Animal(coords.cellCol, coords.cellRow, toolId);
-            drowningAnimal.isDrowning = true; // Mark as drowning
-            
-            // Add to animals array temporarily so it gets drawn in animation loops
-            animals.push(drowningAnimal);
-            //TODO: skip the animals push array manipulation and just do the emoji animations!!!!!!!!
-            
-            // Show drowning animation
-            drowningAnimal.animateEmoji('drown', drowningAnimal.emoji, 1500);
-            
-            // Force an immediate redraw
+    const handleDrowningAnimation = (coords, toolId) => {
+        const drowningAnimal = new Animal(coords.cellCol, coords.cellRow, toolId);
+        drowningAnimal.isDrowning = true;
+        animals.push(drowningAnimal);
+        drowningAnimal.animateEmoji('drown', drowningAnimal.emoji, 1500);
+
+        const clearAndRedrawAnimals = () => {
             animalCtx.clearRect(0, 0, animalCanvas.width, animalCanvas.height);
             animals.forEach(animal => animal.draw(animalCtx));
-            
-            // After animation completes, remove the drowning animal
-            setTimeout(() => {
-                const index = animals.indexOf(drowningAnimal);
-                if (index > -1) {
-                    animals.splice(index, 1);
-                }
-                animalCtx.clearRect(0, 0, animalCanvas.width, animalCanvas.height);
-                animals.forEach(animal => animal.draw(animalCtx));
-            }, 2000);
-            
+        };
+
+        clearAndRedrawAnimals();
+
+        setTimeout(() => {
+            const index = animals.indexOf(drowningAnimal);
+            if (index > -1) animals.splice(index, 1);
+            clearAndRedrawAnimals();
+        }, 2000);
+    };
+
+    const placeAnimal = (coords, toolId) => {
+        if (!emptyCells.some(cell => cell.x === coords.cellCol && cell.y === coords.cellRow)) {
+            console.log("Animal drowning in water!");
+            handleDrowningAnimation(coords, toolId);
             return;
         }
 
-        // Generate a random age between 15-90% of the animal's lifespan
-        const maxAge = toolId.includes('Coyote') || toolId.includes('Bear') ? 
+        const maxAge = toolId.includes('Coyote') || toolId.includes('Bear') ?
             Animal.PREDATOR_MAX_AGE : Animal.MAX_AGE;
         const randomAge = Math.floor(Math.random() * (maxAge * 0.9 - maxAge * 0.15) + maxAge * 0.15);
-        
+
         animals.push(new Animal(coords.cellCol, coords.cellRow, toolId, randomAge));
         animalCtx.clearRect(0, 0, animalCanvas.width, animalCanvas.height);
         animals.forEach(animal => animal.draw(animalCtx));
@@ -89,8 +86,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const placeBuilding = (coords, toolId) => {
         console.log(`Placing building: ${toolId} at`, coords);
         buildings.push(new Building(coords.cellCol, coords.cellRow, cellSize, null, toolId));
-        
-        // Clear and redraw buildings on the canvas, similar to animals
         homesCtx.clearRect(0, 0, animalCanvas.width, animalCanvas.height);
         buildings.forEach(building => building.draw(homesCtx));
         console.log("Placed building:", buildings[buildings.length - 1]);
@@ -104,11 +99,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const selectNPC = (coords) => {
-        console.log("Selecting NPC at", coords.cellCol, coords.cellRow,  coords);
         for (const npc of npcs) {
-            if (npc.x === coords.cellCol && npc.y === coords.cellRow) {
+            if (npc.gridX === coords.cellCol && npc.gridY === coords.cellRow) {
                 console.log("Found NPC at", coords);
-                alert("NPC found at", coords);
+                showNPCInfo(npc);
                 break;
             }
         }
@@ -116,30 +110,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const placeNPC = (coords, toolId) => {
         console.log(`Placing NPC of type: ${toolId} at`, coords);
-        // Assuming you have a NPC class and a way to determine the NPC type based on toolId
         npcs.push(new NPC(coords.cellCol, coords.cellRow, npcs.length, null, 0));
-        //draw
         npcCanvas.getContext('2d').clearRect(0, 0, npcCanvas.width, npcCanvas.height);
     };
 
     const selectBuilding = (coords) => {
         console.log("Selecting buildings or houses at coords:", coords);
-        
-        // First, check in the houses array
-        const foundHouse = houses.find(house => {
-            console.log(`Checking house at Cell X ${Math.floor(house.x / cellSize)}, Y${Math.floor(house.y / cellSize)}`);
-            return Math.floor(house.x / cellSize) === coords.cellCol && 
-                   Math.floor(house.y / cellSize) === coords.cellRow;
-        });
-        // Then, check in the buildings array if no house was found
-        const foundBuilding = !foundHouse ? buildings.find(building => 
-            Math.floor(building.x / cellSize) === coords.cellCol && 
+        const foundHouse = houses.find(house =>
+            Math.floor(house.x / cellSize) === coords.cellCol &&
+            Math.floor(house.y / cellSize) === coords.cellRow
+        );
+        const foundBuilding = foundHouse ? null : buildings.find(building =>
+            Math.floor(building.x / cellSize) === coords.cellCol &&
             Math.floor(building.y / cellSize) === coords.cellRow
-        ) : null;
-        
-        // Use either the found house or building
+        );
         const foundStructure = foundHouse || foundBuilding;
-        
+
         if (foundStructure) {
             const insideBuilding = document.getElementById('insideBuilding');
             if (insideBuilding) {
@@ -155,89 +141,60 @@ document.addEventListener('DOMContentLoaded', () => {
     const populateBuildingDetails = (structure) => {
         container.style.visibility = 'collapse';
         container.style.display = "none";
-        
-        // Determine if it's a house or a building
         const isHouse = houses.includes(structure);
         const structureType = isHouse ? (structure.type || 'House') : (structure.type || 'Building');
-        
         document.getElementById('buildingTitle').textContent = structureType;
-        
-        // Common details
+
         let detailsHtml = `
             <p>Type: ${structureType}</p>
             <p>Position: (${isHouse ? Math.floor(structure.x / cellSize) : structure.x}, 
                          ${isHouse ? Math.floor(structure.y / cellSize) : structure.y})</p>
         `;
-        
-        // Additional details based on structure type
+
         if (structure.owner) detailsHtml += `<p>Owner: ${structure.owner}</p>`;
         if (structure.size) detailsHtml += `<p>Size: ${structure.size}</p>`;
         if (structure.id) detailsHtml += `<p>ID: ${structure.id}</p>`;
-        
-        // Add building-specific details if available
         if (!isHouse) {
             if (structure.buildingType) detailsHtml += `<p>Building Type: ${structure.buildingType}</p>`;
             if (structure.resources) detailsHtml += `<p>Resources: ${structure.resources}</p>`;
         }
-        
+
         document.getElementById('buildingDetails').innerHTML = detailsHtml;
         document.getElementById('buildingDetails').style.display = "block";
-        //old code
 
+        console.log('importing rooms');
 
+        fetch('buildings/interior.html')
+            .then(res => res.text())
+            .then(html => {
+                let temp = document.createElement('div');
+                temp.innerHTML = html;
+                let interior = document.getElementById('buildingDetails');
 
+                Array.from(temp.childNodes).forEach(node => {
+                    if (node.tagName !== 'SCRIPT') {
+                        interior.appendChild(node);
+                    }
+                });
 
-  console.log('importing rooms');
-
-
-        //new code
-        //import interior
-    fetch('buildings/interior.html')
-      .then(res => res.text())
-      .then(html => {
-        let temp = document.createElement('div');
-        temp.innerHTML = html;
-
-        // move non-script nodes into existing #interior
-        let interior = document.getElementById('buildingDetails');
-        Array.from(temp.childNodes).forEach(node => {
-          if (node.tagName !== 'SCRIPT') {
-            interior.appendChild(node);
-          }
-        });
-
-        // evaluate scripts in global scope
-        Array.from(temp.querySelectorAll('script')).forEach(script => {
-          let newScript = document.createElement('script');
-          if (script.src) {
-            newScript.src = script.src;
-          } else {
-            newScript.textContent = script.textContent;
-          }
-          document.head.appendChild(newScript);
-        });
-      })
-      .then(() => {
-        console.log('rooms imported');
-          //generate rooms1
-  console.log('generating rooms');
-  severalRooms(3); // Default to 3 rooms
-      });
-  
-
-    
-  
-  
-
-
-
-
+                Array.from(temp.querySelectorAll('script')).forEach(script => {
+                    let newScript = document.createElement('script');
+                    newScript.src = script.src ? script.src : '';
+                    newScript.textContent = script.textContent;
+                    document.head.appendChild(newScript);
+                });
+            })
+            .then(() => {
+                console.log('rooms imported');
+                console.log('generating rooms');
+                severalRooms(3); // Default to 3 rooms
+            });
     };
 
-//MAIN CLICK DETECTOR    THIAGO
+    //MAIN CLICK DETECTOR    THIAGO
     container.addEventListener("click", (event) => {
         if (isDragging) return;
-        const coords = getClickCoordinates(event); //NEVER MODIFY THE getClickCoordinates function.
+        const coords = getClickCoordinates(event);
         switch (currentToolState) {
             case ToolState.PLACING_ANIMAL: placeAnimal(coords, selectedTool); break;
             case ToolState.PLACING_BUILDING: selectedTool === "buildingsCardSelectTool" ? selectBuilding(coords) : placeBuilding(coords, selectedTool); break;
@@ -252,21 +209,22 @@ document.addEventListener('DOMContentLoaded', () => {
         container.style.visibility = 'visible';
     });
 
-    function setActiveAnimalCard(name, emoji) {
+    const setActiveAnimalCard = (name, emoji) => {
         removeActiveClass('#animalsRow .bottomCard');
         const card = document.querySelector(`#animalsRow .bottomCard#creaturesCard${name}`);
         if (card) {
             card.classList.add('active');
             document.body.style.cursor = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><text x="0" y="24" font-size="14">${emoji}</text></svg>'), auto`;
             window.activeTabBottomLeft = "animals";
-        } else {
-            document.body.style.cursor = 'auto';
         }
-    }
+        document.body.style.cursor = 'auto';
+    };
 
-    document.querySelectorAll('#animalsRow .bottomCard').forEach(c => c.addEventListener('click', function() {
-        setActiveAnimalCard(this.id.replace('creaturesCard', ''), this.querySelector('h3').textContent.trim());
-    }));
+    document.querySelectorAll('#animalsRow .bottomCard').forEach(c => {
+        c.addEventListener('click', function () {
+            setActiveAnimalCard(this.id.replace('creaturesCard', ''), this.querySelector('h3').textContent.trim());
+        });
+    });
 
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.bottomTabs') && window.activeTabBottomLeft !== "animals") {
@@ -276,22 +234,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('#leftMenuHeaderTabs .bottomTabs span').forEach(tab => {
         tab.addEventListener('click', () => {
-            window.activeTabBottomLeft = tab.id.replace('Tab', '').toLowerCase();
+            const tabId = tab.id.replace('Tab', '').toLowerCase();
+            window.activeTabBottomLeft = tabId;
             removeActiveClass('#leftMenuHeaderTabs .bottomTabs');
             tab.parentElement.classList.add('active');
             ['terrainRow', 'creaturesRow', 'animalsRow', 'budgetsRow', 'buildingsRow'].forEach(rowId => {
-                document.getElementById(rowId).style.display = rowId.replace('Row', '').toLowerCase() === window.activeTabBottomLeft ? 'flex' : 'none';
+                document.getElementById(rowId).style.display = rowId.replace('Row', '').toLowerCase() === tabId ? 'flex' : 'none';
             });
             document.body.style.cursor = 'auto';
-            console.log(`Tool tab selected: ${window.activeTabBottomLeft}`)
+            console.log(`Tab: ${window.activeTabBottomLeft}`)
         });
     });
 });
 
 // A* pathfinding algorithm to find a path between two cells
-function findPath(start, target) {
+function findPath(start, target, ignoreTrees = false) {
     // Helper function to calculate Manhattan distance heuristic
     const heuristic = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+
+    //log received arguments
+    console.warn(`finding path between ${start.x} , ${start.y} and ${target.x} , ${target.y}`);
     
     // Helper function to check if a cell is walkable
     const isWalkable = (x, y) => {
@@ -303,6 +265,9 @@ function findPath(start, target) {
         // Check if cell is not water (is in emptyCells)
         const cellInEmptyCells = emptyCells.some(cell => cell.x === x && cell.y === y);
         
+        if (ignoreTrees) {
+            return cellInEmptyCells;
+        }
         // Check if cell is occupied by a tree
         // Trees are stored with pixel coordinates, so we need to convert grid coordinates to pixel
         // Trees are centered at (x+0.5)*cellSize, (y+0.5)*cellSize

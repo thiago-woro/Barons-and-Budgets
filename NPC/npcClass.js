@@ -273,23 +273,11 @@ class NPC {
     if (!this.children) {
       this.children = [];
     }
-    
     // Check for circular reference before adding
     if (childNPC === this) {
       console.error("Attempted to add NPC as its own child:", this.name);
       return;
     }
-    
-    // Optional: Check if this NPC is already in the child's ancestry
-    if (childNPC.parents && 
-        childNPC.parents.some(parent => 
-          parent === this || 
-          (parent.parents && parent.parents.includes(this))
-        )) {
-      console.error("Circular reference detected when adding child:", childNPC.name, "to parent:", this.name);
-      return;
-    }
-    
     this.children.push(childNPC);
   }
 
@@ -344,10 +332,11 @@ class NPC {
 
   // Draw info based on state
   drawNPCInfo(ctx) {
-    return;
+   
     if (this.profession === 'Woodcutter') {
-      drawWoodcutterInfo(this, ctx);
-    } else if (this.profession === 'Hunter') {
+      console.log(`Woodcutter: ${this.state}`);
+      this.drawInfoText(ctx, "Woodcutter", this.state, null, null);
+    } /* else if (this.profession === 'Hunter') {
       drawHunterInfo(this, ctx);
     } else if (this.profession === 'Fisher') {
       drawFisherInfo(this, ctx);
@@ -355,7 +344,7 @@ class NPC {
       drawMinerInfo(this, ctx);
     } else if (this.profession === 'Farmer') {
       drawFarmerInfo(this, ctx);
-    }
+    } */
   }
 
   // Common method for drawing information text above NPCs

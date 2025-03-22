@@ -393,66 +393,8 @@ infoPanel.addEventListener('click', () => {
 
 let foundNPC = false;
 
-/* // Add click event handler for NPCs
-npcCanvas.addEventListener("click", function(event) {
-  // Only show NPC info if the active tab is "creatures"
-  if (window.activeTabBottomLeft !== "creatures") return;
-  
-  const rect = npcCanvas.getBoundingClientRect();
-  const screenX = event.clientX - rect.left;
-  const screenY = event.clientY - rect.top;
-  
-  // Convert screen coordinates to world coordinates
-  const { x: worldX, y: worldY } = camera.screenToWorld(screenX, screenY);
-  
-  for (const npc of npcs) {
-    // Calculate distance using world coordinates
-    const distance = Math.sqrt((worldX - npc.x) ** 2 + (worldY - npc.y) ** 2);
-    
-    // Adjust hit area based on zoom level
-    const hitArea = 20 / camera.zoom;
-    
-    if (distance < hitArea) { // Larger hit area for clicking
-      console.log(`Clicked NPC: ${npc.name}`);
-      showNPCInfo(npc);
-      foundNPC = true;
-      infoPanel.style.visibility = 'visible';
-      
-      // If shift key is pressed, center on the NPC's cell
-      if (event.shiftKey && typeof centerOnCell === 'function') {
-        // Convert NPC world position to cell coordinates
-        const cellX = Math.floor(npc.x / cellSize);
-        const cellY = Math.floor(npc.y / cellSize);
-        centerOnCell(cellX, cellY);
-      }
-      
-      break;
-    }
-  }
-});
 
- */
 
-// Keep the existing mousemove handler with simplified functionality
-npcCanvas.addEventListener("mousemove", function (event) {
-  // Only show NPC info if the active tab is "creatures"
-  if (window.activeTabBottomLeft !== "creatures") return;
-  
-  const rect = npcCanvas.getBoundingClientRect();
-  const x = event.clientX - rect.left;
-  const y = event.clientY - rect.top;
-  
-  for (const npc of npcs) {
-    const distance = Math.sqrt((x - npc.x) ** 2 + (y - npc.y) ** 2);
-    if (distance < 15) {
-      // Just highlight or change cursor here if needed
-      // No popup showing on mousemove
-      document.body.style.cursor = 'pointer';
-      return;
-    }
-  }
-  document.body.style.cursor = 'default';
-});
 
 //npc card details
 function showNPCInfo(npc) {
@@ -522,6 +464,9 @@ function showNPCInfo(npc) {
 
   // Make the info panel visible
   infoPanel.style.visibility = 'visible';
+  infoPanel.style.display = 'block';
+  //remove class disabled from creaturesCardMoveTo
+  document.getElementById('creaturesCardMoveTo').classList.remove('disabled');
 }
 
 function centerCameraOnNPC(npc) {
