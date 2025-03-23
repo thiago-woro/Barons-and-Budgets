@@ -41,7 +41,7 @@ function getNearestTree(npc) {
     let shortestDistance = Infinity;
     
     // Loop through all trees in the game
-    for (const tree of gPalmTreesPositions) {
+    for (const tree of gMatureTreesPositions) {
         // Calculate Manhattan distance (sum of absolute differences)
         const distance = Math.abs(npc.gridX - tree.gridX) + Math.abs(npc.gridY - tree.gridY);
         

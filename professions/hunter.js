@@ -96,6 +96,15 @@ function updateHunter(npc) {
 
 // Helper function to find nearest prey
 function findNearestPrey(npc) {
+
+  //if no animals, change profession
+  if (animals.length === 0) {
+    npc.profession = "farmer";	
+    npc.setState("idle");
+    npc.generateProfession(npc.race);
+    return null;
+  }
+
   let nearestPrey = null;
   let minDistance = Infinity;
 
