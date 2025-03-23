@@ -103,6 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (npc.gridX === coords.cellCol && npc.gridY === coords.cellRow) {
                 console.log("Found NPC at", coords);
                 showNPCInfo(npc);
+                currentNPCselected = npc;
                 break;
             }
         }
@@ -112,6 +113,50 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log(`Placing NPC of type: ${toolId} at`, coords);
         npcs.push(new NPC(coords.cellCol, coords.cellRow, npcs.length, null, 0));
         npcCanvas.getContext('2d').clearRect(0, 0, npcCanvas.width, npcCanvas.height);
+    };
+
+    const walkSelectedNPCtoCell = (coords) => {
+        // TODO: Implement the moveTo functionality
+        console.log(`selected NPC: ${currentNPCselected.name}, currently at: ${currentNPCselected.gridX}, ${currentNPCselected.gridY}  move to: ${coords.cellCol}, ${coords.cellRow}`);
+        let fromCell = {x: currentNPCselected.gridX, y: currentNPCselected.gridY};
+        let toCell = {x: coords.cellCol, y: coords.cellRow};
+        let path = findPath(fromCell, toCell);
+        console.log(`path: ${path}`);
+
+        if (path) {
+            console.log("Path found:", path);
+            
+            // Clear previous paths
+            boatCtx.clearRect(0, 0, boatCtx.canvas.width, boatCtx.canvas.height);
+            
+            // Draw path as purple line
+            boatCtx.strokeStyle = "#8A2BE2"; // Purple color
+            boatCtx.lineWidth = 2;
+            boatCtx.beginPath();
+            
+            // Move to the first point
+            const firstCell = path[0];
+            boatCtx.moveTo(
+                (firstCell.x * cellSize) + (cellSize / 2), 
+                (firstCell.y * cellSize) + (cellSize / 2)
+            );
+            
+            // Draw lines to each subsequent point
+            for (let i = 1; i < path.length; i++) {
+                const cell = path[i];
+                boatCtx.lineTo(
+                    (cell.x * cellSize) + (cellSize / 2), 
+                    (cell.y * cellSize) + (cellSize / 2)
+                );
+            }
+            
+            boatCtx.stroke();
+        } else {
+            console.log("No path found between start and target");
+            
+            // Clear previous paths when no path is found
+           // boatCtx.clearRect(0, 0, boatCtx.canvas.width, boatCtx.canvas.height);
+        }
     };
 
     const selectBuilding = (coords) => {
@@ -199,7 +244,15 @@ document.addEventListener('DOMContentLoaded', () => {
             case ToolState.PLACING_ANIMAL: placeAnimal(coords, selectedTool); break;
             case ToolState.PLACING_BUILDING: selectedTool === "buildingsCardSelectTool" ? selectBuilding(coords) : placeBuilding(coords, selectedTool); break;
             case ToolState.TERRAIN_TOOL: handleTerrainTool(coords, selectedTool); break;
-            case ToolState.SELECTING_NPC: selectedTool === "creaturesCardSelectTool" ? selectNPC(coords) : placeNPC(coords, selectedTool); break;
+            case ToolState.SELECTING_NPC:
+                if (selectedTool === "creaturesCardSelectTool") {
+                    selectNPC(coords);
+                } else if (selectedTool === "walkSelectedNPCtoCell" && currentNPCselected) {
+                    walkSelectedNPCtoCell(coords);
+                } else {
+                    placeNPC(coords, selectedTool);
+                }
+                break;
         }
     });
 

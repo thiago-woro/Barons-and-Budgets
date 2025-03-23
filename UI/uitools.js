@@ -466,7 +466,7 @@ function showNPCInfo(npc) {
   infoPanel.style.visibility = 'visible';
   infoPanel.style.display = 'block';
   //remove class disabled from creaturesCardMoveTo
-  document.getElementById('creaturesCardMoveTo').classList.remove('disabled');
+  document.getElementById('walkSelectedNPCtoCell').classList.remove('disabled');
 }
 
 function centerCameraOnNPC(npc) {
