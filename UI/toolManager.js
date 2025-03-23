@@ -305,8 +305,7 @@ function findPath(start, target, targetIsTree = false) {
     // Helper function to calculate Manhattan distance heuristic
     const heuristic = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
 
-    //log received arguments
-    console.warn(`⏳´... finding path between \nX:${start.x} , Y:${start.y} and \nX:${target.x} , Y:${target.y}`);
+    //console.warn(`⏳´... finding path between \nX:${start.x} , Y:${start.y} and \nX:${target.x} , Y:${target.y}`);
     
     // Helper function to check if a cell is walkable
     const isWalkable = (x, y) => {
@@ -314,7 +313,7 @@ function findPath(start, target, targetIsTree = false) {
         
         // If this cell is the target and targetIsTree is true, always make it walkable
         if ( x === target.x && y === target.y) {
-            console.log("target cell is a tree ✅");
+            //console.log("target cell is a tree ✅");
             return true;
         }
         

@@ -1,6 +1,5 @@
 // Woodcutter profession behaviors
 
-let logStorage = [];
 /* logStorage {
     race: "Elf",
     gridX: 0,
@@ -19,12 +18,12 @@ function getNearestLogStorage(npc) {
         return null;
     }
     //loop through logStorage
-    for (const logStorage of logStorage) {
-        const distance = Math.abs(npc.gridX - logStorage.gridX) + Math.abs(npc.gridY - logStorage.gridY);
+    for (const logStorageLocations of logStorage) {
+        const distance = Math.abs(npc.gridX - logStorageLocations.gridX) + Math.abs(npc.gridY - logStorageLocations.gridY);
 
         if (distance < shortestDistance) {
             shortestDistance = distance;
-            nearestLogStorage = logStorage;
+            nearestLogStorage = logStorageLocations;
         }
     }   
 
@@ -61,9 +60,15 @@ function getNearestTree(npc) {
 
 
 
-function drawOneSingleCell(cell, color) {
-    boatCtx.fillStyle = color;
-    boatCtx.fillRect(cell.x * cellSize, cell.y * cellSize, cellSize, cellSize);
+function drawOneSingleCell(cell, color, ctx = boatCtx, emoji = null) {
+    ctx.fillStyle = color;
+    ctx.fillRect(cell.x * cellSize, cell.y * cellSize, cellSize, cellSize);
+    if (emoji) {
+        ctx.font = "20px Arial";
+        ctx.fillStyle = "white";
+        ctx.textAlign = "center";
+        ctx.fillText(emoji, cell.x * cellSize + cellSize / 2, cell.y * cellSize + cellSize / 2);
+    }
 }
 
 
@@ -91,7 +96,6 @@ function updateWoodcutter(npc) {
 
             if (path && path.length > 0) {
                 console.log("Path found. Path length:", path.length);
-                console.log("Path cells:", path);
 
                 // Clear previous paths
                 // boatCtx.clearRect(0, 0, boatCtx.canvas.width, boatCtx.canvas.height);
@@ -138,10 +142,24 @@ function updateWoodcutter(npc) {
             } else {
                 npc.setState("cuttingTree"); // Transition to cutting
                 npc.stateData.cuttingProgress = 0; // Initialize cutting progress
+                
+                // Find the index of the target tree in the treePositions array
+                const targetTreeIndex = treePositions.findIndex(
+                    tree => tree.gridX === npc.stateData.targetTree.gridX && 
+                           tree.gridY === npc.stateData.targetTree.gridY
+                );
+                
+                // Set the targetTreeIndex in stateData for use in the dyingTreeAnimation
+                npc.stateData.targetTreeIndex = targetTreeIndex;
+                
+                // Set the waitTime for cutting
+                npc.waitTime = npc.maxWaitTime;
             }
             break;
 
  case "cuttingTree":
+       console.log(`${npc.name} CHOPPING TREE at ${npc.stateData.targetTree.gridX}, ${npc.stateData.targetTree.gridY}`);
+
       if (npc.waitTime > 0) {
         npc.waitTime--;
         
@@ -157,7 +175,6 @@ function updateWoodcutter(npc) {
         // This ensures the tree falls as the woodcutter is still chopping
         if (npc.waitTime === Math.floor(npc.maxWaitTime / 2) && npc.stateData.targetTreeIndex !== undefined) {
           dyingTreeAnimation(npc.stateData.targetTreeIndex, () => {
-           // console.log(`woodcutter: ${npc.name} cut down a tree`);
 
             //add wood to the wood count
             elfWoodCount += 1;
@@ -180,13 +197,14 @@ function updateWoodcutter(npc) {
        trees.splice(treeIndex, 1);
 
        treeFoundSound.play();
+            npc.setState("storeLogs");
+
         
           });
         }
       } else {
         npc.animationState = "normal"; // Reset animation state
         // Tree has already been removed by the animation
-            npc.setState("storeLogs");
 
       }
       break;
@@ -212,7 +230,7 @@ function updateWoodcutter(npc) {
                     x: newLogStorage.gridX,
                     y: newLogStorage.gridY
                 };
-                drawOneSingleCell(logStorageCell, "#00FF00");
+                drawOneSingleCell(logStorageCell, "#00FF00", oreDepositsCtx, "🧱");
             }
 
             //2 findPath to nearestLogStorage
@@ -223,8 +241,37 @@ function updateWoodcutter(npc) {
             npc.pathIndex = 0;
 
             if (!npc.currentPath || npc.currentPath.length === 0) {
+                //if there is no path, probably bc its too far, just create new storage
+                const newLogStorage = {
+                    race: npc.race,
+                    gridX: npc.gridX,
+                    gridY: npc.gridY,
+                    count: 0
+                };
+                logStorage.push(newLogStorage);
+
+                //draw the new log storage on the map
+                const logStorageCell = {
+                    x: newLogStorage.gridX,
+                    y: newLogStorage.gridY
+                };
+                drawOneSingleCell(logStorageCell, "#00FF00", oreDepositsCtx, "☢");
+
+                //update the nearest log storage
+                nearestLogStorage = newLogStorage;
+
+                //update the path to the new log storage
+                npc.currentPath = findPath(pathToLogStorageStart, pathToLogStorageTarget, true);
+                npc.pathIndex = 0;
+
+                //if still no path, then just state roaming
+                if (!npc.currentPath || npc.currentPath.length === 0) {
+                    console.log(`No path to log storage for ${npc.name} ${npc.profession}`);
+                    npc.setState("roaming");
+                    break;
+                }
+
                 console.log(`No path to log storage for ${npc.name} ${npc.profession}`);
-                npc.setState("idle");
                 break;
             }
 
