@@ -14,22 +14,7 @@ class Task {
   }
 }
 
-// Simple WanderTask reusing existing random movement
-class WanderTask extends Task {
-  constructor(animal) {
-    super(animal);
-  }
 
-  update(deltaTime) {
-    // Set movement mode to random, letting getNextCell handle wandering
-    this.animal.movementMode = "random";
-    this.animal.targetPosition = null;
-    this.animal.targetAnimal = null;
-
-    // Optional: We could add a duration or condition to complete the task later
-    // For now, it runs indefinitely until interrupted
-  }
-}
 
 // FleeTask for prey animals escaping from predators
 class FleeTask extends Task {
@@ -153,6 +138,8 @@ class FindWaterTask extends Task {
   }
   
   update(deltaTime) {
+    //log
+    console.log(`${this.animal.type} is looking for water`);
     const myX = Math.floor(this.animal.x / cellSize);
     const myY = Math.floor(this.animal.y / cellSize);
     
@@ -163,6 +150,8 @@ class FindWaterTask extends Task {
       // When done drinking, reduce thirst and complete task
       if (this.drinkingTime >= this.maxDrinkingTime) {
         this.animal.thirst = Math.max(0, this.animal.thirst - 60);
+        //log
+        console.log(`${this.animal.type} is drinking water at ${this.targetWaterCell.x}, ${this.targetWaterCell.y}`);
         this.onComplete();
       }
       return;
@@ -171,7 +160,7 @@ class FindWaterTask extends Task {
     // If we don't have a target water cell, find the closest one
     if (!this.targetWaterCell) {
       // Sort water cells by distance to animal
-      const sortedWaterCells = waterCells.slice(0, 50).sort((a, b) => {
+      const sortedWaterCells = outsideRingLakeBorders.slice(0, 50).sort((a, b) => {
         const distanceA = Math.sqrt(Math.pow(a.x - myX, 2) + Math.pow(a.y - myY, 2));
         const distanceB = Math.sqrt(Math.pow(b.x - myX, 2) + Math.pow(b.y - myY, 2));
         return distanceA - distanceB;
@@ -182,6 +171,8 @@ class FindWaterTask extends Task {
       } else {
         // No water cells found, complete the task
         this.onComplete();
+        //log
+        console.log(`${this.animal.type} failed to find water`);
         return;
       }
     }
@@ -220,6 +211,8 @@ class FindBerriesTask extends Task {
   }
   
   update(deltaTime) {
+    //log
+    console.log(`${this.animal.type} is looking for berries`);
     const myX = Math.floor(this.animal.x / cellSize);
     const myY = Math.floor(this.animal.y / cellSize);
     
@@ -239,15 +232,16 @@ class FindBerriesTask extends Task {
     if (!this.targetBerryCell) {
       // Use greenest cells as berry sources (could be replaced with actual berry objects)
       // Take a sample of cells to avoid sorting the entire map
-      const sampleCells = emptyCells.slice(0, 100);
+
+     /*  const sampleCells = gBushesPositions.slice(0, 100);
       const suitableCells = sampleCells.filter(cell => {
         // Consider cells with noise between 0.15 and 0.25 as berry-rich
         const noise = parseFloat(cell.noise || 0);
         return noise >= 0.15 && noise <= 0.25;
       });
-      
+       */
       // Sort by distance to animal
-      const sortedCells = suitableCells.sort((a, b) => {
+      const sortedCells = gBushesPositions.sort((a, b) => {
         const distanceA = Math.sqrt(Math.pow(a.x - myX, 2) + Math.pow(a.y - myY, 2));
         const distanceB = Math.sqrt(Math.pow(b.x - myX, 2) + Math.pow(b.y - myY, 2));
         return distanceA - distanceB;
@@ -258,6 +252,10 @@ class FindBerriesTask extends Task {
       } else {
         // No suitable cells found, complete the task
         this.onComplete();
+        this.currentTask = null;
+        this.currentTask = new FindWaterTask(this);
+        //log
+        console.log(`${this.animal.type} failed to find berries`);
         return;
       }
     }
@@ -303,9 +301,10 @@ class Animal {
     });
   }
 
-  constructor(x, y, type, age = 0) {
+  constructor(x, y, type, age = 0, species) {
     this.x = x * cellSize;
     this.y = y * cellSize;
+    this.species = species;
     this.type = type;
     this.isPredator = this.checkIfPredator();
     this.emoji = this.getEmoji();
@@ -385,8 +384,11 @@ class Animal {
 
     // Update age and needs
     this.age += deltaTime;
+    this.age = Math.floor(this.age);
     this.hunger += this.hungerRate * (deltaTime / 1000);
+    this.hunger = Math.floor(this.hunger);
     this.thirst += this.thirstRate * (deltaTime / 1000);
+    this.thirst = Math.floor(this.thirst);
 
     // Check for death by age
     if (this.age >= (this.isPredator ? Animal.PREDATOR_MAX_AGE : Animal.MAX_AGE)) {
@@ -410,7 +412,19 @@ class Animal {
         this.y = nextCell.y * cellSize;
         this.checkForKills();
       }
-      this.timeSinceLastMove = 0;
+      this.timeSinceLastMove = Math.floor(this.timeSinceLastMove);
+      this.timeSinceLastMove += deltaTime;
+      if (this.timeSinceLastMove >= this.moveInterval) {
+        const currentX = Math.floor(this.x / cellSize);
+        const currentY = Math.floor(this.y / cellSize);
+        const nextCell = this.getNextCell(currentX, currentY);
+        if (emptyCells.some(cell => cell.x === nextCell.x && cell.y === nextCell.y)) {
+          this.x = nextCell.x * cellSize;
+          this.y = nextCell.y * cellSize;
+          this.checkForKills();
+        }
+        this.timeSinceLastMove = 0;
+      }
     }
 
     // Handle reproduction
@@ -447,17 +461,19 @@ class Animal {
       const prey = nearby.find(a => !a.isPredator && a.isAlive);
       if (this.hunger > this.maxNeed * 0.7 && prey) {
         this.currentTask = new HuntTask(this, prey);
+      } else if (!this.currentTask || this.currentTask.isComplete) {
+        this.currentTask = null;
       }
     } else {
       const predator = nearby.find(a => a.isPredator && a.isAlive);
       if (predator) {
         this.currentTask = new FleeTask(this, predator);
-      } else if (this.thirst > this.maxNeed && (!this.currentTask || this.currentTask instanceof WanderTask)) {
+      } else if (this.thirst > this.maxNeed) {
         this.currentTask = new FindWaterTask(this);
-      } else if (this.hunger > this.maxNeed && (!this.currentTask || this.currentTask instanceof WanderTask)) {
+      } else if (this.hunger > this.maxNeed) {
         this.currentTask = new FindBerriesTask(this);
       } else if (!this.currentTask || this.currentTask.isComplete) {
-        this.currentTask = new WanderTask(this);
+        this.currentTask = (this.currentTask instanceof FindWaterTask) ? new FindBerriesTask(this) : new FindWaterTask(this);
       }
     }
 

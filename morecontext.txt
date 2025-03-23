@@ -1,6 +1,20 @@
-// filepath: j:\BaronsBudgets\context.txt
 Project Context:
 This is a pure JavaScript, browser-only, 2D game with a grid coordinate system. Always use the Cell (x, y) row, column format to refer to a cell. Example: (`Cell X ${cellCol}, Y${cellRow}`).
+npc object sample:
+{
+  "x": 1300,
+  "y": 1680,
+  "gridX": 65,
+  "gridY": 84,
+}
+
+ tree object sample:
+{
+  "gridX": 51,
+  "gridY": 31,
+  "emoji": "🌴",
+}
+
 
 Core Files Overview:
 1. globalvariables.js:
@@ -54,3 +68,6 @@ Technologies:
 Important Notes:
 - Testing is manual; avoid automated tests.
 - Do not modify style.css.
+
+
+

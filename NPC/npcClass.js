@@ -333,11 +333,11 @@ class NPC {
    
     if (this.profession === 'Woodcutter') {
    //   console.log(`Woodcutter current state: ${this.state}`);
-      const additionalInfo = this.state ? {
+  /*     const additionalInfo = this.state ? {
         text: this.state,
         color: this.getRaceColor()
-      } : null;
-      this.drawInfoText(ctx, "Woodcutter", additionalInfo, null);
+      } : null; */
+      this.drawInfoText(ctx, this.state, null);
     }  else if (this.profession === 'Hunter') {
       drawHunterInfo(this, ctx);
     } else if (this.profession === 'Fisher') {

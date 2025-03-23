@@ -158,7 +158,7 @@ function updateWoodcutter(npc) {
             break;
 
  case "cuttingTree":
-       console.log(`${npc.name} CHOPPING TREE at ${npc.stateData.targetTree.gridX}, ${npc.stateData.targetTree.gridY}`);
+      // console.log(`${npc.name} CHOPPING TREE at ${npc.stateData.targetTree.gridX}, ${npc.stateData.targetTree.gridY}`);
 
       if (npc.waitTime > 0) {
         npc.waitTime--;

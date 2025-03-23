@@ -836,7 +836,7 @@ function placeLakes() {
     });
 
     // 1. Find and store lake border cells (cells adjacent to lake)
-    const outsideRingLakeBorders = [];
+     outsideRingLakeBorders = [];
     
     // Check each lake cell's neighbors to find borders
     lakeCells.forEach(lakeCell => {

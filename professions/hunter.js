@@ -98,6 +98,13 @@ function updateHunter(npc) {
 function findNearestPrey(npc) {
   let nearestPrey = null;
   let minDistance = Infinity;
+
+  console.warn(`🔍🔍🔍🔍🔍 ${npc.name} is finding prey...  ${animals[0].x} ${animals[0].y} ${animals[0].x/cellSize} ${animals[0].y/cellSize} - ${animals[0].isAlive} ${animals[0].isPredator}`);
+
+   console.groupCollapsed(`🔍🔍🔍🔍🔍 ${npc.name} is finding prey...`);
+  console.log("NPC:", npc);
+  console.log("Animals:", animals);
+  console.groupEnd();
   
   animals.forEach(animal => {
     if (!animal.isAlive || animal.isPredator) return;
