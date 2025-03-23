@@ -321,6 +321,37 @@ function findPath(start, target, ignoreTrees = false) {
         if (ignoreTrees) {
             return cellInEmptyCells;
         }
+
+        // Check if the target cell is occupied by a tree
+        if (x === target.x && y === target.y) {
+            console.warn(`target: ${target.x}, ${target.y}`);
+            console.warn(`treePositions: ${treePositions.length}`);
+            console.warn(`treePositions: ${treePositions[0].x}, ${treePositions[0].y}`);
+            console.warn(`treePositions: ${treePositions[0]}`);
+
+
+/* 
+tree object sample:
+{
+  "gridX": 100,
+  "gridY": 14,
+  "emoji": "🌴",
+  "scale": 1,
+  "opacity": 1,
+  "rotation": 0
+}
+ */
+
+            const treePresentAtTarget = treePositions.some(tree => {
+                const treeGridX = tree.gridX;
+                const treeGridY = tree.gridY;
+                return treeGridX === x && treeGridY === y;
+            });
+            if (treePresentAtTarget) {
+                alert("Target cell has a tree, not walkable");
+                return false; // Target cell has a tree, not walkable
+            }
+        }
         // Check if cell is occupied by a tree
         // Trees are stored with pixel coordinates, so we need to convert grid coordinates to pixel
         // Trees are centered at (x+0.5)*cellSize, (y+0.5)*cellSize
