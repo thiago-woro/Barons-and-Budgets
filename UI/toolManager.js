@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.style.cursor = 'auto';
         console.log(`Tool selected: ${cardId}`);
 
+        // Only set the tool state based on the tab - don't draw anything here
         currentToolState = (() => {
             switch (window.activeTabBottomLeft) {
                 case 'animals': return ToolState.PLACING_ANIMAL;
@@ -38,7 +39,17 @@ document.addEventListener('DOMContentLoaded', () => {
         })();
     };
 
-    document.querySelectorAll('.bottomCard').forEach(card => card.addEventListener('click', () => handleCardClick(card)));
+    // IMPORTANT: Only add event listeners to DOM elements - don't try to draw them
+    document.querySelectorAll('.bottomCard').forEach(card => {
+        card.addEventListener('click', () => handleCardClick(card));
+        // Make sure we're not treating the card as a building
+        if (card.id.startsWith('buildingsCard')) {
+            // Remove any attributes that might cause it to be treated as a Building object
+            card.removeAttribute('x');
+            card.removeAttribute('y');
+            card.removeAttribute('type');
+        }
+    });
 
     const getClickCoordinates = (event) => {
         const rect = container.getBoundingClientRect();
@@ -85,7 +96,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const placeBuilding = (coords, toolId) => {
         console.log(`Placing building: ${toolId} at`, coords);
-        buildings.push(new Building(coords.cellCol, coords.cellRow, cellSize, null, toolId));
+        
+        // Extract the building type by removing the "buildingsCard" prefix
+        const buildingType = toolId.startsWith("buildingsCard") ? 
+            toolId.replace("buildingsCard", "") : toolId;
+            
+        // Create the building with the cleaned type
+        buildings.push(new Building(coords.cellCol, coords.cellRow, null, buildingType, ""));
+        
+        // Clear and redraw all buildings
         homesCtx.clearRect(0, 0, animalCanvas.width, animalCanvas.height);
         buildings.forEach(building => building.draw(homesCtx));
         console.log("Placed building:", buildings[buildings.length - 1]);

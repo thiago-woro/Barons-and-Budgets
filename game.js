@@ -85,7 +85,13 @@ function renderLoop(timestamp) {
   // Draw buildings
   if (buildings && buildings.length > 0) {
     buildings.forEach(building => {
-      if (typeof building.draw === 'function') {
+      // Only draw if it's a proper Building instance with a draw method
+      // and not a DOM element or other object
+      if (building && 
+          typeof building === 'object' && 
+          typeof building.draw === 'function' &&
+          typeof building.x === 'number' && 
+          typeof building.y === 'number') {
         building.draw(npcCtx);
       }
     });

@@ -307,7 +307,7 @@ function drawRectanglesBetweenHouses(houses, ctx) {
 //commercial buildings
 
 class Building {
-  constructor(x, y, cellSize, npc, type) {
+  constructor(x, y, npc, type, race) {
     this.x = x * cellSize;
     this.y = y * cellSize;
     this.owner = npc ?? null; // The NPC owner of the building
@@ -316,6 +316,8 @@ class Building {
     this.upgrades = []; // Array to store building upgrades
     this.economicStatus = "Average"; // Economic status of the building
     this.value = Math.floor(Math.random() * 100000) + 50000; // Random building value
+    // Don't automatically call draw here
+    this.race = race;
   }
 
   // Method to add an inhabitant (NPC) to this building
@@ -333,7 +335,13 @@ class Building {
     // Choose emoji character based on building type, economic status, and upgrades
     let emoji = "🏠"; // Default emoji for average house
 
-    if (this.type === "House") {
+    // Extract the building type without the "buildingsCard" prefix
+    let buildingType = this.type;
+    if (typeof this.type === 'string' && this.type.startsWith("buildingsCard")) {
+      buildingType = this.type.replace("buildingsCard", "");
+    }
+
+    if (buildingType === "House") {
       if (this.economicStatus === "Wealthy") {
         emoji = "🏡"; // Emoji for wealthy house
       } else if (this.economicStatus === "Poor") {
@@ -341,31 +349,46 @@ class Building {
       } else if (this.upgrades.length > 0) {
         emoji = "🏢"; // Emoji for house with upgrades
       }
-    } else if (this.type === "Shop") {
+    } else if (buildingType === "Shop") {
       // Add emoji for shops based on their attributes or upgrades
-      // Customize this part based on your game mechanics
-    } else if (this.type === "Guild") {
+    } else if (buildingType === "Guild") {
       // Add emoji for guilds based on their attributes or upgrades
-      // Customize this part based on your game mechanics
+    } else if (buildingType === "logStorage") {
+      emoji = "🧱";
+    } else if (buildingType === "Farm") {
+      emoji = "🌾";
+    } else if (buildingType === "Mine") {
+      emoji = "🛖";
+    } else if (buildingType === "Factory") {
+      emoji = "🏭";
+    } else if (buildingType === "School") {
+      emoji = "🏫";
+    } else if (buildingType === "Hospital") {
+      emoji = "🏥";
+    } else if (buildingType === "Temple") {
+      emoji = "🕌";
+    } else if (buildingType === "Castle") {
+      emoji = "🏰";
     }
 
-    // Draw the emoji on the canvas
-    buildingCtx.font = "bold 20px Arial";
-    
-    // Set text alignment to center horizontally
-    buildingCtx.textAlign = "center";
-    
-    // Set text baseline to position at the bottom of the cell
-    buildingCtx.textBaseline = "bottom";
-    
-    // Calculate the center x position and bottom y position of the cell
-    const centerX = this.x + (cellSize / 2);
-    const bottomY = this.y + cellSize;
-    
-    // Draw the text centered and at the bottom of the cell
-    buildingCtx.fillText(emoji, centerX, bottomY);
-
-    //console.log(`✅ ${this.type} placed on map!\n\n  X: ${this.x}, Y: ${this.y}`);
+    // Only proceed if we have a valid context
+    if (buildingCtx) {
+      // Draw the emoji on the canvas
+      buildingCtx.font = "bold 20px Arial";
+      
+      // Set text alignment to center horizontally
+      buildingCtx.textAlign = "center";
+      
+      // Set text baseline to position at the bottom of the cell
+      buildingCtx.textBaseline = "bottom";
+      
+      // Calculate the center x position and bottom y position of the cell
+      const centerX = this.x + (cellSize / 2);
+      const bottomY = this.y + cellSize;
+      
+      // Draw the text centered and at the bottom of the cell
+      buildingCtx.fillText(emoji, centerX, bottomY);
+    }
   }
 }
 

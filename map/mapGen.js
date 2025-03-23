@@ -353,10 +353,19 @@ function afterMapGen() { //after basic terrain generation, adds enviromental det
   //debugTerrain(npcCtx, gridSize, cellSize);
 
   // Initialize animal populations after everything else is set up
-  starterAnimalPopulations(10);  //animpop
+  starterAnimalPopulations(0);  //animpop
   
   // Draw grass patches at the end
   drawGrass(treeCtx, 0.45);
+
+
+   startNPCs(npcCtx, cellSize);
+  initializeFishingResources();
+
+      gameLoopInterval = requestAnimationFrame(renderLoop);
+    simulationInterval = setInterval(updateSimulation, simulationBaseInterval / (gameLoopSpeed / 90));
+    startButton.textContent = "Pause Game";
+    isPaused = false;
   
   // Remove loading screen after everything is complete
   removeLoadingScreen();

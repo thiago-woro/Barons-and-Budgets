@@ -28,7 +28,7 @@ let sandCells = [];
 let emptyCells = [];
 let trees = [];
 let treePositions = [];  //array format: treePositions.push({ x, y, emoji: selectedEmoji });
-let logStorage = [];
+let logStorageCabinPositions = [];
 let outsideRingLakeBorders = [];
 
 

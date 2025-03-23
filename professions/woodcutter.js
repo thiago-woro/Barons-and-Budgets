@@ -13,12 +13,12 @@ function getNearestLogStorage(npc) {
     let nearestLogStorage = null;
     let shortestDistance = Infinity;
 
-    if (logStorage.length === 0) {
+    if (logStorageCabinPositions.length === 0) {
         console.log(`No log storage found for ${npc.name} ${npc.profession}`);
         return null;
     }
     //loop through logStorage
-    for (const logStorageLocations of logStorage) {
+    for (const logStorageLocations of logStorageCabinPositions) {
         const distance = Math.abs(npc.gridX - logStorageLocations.gridX) + Math.abs(npc.gridY - logStorageLocations.gridY);
 
         if (distance < shortestDistance) {
@@ -215,22 +215,32 @@ function updateWoodcutter(npc) {
 
             if (!nearestLogStorage) {
                 console.log(`No log storage found for ${npc.name} ${npc.profession}`);
-                //create a new log storage and draw it on map
+                
+                // Create a new log storage data object first
                 const newLogStorage = {
                     race: npc.race,
                     gridX: npc.gridX,
                     gridY: npc.gridY,
                     count: 0
                 };
-                logStorage.push(newLogStorage);
+                logStorageCabinPositions.push(newLogStorage);
                 nearestLogStorage = newLogStorage;
-
-                //draw the new log storage on the map
-                const logStorageCell = {
-                    x: newLogStorage.gridX,
-                    y: newLogStorage.gridY
-                };
-                drawOneSingleCell(logStorageCell, "#00FF00", oreDepositsCtx, "🧱");
+                
+                // Create the building and add it to buildings array
+                const newBuilding = new Building(npc.gridX, npc.gridY, npc, "logStorage", npc.race);
+                buildings.push(newBuilding);
+                
+                // Draw the building manually with the appropriate context
+                if (oreDepositsCtx) {
+                    newBuilding.draw(oreDepositsCtx);
+                } else {
+                    // Fallback to drawing a simple marker
+                    const logStorageCell = {
+                        x: newLogStorage.gridX,
+                        y: newLogStorage.gridY
+                    };
+                    drawOneSingleCell(logStorageCell, "#00FF00", oreDepositsCtx, "⏬");
+                }
             }
 
             //2 findPath to nearestLogStorage
@@ -248,7 +258,7 @@ function updateWoodcutter(npc) {
                     gridY: npc.gridY,
                     count: 0
                 };
-                logStorage.push(newLogStorage);
+                logStorageCabinPositions.push(newLogStorage);
 
                 //draw the new log storage on the map
                 const logStorageCell = {
