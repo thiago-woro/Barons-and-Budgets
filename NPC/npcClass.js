@@ -48,8 +48,6 @@ class Item {
  * @returns {boolean} - True if path is completed, false otherwise
  */
 function followPath(npc) {
-
-  
   // If NPC can't move (e.g., during cutting), don't follow path
   if (npc.canMove === false) {
     return false;
@@ -334,7 +332,7 @@ class NPC {
   drawNPCInfo(ctx) {
    
     if (this.profession === 'Woodcutter') {
-      console.log(`Woodcutter: ${this.state}`);
+   //   console.log(`Woodcutter current state: ${this.state}`);
       this.drawInfoText(ctx, "Woodcutter", this.state, null, null);
     } /* else if (this.profession === 'Hunter') {
       drawHunterInfo(this, ctx);

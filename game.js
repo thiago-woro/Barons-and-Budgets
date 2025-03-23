@@ -23,26 +23,21 @@ const targetFrameRate = 60; // 60 FPS for smooth rendering
 const simulationBaseInterval = 1000; // Base simulation update every 1s
 const cycleLength = 3; // Added: Controls major activity cycles (every 3rd simulation tick)
 let loopCounter = 0;
-let isPaused = false; // Start paused
-
-
-
-
-
+let isPaused = false;
 
 
 startButton.addEventListener("click", function () {
   if (gameLoopInterval === null) {
     gameLoopInterval = requestAnimationFrame(renderLoop);
     simulationInterval = setInterval(updateSimulation, simulationBaseInterval / (gameLoopSpeed / 50));
-    startButton.textContent = "⏸ Pause Game";
+    startButton.textContent = "Pause Game";
     isPaused = false;
   } else {
     cancelAnimationFrame(gameLoopInterval);
     clearInterval(simulationInterval);
     gameLoopInterval = null;
     simulationInterval = null;
-    startButton.textContent = "⏯ Play";
+    startButton.textContent = "Play";
     isPaused = true;
   }
 });

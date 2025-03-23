@@ -1,70 +1,36 @@
 // Woodcutter profession behaviors
-// This file contains all the logic for woodcutter NPCs
 
-if (loopCounter > 3) {
-    isPaused = true;
-}
+let logStorage = [];
+/* logStorage {
+    race: "Elf",
+    gridX: 0,
+    gridY: 0,
+    count: 0
+} */
 
-function findPathbetweenNPCandTree(startPos, targetPos) {
-    const heuristic = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
-    
-    const isWalkable = (x, y) => {
-        if (x < 0 || y < 0 || x >= rows || y >= rows) return false;
-        return emptyCells.some(cell => cell.x === x && cell.y === y);
-    };
-    
-    const openSet = [{ x: startPos.x, y: startPos.y, g: 0, h: heuristic(startPos, targetPos), f: heuristic(startPos, targetPos), parent: null }];
-    const closedSet = [];
-    
-    while (openSet.length > 0) {
-        openSet.sort((a, b) => a.f - b.f);
-        const current = openSet.shift();
-        closedSet.push(current);
-        
-        if (current.x === targetPos.x && current.y === targetPos.y) {
-            const path = [];
-            let temp = current;
-            while (temp) {
-                path.push({ x: temp.x, y: temp.y });
-                temp = temp.parent;
-            }
-            return path.reverse();
-        }
-        
-        const neighbors = [
-            { x: current.x - 1, y: current.y },
-            { x: current.x + 1, y: current.y },
-            { x: current.x, y: current.y - 1 },
-            { x: current.x, y: current.y + 1 }
-        ];
-        
-        for (const neighbor of neighbors) {
-            if (!isWalkable(neighbor.x, neighbor.y) || 
-                closedSet.some(n => n.x === neighbor.x && n.y === neighbor.y)) continue;
-            
-            const gScore = current.g + 1;
-            const existingIdx = openSet.findIndex(n => n.x === neighbor.x && n.y === neighbor.y);
-            
-            if (existingIdx === -1) {
-                openSet.push({
-                    x: neighbor.x,
-                    y: neighbor.y,
-                    g: gScore,
-                    h: heuristic(neighbor, targetPos),
-                    f: gScore + heuristic(neighbor, targetPos),
-                    parent: current
-                });
-            } else if (gScore < openSet[existingIdx].g) {
-                openSet[existingIdx].g = gScore;
-                openSet[existingIdx].f = gScore + openSet[existingIdx].h;
-                openSet[existingIdx].parent = current;
-            }
-        }
+
+function getNearestLogStorage(npc) {
+    //get nearest log storage
+    let nearestLogStorage = null;
+    let shortestDistance = Infinity;
+
+    if (logStorage.length === 0) {
+        console.log(`No log storage found for ${npc.name} ${npc.profession}`);
+        return null;
     }
-    
-    console.log("No path found"); // Log when no path is found
-    return null;
+    //loop through logStorage
+    for (const logStorage of logStorage) {
+        const distance = Math.abs(npc.gridX - logStorage.gridX) + Math.abs(npc.gridY - logStorage.gridY);
+
+        if (distance < shortestDistance) {
+            shortestDistance = distance;
+            nearestLogStorage = logStorage;
+        }
+    }   
+
+    return nearestLogStorage;
 }
+
 
 
 //get nearestTree gridX , gridY
@@ -93,13 +59,7 @@ function getNearestTree(npc) {
     return nearestTree;
 }
 
-function drawPath(path) {
-    // Clear previous paths
-    // boatCtx.clearRect(0, 0, boatCtx.canvas.width, boatCtx.canvas.height);
-    
-    // Draw path as purple line
-    boatCtx.strokeStyle = "#8A2BE2"; // Purple color
-}
+
 
 function drawOneSingleCell(cell, color) {
     boatCtx.fillStyle = color;
@@ -109,85 +69,190 @@ function drawOneSingleCell(cell, color) {
 
 // Woodcutter update flow with path finding logging
 function updateWoodcutter(npc) {
-    loopCounter++;
-    //log the npc.gridX , npc.gridY
-    console.log(`Woodcutter ${npc.name} is at grid coordinates: (${npc.gridX}, ${npc.gridY})`);
+    switch (npc.state) {
+        case "idle":
+            npc.setState("searchingForTree");
+            break;
 
-    //get first tree 
-    const nearestTree = getNearestTree(npc);
-    
-    // Check if a tree was found before proceeding
-    if (!nearestTree) {
-        console.log("No trees found for woodcutter");
-        return;
-    }
-    
-    //log the first tree grid coordinates
-    console.log(`First tree is at grid coordinates: (${nearestTree.gridX}, ${nearestTree.gridY})`);
+        case "searchingForTree":
+            const nearestTree = getNearestTree(npc);
 
-    const pathStart = { x: npc.gridX, y: npc.gridY };
-    const target = { x: nearestTree.gridX, y: nearestTree.gridY };
-
-    //draw the pathStart and target
-    drawOneSingleCell(pathStart, "red");
-    drawOneSingleCell(target, "blue");
-
-
-//find path to the first tree
-    const path = findPathbetweenNPCandTree(pathStart, target, true);
-
-    
-
-//log the path
-
-     if (path) {
-            console.log("Path found. Path length:", path.length);
-            console.log("Path cells:", path);
-
-            // Clear previous paths
-            // boatCtx.clearRect(0, 0, boatCtx.canvas.width, boatCtx.canvas.height);
-            
-            // Draw path as purple line
-            boatCtx.strokeStyle = "#8A2BE2"; // Purple color
-            boatCtx.lineWidth = 2;
-            boatCtx.beginPath();
-            
-            // Move to the first point
-            const firstCell = path[0];
-            boatCtx.moveTo(
-                (firstCell.x * cellSize) + (cellSize / 2), 
-                (firstCell.y * cellSize) + (cellSize / 2)
-            );
-            
-            // Draw lines to each subsequent point
-            for (let i = 1; i < path.length; i++) {
-                const cell = path[i];
-                boatCtx.lineTo(
-                    (cell.x * cellSize) + (cellSize / 2), 
-                    (cell.y * cellSize) + (cellSize / 2)
-                );
+            if (!nearestTree) {
+                console.log(`No trees found for ${npc.name} ${npc.profession}`);
+                npc.setState("roaming");
+                return;
             }
-            
-            boatCtx.stroke();
-            console.log("Drawing the path");
-            isPaused = true;
-            //alert("Path found");
-            return;
+
+            const pathStart = { x: npc.gridX, y: npc.gridY };
+            const target = { x: nearestTree.gridX, y: nearestTree.gridY };
+
+            //find path to the first tree
+            const path = findPath(pathStart, target, true);
+
+            if (path && path.length > 0) {
+                console.log("Path found. Path length:", path.length);
+                console.log("Path cells:", path);
+
+                // Clear previous paths
+                // boatCtx.clearRect(0, 0, boatCtx.canvas.width, boatCtx.canvas.height);
+
+                // Draw path as purple line
+                boatCtx.strokeStyle = "#8A2BE2"; // Purple color
+                boatCtx.lineWidth = 2;
+                boatCtx.beginPath();
+
+                // Move to the first point
+                const firstCell = path[0];
+                boatCtx.moveTo(
+                    (firstCell.x * cellSize) + (cellSize / 2),
+                    (firstCell.y * cellSize) + (cellSize / 2)
+                );
+
+                // Draw lines to each subsequent point
+                for (let i = 1; i < path.length; i++) {
+                    const cell = path[i];
+                    boatCtx.lineTo(
+                        (cell.x * cellSize) + (cellSize / 2),
+                        (cell.y * cellSize) + (cellSize / 2)
+                    );
+                }
+
+                boatCtx.stroke();
+                npc.currentPath = path;
+                npc.pathIndex = 0;
+                npc.stateData.targetTree = nearestTree; // Store the tree
+                npc.setState("movingToTree");
+                break;
+            } else {
+                console.log(`no path between ${pathStart.x} , ${pathStart.y} and ${target.x} , ${target.y}. ${npc.name} ${npc.profession} will roam around.`);
+                npc.setState("roaming");
+                break;
+            }
+
+        case "movingToTree":
+            if (npc.pathIndex < npc.currentPath.length) {
+                const nextCell = npc.currentPath[npc.pathIndex];
+                npc.x = nextCell.x * cellSize;
+                npc.y = nextCell.y * cellSize;
+                npc.pathIndex++;
+            } else {
+                npc.setState("cuttingTree"); // Transition to cutting
+                npc.stateData.cuttingProgress = 0; // Initialize cutting progress
+            }
+            break;
+
+ case "cuttingTree":
+      if (npc.waitTime > 0) {
+        npc.waitTime--;
+        
+        // Add visual feedback for tree cutting (chopping animation)
+        if (npc.waitTime % 2 === 0) {
+          // Alternate between normal position and "chopping" position
+          npc.animationState = "chopping";
         } else {
-            console.log(`no path between ${pathStart.x} , ${pathStart.y} and ${target.x} , ${target.y}`);
-            console.log("Failed to find a valid path.");
-            isPaused = true;
-            
-            // Fix the height reference to use the correct canvas
-            // boatCtx.clearRect(0, 0, npcInfoOverlayCtx.canvas.width, npcInfoOverlayCtx.canvas.height);
+          npc.animationState = "normal";
         }
+        
+        // Start tree animation when we're about halfway through cutting
+        // This ensures the tree falls as the woodcutter is still chopping
+        if (npc.waitTime === Math.floor(npc.maxWaitTime / 2) && npc.stateData.targetTreeIndex !== undefined) {
+          dyingTreeAnimation(npc.stateData.targetTreeIndex, () => {
+           // console.log(`woodcutter: ${npc.name} cut down a tree`);
 
+            //add wood to the wood count
+            elfWoodCount += 1;
 
+           //update the wood count display
+            document.getElementById("woodCount").textContent = elfWoodCount + "/ " + treePositions.length;
+       // "Cut" the tree
+       console.warn(`🎄🎄🎄🎄🎄´${npc.name} has cut down a tree at ${npc.stateData.targetTree.gridX}, ${npc.stateData.targetTree.gridY}`);
+                
+       // Add wood to inventory
+       npc.addToInventory("wood", 1);
 
+       //Remove tree from the map
+       const treeIndex = treePositions.findIndex(tree => tree.gridX === npc.stateData.targetTree.gridX && tree.gridY === npc.stateData.targetTree.gridY);
+       if (treeIndex !== -1) {
+           treePositions.splice(treeIndex, 1);
+       }
 
+       //remove tree from the trees array
+       trees.splice(treeIndex, 1);
 
+       treeFoundSound.play();
+        
+          });
+        }
+      } else {
+        npc.animationState = "normal"; // Reset animation state
+        // Tree has already been removed by the animation
+            npc.setState("storeLogs");
 
+      }
+      break;
 
+        case "storeLogs":
+            //1 findNearestLogStorage
+            let nearestLogStorage = getNearestLogStorage(npc);
+
+            if (!nearestLogStorage) {
+                console.log(`No log storage found for ${npc.name} ${npc.profession}`);
+                //create a new log storage and draw it on map
+                const newLogStorage = {
+                    race: npc.race,
+                    gridX: npc.gridX,
+                    gridY: npc.gridY,
+                    count: 0
+                };
+                logStorage.push(newLogStorage);
+                nearestLogStorage = newLogStorage;
+
+                //draw the new log storage on the map
+                const logStorageCell = {
+                    x: newLogStorage.gridX,
+                    y: newLogStorage.gridY
+                };
+                drawOneSingleCell(logStorageCell, "#00FF00");
+            }
+
+            //2 findPath to nearestLogStorage
+            const pathToLogStorageStart = { x: npc.gridX, y: npc.gridY };
+            const pathToLogStorageTarget = { x: nearestLogStorage.gridX, y: nearestLogStorage.gridY };
+
+            npc.currentPath = findPath(pathToLogStorageStart, pathToLogStorageTarget, true);
+            npc.pathIndex = 0;
+
+            if (!npc.currentPath || npc.currentPath.length === 0) {
+                console.log(`No path to log storage for ${npc.name} ${npc.profession}`);
+                npc.setState("idle");
+                break;
+            }
+
+            npc.setState("movingToLogStorage");
+            break;
+
+        case "movingToLogStorage":
+            if (followPath(npc)) {
+                //3 store logs
+                const woodCount = npc.getInventoryCount("wood");
+                if (woodCount > 0) {
+                    nearestLogStorage.count += woodCount;
+                    npc.removeFromInventory("wood", woodCount);
+                    console.log(`${npc.name} stored ${woodCount} wood at (${nearestLogStorage.gridX}, ${nearestLogStorage.gridY}). Total: ${nearestLogStorage.count}`);
+                }
+
+                //4 update log storage count (already done above)
+
+                npc.setState("idle");
+            }
+            break;
+
+        case "roaming":
+            //basic roaming
+            npc.move();
+            npc.setState("idle");
+            break;
+    }
 }
 
 

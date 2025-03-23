@@ -301,69 +301,27 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // A* pathfinding algorithm to find a path between two cells
-function findPath(start, target, ignoreTrees = false) {
+function findPath(start, target, targetIsTree = false) {
     // Helper function to calculate Manhattan distance heuristic
     const heuristic = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
 
     //log received arguments
-    console.warn(`finding path between ${start.x} , ${start.y} and ${target.x} , ${target.y}`);
+    console.warn(`⏳´... finding path between \nX:${start.x} , Y:${start.y} and \nX:${target.x} , Y:${target.y}`);
     
     // Helper function to check if a cell is walkable
     const isWalkable = (x, y) => {
-        // Check if cell is within grid bounds
-        if (x < 0 || y < 0 || x >= rows || y >= rows) {
-            return false;
+       
+        
+        // If this cell is the target and targetIsTree is true, always make it walkable
+        if ( x === target.x && y === target.y) {
+            console.log("target cell is a tree ✅");
+            return true;
         }
         
-        // Check if cell is not water (is in emptyCells)
+        // Check if cell is in emptyCells (not water)
         const cellInEmptyCells = emptyCells.some(cell => cell.x === x && cell.y === y);
         
-        if (ignoreTrees) {
-            return cellInEmptyCells;
-        }
-
-        // Check if the target cell is occupied by a tree
-        if (x === target.x && y === target.y) {
-            console.warn(`target: ${target.x}, ${target.y}`);
-            console.warn(`treePositions: ${treePositions.length}`);
-            console.warn(`treePositions: ${treePositions[0].x}, ${treePositions[0].y}`);
-            console.warn(`treePositions: ${treePositions[0]}`);
-
-
-/* 
-tree object sample:
-{
-  "gridX": 100,
-  "gridY": 14,
-  "emoji": "🌴",
-  "scale": 1,
-  "opacity": 1,
-  "rotation": 0
-}
- */
-
-            const treePresentAtTarget = treePositions.some(tree => {
-                const treeGridX = tree.gridX;
-                const treeGridY = tree.gridY;
-                return treeGridX === x && treeGridY === y;
-            });
-            if (treePresentAtTarget) {
-                alert("Target cell has a tree, not walkable");
-                return false; // Target cell has a tree, not walkable
-            }
-        }
-        // Check if cell is occupied by a tree
-        // Trees are stored with pixel coordinates, so we need to convert grid coordinates to pixel
-        // Trees are centered at (x+0.5)*cellSize, (y+0.5)*cellSize
-        const treePresent = treePositions.some(tree => {
-            // Convert tree's pixel coordinates back to grid coordinates
-            const treeGridX = Math.floor(tree.x / cellSize);
-            const treeGridY = Math.floor(tree.y / cellSize);
-            return treeGridX === x && treeGridY === y;
-        });
-        
-        // A cell is walkable if it's in emptyCells AND doesn't have a tree
-        return cellInEmptyCells && !treePresent;
+        return cellInEmptyCells;
     };
     
     // Create open and closed sets
@@ -402,8 +360,15 @@ tree object sample:
                 temp = temp.parent;
             }
             
+            let finalPath = path.reverse();
+
+            if (targetIsTree) {
+                // Remove the last cell (the tree cell) from the path
+                finalPath.pop();
+            }
+            
             // Return the path in reverse (from start to target)
-            return path.reverse();
+            return finalPath;
         }
         
         // Get neighboring cells
@@ -453,21 +418,21 @@ tree object sample:
 }
 
 // Variable to store the start cell for pathfinding
-let pathStart = null;
+let toolManagerPathStartTest = null;
 
 // Function to handle path visualization when using the path tool
 function viewPath(coords) {
-    if (!pathStart) {
+    if (!toolManagerPathStartTest) {
         // First click - set start cell
-        pathStart = { x: coords.cellCol, y: coords.cellRow };
-        console.log("Path start cell selected:", pathStart);
+        toolManagerPathStartTest = { x: coords.cellCol, y: coords.cellRow };
+        console.log("Path start cell selected:", toolManagerPathStartTest);
     } else {
         // Second click - set target cell and calculate path
         const target = { x: coords.cellCol, y: coords.cellRow };
         console.log("Path target cell selected:", target);
         
         // Calculate path using A* algorithm
-        const path = findPath(pathStart, target);
+        const path = findPath(toolManagerPathStartTest, target);
         
         if (path) {
             console.log("Path found:", path);
@@ -505,7 +470,7 @@ function viewPath(coords) {
         }
         
         // Reset the start cell for the next path
-        pathStart = null;
+        toolManagerPathStartTest = null;
     }
 }
 

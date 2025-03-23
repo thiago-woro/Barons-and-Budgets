@@ -131,12 +131,10 @@ function isLandCell(x, y) {
  */
 function findPathTo(npc, target) {
 
-    console.warn(`@utils.js USED OLD FN : findPathTo: ${npc.name} - Target: (${target.x}, ${target.y})`);
+    console.warn(`@utils.js  findPathTo: ${npc.name} ${npc.profession} - Target: (${target.x}, ${target.y})`);
 
-
-    
-    // Skip non-woodcutters
-    if (npc.profession !== 'Woodcutter') {
+    // Skip woodcutters
+    if (npc.profession == 'Woodcutter') {
         return null;
     }
 
