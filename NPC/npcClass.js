@@ -333,8 +333,12 @@ class NPC {
    
     if (this.profession === 'Woodcutter') {
    //   console.log(`Woodcutter current state: ${this.state}`);
-      this.drawInfoText(ctx, "Woodcutter", this.state, null, null);
-    } /* else if (this.profession === 'Hunter') {
+      const additionalInfo = this.state ? {
+        text: this.state,
+        color: this.getRaceColor()
+      } : null;
+      this.drawInfoText(ctx, "Woodcutter", additionalInfo, null);
+    }  else if (this.profession === 'Hunter') {
       drawHunterInfo(this, ctx);
     } else if (this.profession === 'Fisher') {
       drawFisherInfo(this, ctx);
@@ -342,7 +346,7 @@ class NPC {
       drawMinerInfo(this, ctx);
     } else if (this.profession === 'Farmer') {
       drawFarmerInfo(this, ctx);
-    } */
+    } 
   }
 
   // Common method for drawing information text above NPCs
@@ -352,15 +356,15 @@ class NPC {
     ctx.textAlign = "center";
     
     // Draw text shadow first
-    ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-    ctx.fillText(infoText, this.x + 2, this.y - 24);
+    ctx.fillStyle = "rgba(0, 0, 0)";
+    ctx.fillText(infoText, this.x + 1, this.y - 24);
     
     // Draw main text on top
     ctx.fillStyle = "white";
     ctx.fillText(infoText, this.x, this.y - 25);
     
     // Draw additional info if provided
-    if (additionalInfo && additionalInfo.text) {
+    if (additionalInfo) {
       ctx.fillStyle = additionalInfo.color;
       ctx.fillText(additionalInfo.text, this.x, this.y - 45);
     }

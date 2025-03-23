@@ -19,7 +19,7 @@ function updateMiner(npc) {
           if (npc.currentPath === null || npc.currentPath.length === 0) {
             console.warn(`${npc.name} failed to find a path to the ore`);
           } else {
-            console.warn(`${npc.name} found a path to the ore`);
+            console.warn(`❤❤❤❤❤❤${npc.name} found a path to the ore`);
           }
           npc.pathIndex = 0;
           npc.stateData.targetOre = ore;
