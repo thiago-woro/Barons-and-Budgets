@@ -275,6 +275,8 @@ function updateWoodcutter(npc) {
                 break;
             }
 
+            // Store the log storage reference in stateData for use in movingToLogStorage state
+            npc.stateData.targetLogStorage = nearestLogStorage;
             npc.setState("movingToLogStorage");
             break;
 
@@ -282,10 +284,10 @@ function updateWoodcutter(npc) {
             if (followPath(npc)) {
                 //3 store logs
                 const woodCount = npc.getInventoryCount("wood");
-                if (woodCount > 0) {
-                    nearestLogStorage.count += woodCount;
+                if (woodCount > 0 && npc.stateData.targetLogStorage) {
+                    npc.stateData.targetLogStorage.count += woodCount;
                     npc.removeFromInventory("wood", woodCount);
-                    console.log(`${npc.name} stored ${woodCount} wood at (${nearestLogStorage.gridX}, ${nearestLogStorage.gridY}). Total: ${nearestLogStorage.count}`);
+                    console.log(`${npc.name} stored ${woodCount} wood at (${npc.stateData.targetLogStorage.gridX}, ${npc.stateData.targetLogStorage.gridY}). Total: ${npc.stateData.targetLogStorage.count}`);
                 }
 
                 //4 update log storage count (already done above)
