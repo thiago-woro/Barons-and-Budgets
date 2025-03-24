@@ -6,6 +6,8 @@ let gCactiPositions = [];        //🌵
 let gBushesPositions = [];       //🌳
 let gMatureTreesPositions = [];  //🌲
 
+// This is declared in woodcutter.js but declared here for clarity
+// const claimedTrees = new Set();
 
 const TREE_LIFECYCLE = {
     NEW_TREE_INTERVAL: 15000,
@@ -195,6 +197,29 @@ function animateNewTree(gridX, gridY, emoji, callback) {
         rotation: 0 
     };
     
+    // Add to the appropriate tree type array
+    if (emoji === "🌲") {
+        gMatureTreesPositions.push({
+            gridX: gridX,
+            gridY: gridY,
+        });
+    } else if (emoji === "🌴") {
+        gPalmTreesPositions.push({
+            gridX: gridX,
+            gridY: gridY,
+        });
+    } else if (emoji === "🌵") {
+        gCactiPositions.push({
+            gridX: gridX,
+            gridY: gridY,
+        });
+    } else if (emoji === "🌳") {
+        gBushesPositions.push({
+            gridX: gridX,
+            gridY: gridY,
+        });
+    }
+    
     treePositions.push(tree);
 
     if (!treePopSound.lastPlayed || (Date.now() - treePopSound.lastPlayed) > 5000) {
@@ -242,6 +267,15 @@ function dyingTreeAnimation(treeIndex, callback) {
 
     tree.isDying = true;
 
+    // Release claim on the tree if it exists
+    if (typeof claimedTrees !== 'undefined') {
+        const treeKey = `${tree.gridX},${tree.gridY}`;
+        if (claimedTrees.has(treeKey)) {
+            claimedTrees.delete(treeKey);
+            console.log(`Tree claim released during dying animation: ${treeKey}`);
+        }
+    }
+
     const startTime = performance.now();
     const startRotation = tree.rotation || 0;
     const fallDirection = Math.random() < 0.5 ? 1 : -1;
@@ -273,6 +307,38 @@ function dyingTreeAnimation(treeIndex, callback) {
             if (finalIndex !== -1) {
                 // Get the grid coords before removing
                 const { gridX, gridY } = treePositions[finalIndex];
+                
+                // Remove tree from appropriate type array based on emoji
+                if (tree.emoji === "🌲") {
+                    const matureTreeIndex = gMatureTreesPositions.findIndex(
+                        t => t.gridX === gridX && t.gridY === gridY
+                    );
+                    if (matureTreeIndex !== -1) {
+                        gMatureTreesPositions.splice(matureTreeIndex, 1);
+                        console.log(`Tree removed from gMatureTreesPositions during animation: ${gridX},${gridY}`);
+                    }
+                } else if (tree.emoji === "🌴") {
+                    const palmTreeIndex = gPalmTreesPositions.findIndex(
+                        t => t.gridX === gridX && t.gridY === gridY
+                    );
+                    if (palmTreeIndex !== -1) {
+                        gPalmTreesPositions.splice(palmTreeIndex, 1);
+                    }
+                } else if (tree.emoji === "🌵") {
+                    const cactusIndex = gCactiPositions.findIndex(
+                        t => t.gridX === gridX && t.gridY === gridY
+                    );
+                    if (cactusIndex !== -1) {
+                        gCactiPositions.splice(cactusIndex, 1);
+                    }
+                } else if (tree.emoji === "🌳") {
+                    const bushIndex = gBushesPositions.findIndex(
+                        t => t.gridX === gridX && t.gridY === gridY
+                    );
+                    if (bushIndex !== -1) {
+                        gBushesPositions.splice(bushIndex, 1);
+                    }
+                }
                 
                 // Remove from treePositions
                 treePositions.splice(finalIndex, 1);

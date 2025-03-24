@@ -15,6 +15,13 @@ npc object sample:
   "emoji": "🌴",
 }
 
+all this arrays, are subsets from let treePositions = [];  
+
+let gPalmTreesPositions = [];    //🌴
+let gCactiPositions = [];        //🌵                   
+let gBushesPositions = [];       //🌳
+let gMatureTreesPositions = [];  //🌲
+
 
 Core Files Overview:
 1. globalvariables.js:

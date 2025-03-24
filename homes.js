@@ -353,7 +353,7 @@ class Building {
       // Add emoji for shops based on their attributes or upgrades
     } else if (buildingType === "Guild") {
       // Add emoji for guilds based on their attributes or upgrades
-    } else if (buildingType === "logStorage") {
+    } else if (buildingType === "logStorage" || buildingType === "oreDeposits" || buildingType === "logCabin") {
       emoji = "🧱";
     } else if (buildingType === "Farm") {
       emoji = "🌾";
