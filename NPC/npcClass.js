@@ -135,20 +135,13 @@ class NPC {
   update() {
     // Call the appropriate profession update function
     if (this.profession === "Woodcutter") {
-   //console.log(`moving a: ${this.profession}`);
-
       updateWoodcutter(this);
     } else if (this.profession === "Hunter") {
       updateHunter(this);
-      return;
-    console.log(`moving a: ${this.profession}`);
-
     } else if (this.profession === "Fisher") {
     console.log(`moving a: ${this.profession}`);
-
         updateFisher(this);
       return;
-  
     } else if (this.profession === "Miner") {
       updateMiner(this);
       return;
@@ -287,6 +280,7 @@ class NPC {
         randomIndex = Math.floor(Math.random() * professionArray.length);
       }
     }
+    console.log(`${this.name} changed profession to ${professionArray[randomIndex].profession}`);
     return professionArray[randomIndex].profession;
   }
 

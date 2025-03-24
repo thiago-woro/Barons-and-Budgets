@@ -121,9 +121,17 @@ function updateWoodcutter(npc) {
             const treeInfo = findNearestTree(npc);
             
             if (!treeInfo.tree) {
+                console.log(`${npc.name}: No trees found! Changing profession to Harvester...`);
+                // Clear any existing state data
+                npc.stateData = {};
+                npc.currentPath = '';
+                npc.pathIndex = 0;
+                
+                // Explicitly change profession to harvester
+                npc.profession = "Harvester";
+                
+                // Set appropriate state for the new profession
                 npc.setState("idle");
-                npc.getRandomProfession(npc.profession);
-                console.log(`${npc.name}: No trees found! Became a ${npc.profession}...`);
                 break;
             }
 
@@ -151,8 +159,19 @@ function updateWoodcutter(npc) {
                 npc.inaccessibleTrees = npc.inaccessibleTrees || new Set();
                 npc.inaccessibleTrees.add(`${treeInfo.tree.gridX},${treeInfo.tree.gridY}`);
                 
-                // No need to unclaim since we never claimed it
-                npc.setState("idle");
+                // Check if this NPC has marked too many trees as inaccessible
+                // If they've marked a significant number (e.g., 10+), they might be in an isolated area
+                if (npc.inaccessibleTrees.size > 3) {
+                    console.log(`${npc.name} has tried too many inaccessible trees. Changing profession to Harvester.`);
+                    npc.profession = "Harvester";
+                    npc.stateData = {};
+                    npc.currentPath = '';
+                    npc.pathIndex = 0;
+                    npc.setState("idle");
+                } else {
+                    // Try to find another tree
+                    npc.setState("idle");
+                }
             }
             break;
 
@@ -183,80 +202,57 @@ function updateWoodcutter(npc) {
             break;
 
  case "cuttingTree":
-      // console.log(`${npc.name} CHOPPING TREE at ${npc.stateData.targetTree.gridX}, ${npc.stateData.targetTree.gridY}`);
-
-      if (npc.waitTime > 0) {
-        npc.waitTime--;
-        
-        // Add visual feedback for tree cutting (chopping animation)
-        if (npc.waitTime % 2 === 0) {
-          // Alternate between normal position and "chopping" position
-          npc.animationState = "chopping";
-        } else {
-          npc.animationState = "normal";
-        }
-        
-        // Start tree animation when we're about halfway through cutting
-        // This ensures the tree falls as the woodcutter is still chopping
-        if (npc.waitTime === Math.floor(npc.maxWaitTime / 2) && npc.stateData.targetTreeIndex !== undefined) {
-          dyingTreeAnimation(npc.stateData.targetTreeIndex, () => {
-
-            //add wood to the wood count
-            elfWoodCount += 1;
-
-           //update the wood count display
-            document.getElementById("woodCount").textContent = elfWoodCount + "/ " + treePositions.length;
-       // "Cut" the tree
-       console.warn(`🎄🎄🎄🎄🎄´${npc.name} has cut down a tree at ${npc.stateData.targetTree.gridX}, ${npc.stateData.targetTree.gridY}`);
+            if (npc.waitTime > 0) {
+                npc.waitTime--;
+                npc.animationState = npc.waitTime % 4 < 2 ? "chopping" : "normal";
+                if (npc.waitTime === Math.floor(npc.maxWaitTime / 2) && npc.stateData.targetTreeIndex !== -1) {
+                    dyingTreeAnimation(npc.stateData.targetTreeIndex, () => {
+                        elfWoodCount += 1;
+                        document.getElementById("woodCount").textContent = `${elfWoodCount} / ${treePositions.length}`;
+                        console.warn(`${npc.name} cut tree at ${npc.stateData.targetTree.gridX}, ${npc.stateData.targetTree.gridY}`);
+                        
+                        const treeKey = `${npc.stateData.targetTree.gridX},${npc.stateData.targetTree.gridY}`;
+                        claimedTrees.delete(treeKey);
+                        [treePositions, gMatureTreesPositions, trees].forEach(arr => {
+                            const idx = arr.findIndex(t => t.gridX === npc.stateData.targetTree.gridX && t.gridY === npc.stateData.targetTree.gridY);
+                            if (idx !== -1) arr.splice(idx, 1);
+                        });
+                        npc.addToInventory("wood", 1);
+                        treeFoundSound.play();
+                        
+                        // Reset path info before changing state
+                        npc.currentPath = '';
+                        npc.pathIndex = 0;
+                        npc.waitTime = 0;
+                        
+                        // Important: This forces the state change to happen immediately 
+                        // rather than waiting for the next update cycle
+                        npc.setState("searchingLogCabin");
+                    });
+                }
+            } else {
+                npc.animationState = "normal";
                 
-       // Add wood to inventory
-       npc.addToInventory("wood", 1);
-
-            npc.currentPath = ''; //remove the path from npc to tree (previous goal.)
-            npc.waitTime = 0;
-
-
-       // Remove tree claim when it's cut down
-       if (npc.stateData.targetTree) {
-           const treeKey = `${npc.stateData.targetTree.gridX},${npc.stateData.targetTree.gridY}`;
-           claimedTrees.delete(treeKey);
-           
-           // Remove from gMatureTreesPositions array as well
-           if (npc.stateData.targetTree.treeArrayIndex !== undefined) {
-               gMatureTreesPositions.splice(npc.stateData.targetTree.treeArrayIndex, 1);
-               console.log(`Removed tree from gMatureTreesPositions at index ${npc.stateData.targetTree.treeArrayIndex}`);
-           } else {
-               // Fallback: remove by searching through the array
-               const matureTreeIndex = gMatureTreesPositions.findIndex(
-                   tree => tree.gridX === npc.stateData.targetTree.gridX && 
-                          tree.gridY === npc.stateData.targetTree.gridY
-               );
-               if (matureTreeIndex !== -1) {
-                   gMatureTreesPositions.splice(matureTreeIndex, 1);
-                   console.log(`Removed tree from gMatureTreesPositions by searching (index ${matureTreeIndex})`);
-               }
-           }
-       }
-
-       //Remove tree from the map
-       const treeIndex = treePositions.findIndex(tree => tree.gridX === npc.stateData.targetTree.gridX && tree.gridY === npc.stateData.targetTree.gridY);
-       if (treeIndex !== -1) {
-           treePositions.splice(treeIndex, 1);
-       }
-        //remove tree from the trees array
-        trees.splice(treeIndex, 1);
-        treeFoundSound.play();
-        npc.setState("searchingLogCabin");
-          });
-        }
-      } else {
-        npc.animationState = "normal"; // Reset animation state
-        // Tree has already been removed by the animation
-
-      }
-      break;
+                // Ensure we also transition if waitTime reached 0 without animation finishing
+                if (npc.state === "cuttingTree") {
+                    npc.currentPath = '';
+                    npc.pathIndex = 0;
+                    npc.setState("searchingLogCabin");
+                }
+            }
+            break;
 
         case "searchingLogCabin":
+            // Clear any existing path data
+            npc.currentPath = '';
+            npc.pathIndex = 0;
+            
+            // Make sure gridX and gridY match the NPC's current position
+            // This fixes the teleporting issue by ensuring we start pathing from the current position
+            npc.gridX = Math.floor(npc.x / cellSize);
+            npc.gridY = Math.floor(npc.y / cellSize);
+            console.log(`${npc.name} updated position to gridX: ${npc.gridX}, gridY: ${npc.gridY}`);
+            
             //1 findNearestLogStorage
             npc.stateData.nearestLogStorage = getNearestLogStorage(npc);
 
@@ -277,8 +273,12 @@ function updateWoodcutter(npc) {
                 const newBuilding = new Building(npc.gridX, npc.gridY, npc, "logStorage", npc.race);
                 buildings.push(newBuilding);
                 newBuilding.draw(oreDepositsCtx);
-                console.warn(`created log cabin at X ${npc.gridX}, Y ${npc.gridY} `)
+                console.warn(`created log cabin at X ${npc.gridX}, Y ${npc.gridY}`);
             }
+            
+            // Add path visual indicator for debugging
+            console.log(`${npc.name} is now searching for log cabin from position ${npc.gridX},${npc.gridY}`);
+            
             npc.setState("movingToLogCabin");
             break;
 
@@ -288,58 +288,73 @@ function updateWoodcutter(npc) {
                 npc.stateData.nearestLogStorage = getNearestLogStorage(npc);
             }
             
-            //preparing paths
-            const pathToLogStorageStart = { x: npc.gridX, y: npc.gridY };
-            const pathToLogStorageTarget = { x: npc.stateData.nearestLogStorage.gridX, y: npc.stateData.nearestLogStorage.gridY };
-            npc.currentPath = ''; //remove the path from npc to tree (previous goal.)
-
-
-            //now we want to go to the cabin to deposit it.
-            npc.currentPath = findPath(pathToLogStorageStart, pathToLogStorageTarget, true); //this is the path from current NPC to log cabin (target)
-            npc.pathIndex = 0;
-
-            if (!npc.currentPath || npc.currentPath.length === 0) {
-                //if there is no path, probably bc its too far, just create new storage
-                const newLogStorage = {
-                    race: npc.race,
-                    gridX: npc.gridX,
-                    gridY: npc.gridY,
-                    count: 0
-                };
-                logStorageCabinPositions.push(newLogStorage); //smaller array just for log cabins
-             
-                // Create the building and add it to buildings array
-                //broader array of all buildings
-                const newBuilding = new Building(npc.gridX, npc.gridY, npc, "logCabin", npc.race);
-                buildings.push(newBuilding);
-                newBuilding.draw(oreDepositsCtx);
-                console.warn(`created log cabin at X ${npc.gridX}, Y ${npc.gridY} `)
+            // If NPC is starting this state (no current path)
+            if (!npc.currentPath || npc.currentPath === '') {
+                // Ensure gridX and gridY match the current pixel position
+                npc.gridX = Math.floor(npc.x / cellSize);
+                npc.gridY = Math.floor(npc.y / cellSize);
                 
-                //update the nearest log storage
-                npc.stateData.targetLogStorage = newLogStorage;
-
-                //update the path to the new log storage
-                npc.currentPath = findPath(pathToLogStorageStart, 
-                    { x: newLogStorage.gridX, y: newLogStorage.gridY }, true);
+                //preparing paths
+                const pathToLogStorageStart = { x: npc.gridX, y: npc.gridY };
+                const pathToLogStorageTarget = { x: npc.stateData.nearestLogStorage.gridX, y: npc.stateData.nearestLogStorage.gridY };
+                
+                // Draw starting point for debugging
+                drawOneSingleCell(pathToLogStorageStart, "rgba(255,0,0,0.5)", boatCtx, "👣");
+                
+                //now we want to go to the cabin to deposit it.
+                console.log(`Finding path from ${pathToLogStorageStart.x},${pathToLogStorageStart.y} to log cabin at ${pathToLogStorageTarget.x},${pathToLogStorageTarget.y}`);
+                npc.currentPath = findPath(pathToLogStorageStart, pathToLogStorageTarget, true);
                 npc.pathIndex = 0;
-
-                //if still no path, then change profession.
-                if (!npc.currentPath || npc.currentPath.length === 0) {
-                    npc.setState("stuck");
-                    break;
+                
+                if (npc.currentPath && npc.currentPath.length > 0) {
+                    console.log(`Path found to log cabin. Length: ${npc.currentPath.length}`);
+                    drawExistingPath(npc.currentPath, null);
                 }
-            } else {
-                // Store the log storage reference in stateData
-                npc.stateData.targetLogStorage = npc.stateData.nearestLogStorage;
-            }
 
-            npc.setState("storingLogs");
+                if (!npc.currentPath || npc.currentPath.length === 0) {
+                    //if there is no path, probably bc its too far, just create new storage
+                    const newLogStorage = {
+                        race: npc.race,
+                        gridX: npc.gridX,
+                        gridY: npc.gridY,
+                        count: 0
+                    };
+                    logStorageCabinPositions.push(newLogStorage); //smaller array just for log cabins
+                 
+                    // Create the building and add it to buildings array
+                    //broader array of all buildings
+                    const newBuilding = new Building(npc.gridX, npc.gridY, npc, "logCabin", npc.race);
+                    buildings.push(newBuilding);
+                    newBuilding.draw(oreDepositsCtx);
+                    console.warn(`created log cabin at X ${npc.gridX}, Y ${npc.gridY} `)
+                    
+                    //update the nearest log storage
+                    npc.stateData.targetLogStorage = newLogStorage;
+
+                    //update the path to the new log storage
+                    npc.currentPath = findPath(pathToLogStorageStart, 
+                        { x: newLogStorage.gridX, y: newLogStorage.gridY }, true);
+                    npc.pathIndex = 0;
+
+                    //if still no path, then change profession.
+                    if (!npc.currentPath || npc.currentPath.length === 0) {
+                        npc.setState("stuck");
+                        break;
+                    }
+                } else {
+                    // Store the log storage reference in stateData
+                    npc.stateData.targetLogStorage = npc.stateData.nearestLogStorage;
+                }
+            }
             
+            // Now follow the path
             if (npc.pathIndex < npc.currentPath.length) {
                 //AINDA NÃO TERMINOU O CAMINHO. 
                 const nextCell = npc.currentPath[npc.pathIndex];
                 npc.x = nextCell.x * cellSize;
                 npc.y = nextCell.y * cellSize;
+                npc.gridX = nextCell.x; // Update grid coordinates while moving
+                npc.gridY = nextCell.y;
                 npc.pathIndex++;
             } else {  //TERMINOU O CAMINHO.
                 npc.setState("storingLogs");
