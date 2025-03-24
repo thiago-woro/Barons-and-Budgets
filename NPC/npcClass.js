@@ -279,6 +279,17 @@ class NPC {
     this.children.push(childNPC);
   }
 
+  getRandomProfession(previousProfession = null) {
+    const professionArray = raceProfessions[this.race];
+    let randomIndex = Math.floor(Math.random() * professionArray.length);
+    if (professionArray.length > 1) {
+      while (professionArray[randomIndex].profession === previousProfession) {
+        randomIndex = Math.floor(Math.random() * professionArray.length);
+      }
+    }
+    return professionArray[randomIndex].profession;
+  }
+
   generateProfession(race) {
     // Ensure that this.race matches one of the keys in raceProfessions
     if (!(this.race in raceProfessions)) {
