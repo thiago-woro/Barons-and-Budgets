@@ -147,14 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('npcCanvas').style.zIndex = '99';
   }
   
-  // Add event listener for resetCameraButton
-  const resetCameraButton = document.getElementById('resetCameraButton');
-  if (resetCameraButton) {
-    resetCameraButton.addEventListener('click', () => {
-      // Reset camera position using existing function
-      camera.centerCanvasOnMap(); //1
-    });
-  }
+
   
   // Add event listener for originButton if it exists
   const originButton = document.getElementById('originButton');
@@ -223,26 +216,7 @@ window.addEventListener("load", function () {
     }
   }
 });
-//esc escape key pressed.
-let canvasCentered = false;
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") {
 
-      camera.centerCanvasOnMap();//esc
-      canvasCentered = true;
-    
-      if (hideMenu) {
-        gameTab.style.display = "none";
-        statsTab.style.display = "none";
-        chartTab.style.display = "none";
-        npcTab.style.display = "none";
-        minimizeTabButton.textContent = "Show";
-        hideMenu = false; // or hideMenu = !hideMenu;
-      }
-      canvasCentered = false; // Reset for the next cycle
-    
-  }
-});
 
 function updateVariables() {
   gridSize = parseFloat(document.getElementById("gridSizeSlider").value);

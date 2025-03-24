@@ -218,7 +218,7 @@ class Animal {
     this.emoji = this.getEmoji();
     this.isAlive = true;
     this.age = age;
-    this.isPaused = false;
+   // this.isPaused = false;
     this.birthDate = Date.now();
     this.fontSize = this.getSpeciesFontSize();
 

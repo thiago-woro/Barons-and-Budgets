@@ -23,15 +23,19 @@ const targetFrameRate = 60; // 60 FPS for smooth rendering
 const simulationBaseInterval = 1000; // Base simulation update every 1s
 const cycleLength = 3; // Added: Controls major activity cycles (every 3rd simulation tick)
 let loopCounter = 0;
-let isPaused = false;
+let isPaused = true;
 
 
-startButton.addEventListener("click", function () {
+// Toggle function reused by button and keypress
+function toggleGame() {
   if (gameLoopInterval === null) {
     gameLoopInterval = requestAnimationFrame(renderLoop);
     simulationInterval = setInterval(updateSimulation, simulationBaseInterval / (gameLoopSpeed / 50));
-    startButton.textContent = "Pause Game";
-    isPaused = false;
+   // startButton.textContent = "Pause Game";
+   // isPaused = false;
+    isPaused = true;
+
+    console.log(`Game started`);
   } else {
     cancelAnimationFrame(gameLoopInterval);
     clearInterval(simulationInterval);
@@ -39,6 +43,19 @@ startButton.addEventListener("click", function () {
     simulationInterval = null;
     startButton.textContent = "Play";
     isPaused = true;
+    console.log(`Game paused`);
+  }
+}
+
+// Button click triggers toggle
+startButton.addEventListener("click", function () {
+  toggleGame();
+});
+
+// 'p' key triggers toggle
+window.addEventListener("keydown", function (event) {
+  if (event.key.toLowerCase() === "p") {
+    toggleGame();
   }
 });
 

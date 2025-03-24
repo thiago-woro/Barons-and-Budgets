@@ -32,7 +32,7 @@ let logStorageCabinPositions = [];
 let outsideRingLakeBorders = [];
 
 
-let treePercentageofLand = 0.17
+let treePercentageofLand = 0.917
 let usableLand = 0.045
 
 let flatLandCells = [];

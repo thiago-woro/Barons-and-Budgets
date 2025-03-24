@@ -536,7 +536,7 @@ function drawNPC(npc, ctx) {
   }
 
   ctx.font = "bold 20px Arial"; // Increase font size for the emoji
-  ctx.fillText(emoji, npc.x, npc.y);
+  ctx.fillText(emoji, npc.x, npc.y - cellSize);
 }
 
 function drawNPCInfo(npc, ctx) {

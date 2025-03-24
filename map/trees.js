@@ -62,6 +62,14 @@ function startTrees(ctx, cellSize) {
     let treeCount = groundCells.length * treePercentageofLand;
     console.log(`Starting tree placement: target ${treeCount} trees`);
 
+    // Distribution percentages for tree types
+    const treeDistribution = {
+        "🌴": 0.15, 
+        "🌵": 0.15,  
+        "🌳": 0.30,  
+        "🌲": 0.40   
+    };
+
     const treeEmojis = {
         "🌴": [],  //Palm trees
         "🌵": [],  //Cacti
@@ -71,8 +79,8 @@ function startTrees(ctx, cellSize) {
     const noiseToEmoji = {
         "🌴": (noise) => noise > 0.01 && noise <= 0.03,
         "🌵": (noise) => noise > 0.06 && noise <= 0.08,
-        "🌳": (noise) => noise > 0.13 && noise < 0.45,
-        "🌲": (noise) => noise >= 0.45,
+        "🌳": (noise) => noise > 0.13 && noise < 0.40,
+        "🌲": (noise) => noise >= 0.40,
     };
 
     // Make sure we're placing trees only in valid cells
@@ -100,7 +108,19 @@ function startTrees(ctx, cellSize) {
 
     const newTreePositions = [];
     for (let i = 0; i < treeCount; i++) {
-        const selectedTreeEmoji = Object.keys(treeEmojis)[i % 4];
+        // Instead of cycling through types, use distribution
+        const random = Math.random();
+        let cumulativeProb = 0;
+        let selectedTreeEmoji = null;
+        
+        for (const [emoji, prob] of Object.entries(treeDistribution)) {
+            cumulativeProb += prob;
+            if (random <= cumulativeProb) {
+                selectedTreeEmoji = emoji;
+                break;
+            }
+        }
+
         if (treeEmojis[selectedTreeEmoji].length > 0) {
             const randomIndex = Math.floor(Math.random() * treeEmojis[selectedTreeEmoji].length);
             const selectedCell = treeEmojis[selectedTreeEmoji].splice(randomIndex, 1)[0];

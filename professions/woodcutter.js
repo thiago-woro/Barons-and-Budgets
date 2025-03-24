@@ -115,6 +115,11 @@ function updateWoodcutter(npc) {
     switch (npc.state) {
         case "idle":
             npc.setState("searchingForTree");
+
+            //50% chance of npc.state idle
+            if (Math.random() < 0.9) {
+                npc.setState("idle");
+            }
             break;
 
         case "searchingForTree":

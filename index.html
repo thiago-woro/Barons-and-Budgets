@@ -523,6 +523,17 @@
      <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
 
   <script>
+
+document.addEventListener("DOMContentLoaded", function() {
+    //click on newGameWelcomeScreen button
+       let newGameWelcomeScreen = document.getElementById("newGameWelcomeScreen");
+      
+
+      //click on newGameWelcomeScreen button
+      newGameWelcomeScreen.click();
+});
+
+
     document.getElementById("toggleDebugger").addEventListener("click", function() {
       const debuggerOverlay = document.getElementById("debugPanel");
       if (debuggerOverlay.style.display === "none") {

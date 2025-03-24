@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const placeAnimal = (coords, toolId) => {
         if (!emptyCells.some(cell => cell.x === coords.cellCol && cell.y === coords.cellRow)) {
-            console.log("Animal drowning in water!");
+            console.log("Animal drowning in water!"); //todo if its water, drown, if its tree, just pick a nearby cell with no trees
             handleDrowningAnimation(coords, toolId);
             return;
         }

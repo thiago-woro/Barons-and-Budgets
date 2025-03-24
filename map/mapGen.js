@@ -71,7 +71,7 @@ function removeLoadingScreen() {
   const loadingScreen = document.getElementById('mapLoadingScreen');
   if (loadingScreen) {
     // Add fade-out effect
-    loadingScreen.style.transition = 'opacity 1.5s ease-out';
+    loadingScreen.style.transition = 'opacity 0.9s ease-out';
     loadingScreen.style.opacity = '0';
     
     // Remove after transition
@@ -365,10 +365,11 @@ function afterMapGen() { //after basic terrain generation, adds enviromental det
       gameLoopInterval = requestAnimationFrame(renderLoop);
     simulationInterval = setInterval(updateSimulation, simulationBaseInterval / (gameLoopSpeed / 90));
     startButton.textContent = "Pause Game";
-    isPaused = false;
+   // isPaused = false;
   
   // Remove loading screen after everything is complete
   removeLoadingScreen();
+  camera.reset();
 }
 
 function drawHousePaths(cellArray, numRowsToSkip, pathCurveAmount) {   //wavy house paths

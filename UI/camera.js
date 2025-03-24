@@ -1,5 +1,5 @@
 // Initialize zoomLevel and other related variables
-let zoomLevel = 1.0;
+let zoomLevel = 0.1;
 let canvasX = 0;
 let canvasY = 0;
 let mouseX = 0;
@@ -85,6 +85,7 @@ class Camera {
       isDragging = false; // Update global variable
       this.container.style.cursor = 'default';
     });
+    
   }
 
   screenToWorld(screenX, screenY) {
@@ -211,13 +212,18 @@ updateHoveredCell(event, emoji) {
   }
 
   reset() {
-    this.position = { x: 0, y: 0 };
-    this.zoom = 1.0;
+
+    // Calculate the middle of the map, using homesCanvas width and height
+    const middleX = homesCanvas.width / 2 / cellSize;
+    const middleY = homesCanvas.height / 2 ;
+
+    this.position = { x: middleX, y: middleY };
+    this.zoom = 0.51;
 
     // Update global variables
     canvasX = 0;
     canvasY = 0;
-    zoomLevel = 1.0;
+    zoomLevel = 0.1;
 
     this.updateTransform();
   }
@@ -271,7 +277,6 @@ document.addEventListener("keydown", (event) => {
     chartTab.style.display = "none";
     npcTab.style.display = "none";
     minimizeTabButton.textContent = "Show";
-    resetCanvasPosition();
     camera.reset(); // Reset the camera too
   }
 });
@@ -340,20 +345,10 @@ function logCellOnClick(container, ctx, cellSize) { //same things as getClickCoo
 
 
 
-
-
-
-
-// Reset camera controls - DO NOT DELETE
-function resetCanvasPosition() {
-  // Update camera object instead of directly setting values
-  camera.reset();
-}
-
 // Listen for click on the 'recenterCanvas' icon
 document.getElementById("recenterCanvas").addEventListener("click", () => {
-  resetCanvasPosition();
-  centerCanvasOnMap();
+    camera.reset(); 
+
 });
 
 // Function to center the canvas on the map
