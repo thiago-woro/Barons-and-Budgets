@@ -64,10 +64,10 @@ function startTrees(ctx, cellSize) {
 
     // Distribution percentages for tree types
     const treeDistribution = {
-        "🌴": 0.15, 
-        "🌵": 0.15,  
+        "🌴": 0.20, 
+        "🌵": 0.05,  
         "🌳": 0.30,  
-        "🌲": 0.40   
+        "🌲": 0.45   
     };
 
     const treeEmojis = {
