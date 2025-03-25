@@ -1,3 +1,151 @@
+let timesUsedPathFinderFunction = 0;
+// Add at the top with other globals
+let walkableCellsLookup = new Set(); // Will store walkable cell coordinates as "x,y" strings
+
+// Function to initialize walkable cells lookup
+function initWalkableCellsLookup() {
+  walkableCellsLookup.clear();
+  for (const cell of emptyCells) {
+    walkableCellsLookup.add(`${cell.x},${cell.y}`);
+  }
+  console.log(`Initialized walkable cells lookup with ${walkableCellsLookup.size} cells`);
+}
+
+// A* pathfinding algorithm to find a path between two cells
+function findPath(start, target, targetIsTree = false) {
+    timesUsedPathFinderFunction++;
+    console.warn(`timesUsedPathFinderFunction: ${timesUsedPathFinderFunction} - had animals: ${animals.length} - game loop: ${year}`);
+    
+    // Initialize walkable cells lookup if not already done
+    if (walkableCellsLookup.size === 0) {
+      initWalkableCellsLookup();
+    }
+    
+    // Helper function to calculate Manhattan distance heuristic
+    const heuristic = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+    
+    // Helper function to check if a cell is walkable - now using Set lookup
+    const isWalkable = (x, y) => {
+        // If this cell is the target and targetIsTree is true, always make it walkable
+        if (x === target.x && y === target.y && targetIsTree) {
+            return true;
+        }
+        // Use Set lookup instead of array search
+        return walkableCellsLookup.has(`${x},${y}`);
+    };
+    
+    //console.warn(`⏳´... finding path between \nX:${start.x} , Y:${start.y} and \nX:${target.x} , Y:${target.y}`);
+    
+    // Create open and closed sets
+    const openSet = [];
+    const closedSet = [];
+    
+    // Add start node to open set
+    openSet.push({
+        x: start.x,
+        y: start.y,
+        g: 0,                          // Cost from start to current node
+        h: heuristic(start, target),   // Estimated cost from current to target
+        f: heuristic(start, target),   // Total cost (g + h)
+        parent: null                   // Reference to parent node
+    });
+    
+    // While there are nodes to explore
+    while (openSet.length > 0) {
+        // Sort openSet by f score (lowest first)
+        openSet.sort((a, b) => a.f - b.f);
+        
+        // Get the node with lowest f score
+        const current = openSet.shift();
+        
+        // Add current to closed set
+        closedSet.push(current);
+        
+        // If reached the target
+        if (current.x === target.x && current.y === target.y) {
+            // Reconstruct the path
+            const path = [];
+            let temp = current;
+            
+            while (temp !== null) {
+                path.push({ x: temp.x, y: temp.y });
+                temp = temp.parent;
+            }
+            
+            let finalPath = path.reverse();
+
+            if (targetIsTree) {
+                // Remove the last cell (the tree cell) from the path
+                finalPath.pop();
+            }
+            
+            // Return the path in reverse (from start to target)
+            return finalPath;
+        }
+        
+        // Get neighboring cells
+        const neighbors = [
+            { x: current.x - 1, y: current.y },     // Left
+            { x: current.x + 1, y: current.y },     // Right
+            { x: current.x, y: current.y - 1 },     // Up
+            { x: current.x, y: current.y + 1 }      // Down
+        ];
+        
+        for (const neighbor of neighbors) {
+            // Skip if not walkable or in closed set
+            if ( !isWalkable(neighbor.x, neighbor.y) ||  
+                closedSet.some(n => n.x === neighbor.x && n.y === neighbor.y)) {
+                continue;
+            }
+            
+            // Calculate g score for this neighbor
+            const gScore = current.g + 1; // Assuming cost of 1 to move to adjacent cell
+            
+            // Check if neighbor is already in open set
+            const existingNeighborIndex = openSet.findIndex(n => 
+                n.x === neighbor.x && n.y === neighbor.y
+            );
+            
+            if (existingNeighborIndex === -1) {
+                // Not in open set, add it
+                openSet.push({
+                    x: neighbor.x,
+                    y: neighbor.y,
+                    g: gScore,
+                    h: heuristic(neighbor, target),
+                    f: gScore + heuristic(neighbor, target),
+                    parent: current
+                });
+            } else if (gScore < openSet[existingNeighborIndex].g) {
+                // Already in open set, but this path is better
+                openSet[existingNeighborIndex].g = gScore;
+                openSet[existingNeighborIndex].f = gScore + openSet[existingNeighborIndex].h;
+                openSet[existingNeighborIndex].parent = current;
+            }
+        }
+    }
+    
+    // No path found
+    return null;
+}
+
+
+
+
+
+/* end of movement logic */
+
+
+
+
+
+
+
+
+
+
+
+
 // Euclidean distance - most accurate for real-world movement but computationally expensive
 // Use when visual appearance of diagonal and straight movement should look natural
 const calcDistance = (x1, y1, x2, y2) => Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
@@ -15,6 +163,49 @@ const calcManhattanDistance = (x1, y1, x2, y2) => Math.abs(x2 - x1) + Math.abs(y
 // Add a spatial grid for faster animal lookups
 let animalSpatialGrid = {};
 const GRID_CELL_SIZE = 10; // Size of each spatial grid cell (in game grid cells)
+
+// Add this at the top of the file with other globals
+let validMovesLookup = {}; // Will store valid moves for each grid cell
+
+// Path cache to avoid redundant pathfinding calculations
+// Format: { "startX,startY-endX,endY": { path: [...], timestamp: 123456789 } }
+let pathCache = {};
+const PATH_CACHE_SIZE = 100; // Maximum number of paths to cache
+const PATH_CACHE_TTL = 10000; // Time to live for cached paths (10 seconds)
+
+// Function to precompute valid moves for all cells
+function precomputeValidMoves() {
+  console.log("Precomputing valid moves for animal movement...");
+  validMovesLookup = {};
+  
+  // For each empty cell, calculate all valid adjacent moves
+  for (const cell of emptyCells) {
+    const key = `${cell.x},${cell.y}`;
+    
+    // Check all adjacent cells (including diagonals for more natural movement)
+    const possibleMoves = [
+      { x: cell.x + 1, y: cell.y },     // right
+      { x: cell.x - 1, y: cell.y },     // left
+      { x: cell.x, y: cell.y + 1 },     // down
+      { x: cell.x, y: cell.y - 1 },     // up
+      { x: cell.x + 1, y: cell.y + 1 }, // diagonal down-right
+      { x: cell.x - 1, y: cell.y - 1 }, // diagonal up-left
+      { x: cell.x + 1, y: cell.y - 1 }, // diagonal up-right
+      { x: cell.x - 1, y: cell.y + 1 }  // diagonal down-left
+    ];
+    
+    // Filter to only valid moves (those that exist in emptyCells)
+    validMovesLookup[key] = possibleMoves.filter(move => 
+      emptyCells.some(emptyCell => emptyCell.x === move.x && emptyCell.y === move.y)
+    );
+  }
+  
+  console.log(`Precomputed valid moves for ${Object.keys(validMovesLookup).length} cells`);
+}
+
+// Call this after map generation and whenever the map changes
+// Example: after trees are cut, buildings are placed, etc.
+// precomputeValidMoves();
 
 // Function to update the spatial grid
 function updateAnimalSpatialGrid() {
@@ -40,6 +231,30 @@ function updateAnimalSpatialGrid() {
   }
 }
 
+// Cleanup old path cache entries periodically
+function cleanupPathCache() {
+  const now = Date.now();
+  const keys = Object.keys(pathCache);
+  
+  // If cache is getting too large, remove oldest entries first
+  if (keys.length > PATH_CACHE_SIZE) {
+    const sortedEntries = keys
+      .map(key => ({ key, timestamp: pathCache[key].timestamp }))
+      .sort((a, b) => a.timestamp - b.timestamp);
+    
+    // Remove oldest entries to get back to cache size limit
+    const entriesToRemove = sortedEntries.slice(0, keys.length - PATH_CACHE_SIZE);
+    entriesToRemove.forEach(entry => delete pathCache[entry.key]);
+  }
+  
+  // Remove expired entries
+  keys.forEach(key => {
+    if (now - pathCache[key].timestamp > PATH_CACHE_TTL) {
+      delete pathCache[key];
+    }
+  });
+}
+
 class Animal {
   static PREY_BASE_SPEED = 2000;
   static PREDATOR_SPEED_MULTIPLIER = 2;
@@ -49,6 +264,7 @@ class Animal {
   static PREDATOR_MAX_AGE = 20000;
   static MAX_ANIMALS = Math.floor(maxLandPopulation);
   static BABY_EMOJI_DURATION = 5000;
+  static PATH_RECALC_COOLDOWN = 2000; // 2 seconds cooldown between path recalculations
 
   static setAllPaused(isPaused) {
     animals.forEach(animal => animal.isPaused = isPaused);
@@ -86,6 +302,8 @@ class Animal {
     this.currentPath = null;
     this.pathIndex = 0;
     this.inaccessibleTargets = new Set();
+    this.pathCooldown = 0; // Cooldown timer for path recalculations
+    this.lastPathTarget = null; // Remember last path target for comparison
 
     // Needs
     this.hunger = 0;
@@ -134,6 +352,11 @@ class Animal {
     this.age = Math.min(this.age + deltaTime, this.isPredator ? Animal.PREDATOR_MAX_AGE : Animal.MAX_AGE);
     this.hunger = Math.min(this.hunger + this.hungerRate * (deltaTime / 1000), this.maxNeed);
     this.thirst = Math.min(this.thirst + this.thirstRate * (deltaTime / 1000), this.maxNeed);
+
+    // Update path cooldown
+    if (this.pathCooldown > 0) {
+      this.pathCooldown -= deltaTime;
+    }
 
     if (this.age >= (this.isPredator ? Animal.PREDATOR_MAX_AGE : Animal.MAX_AGE)) {
       this.isAlive = false;
@@ -220,42 +443,54 @@ class Animal {
             
             // If we have a move timer ready, move toward target
             if (this.timeSinceLastMove >= this.moveInterval) {
-              // Calculate direction toward patrol point
-              const dx = this.targetCell.gridX - this.gridX;
-              const dy = this.targetCell.gridY - this.gridY;
+              const cellKey = `${this.gridX},${this.gridY}`;
+              const validMoves = validMovesLookup[cellKey] || [];
               
-              // Determine primary move direction (horizontal or vertical)
-              let moveX = 0, moveY = 0;
-              
-              // Decide which direction to move more strongly
-              if (Math.abs(dx) >= Math.abs(dy)) {
-                // Move horizontally
-                moveX = dx > 0 ? 1 : -1;
-              } else {
-                // Move vertically
-                moveY = dy > 0 ? 1 : -1;
-              }
-              
-              // Try to find an empty cell in the patrol direction
-              const possibleMoves = [
-                { x: this.gridX + moveX, y: this.gridY + moveY }, // Primary direction
-                { x: this.gridX + moveX, y: this.gridY },         // Horizontal component
-                { x: this.gridX, y: this.gridY + moveY },         // Vertical component
-                // Add some randomness for more natural movement
-                { x: this.gridX + (Math.random() > 0.5 ? 1 : -1), y: this.gridY },
-                { x: this.gridX, y: this.gridY + (Math.random() > 0.5 ? 1 : -1) }
-              ];
-              
-              // Filter to only valid moves
-              const validMoves = possibleMoves.filter(move => 
-                emptyCells.some(cell => cell.x === move.x && cell.y === move.y)
-              );
-              
-              // Choose a move
+              // If we have valid moves from this position
               if (validMoves.length > 0) {
-                // Prefer the direct path move, but with some randomness
-                const moveIndex = Math.random() < 0.7 ? 0 : Math.floor(Math.random() * validMoves.length);
-                const selectedMove = validMoves[Math.min(moveIndex, validMoves.length - 1)];
+                // Calculate direction toward patrol point
+                const dx = this.targetCell.gridX - this.gridX;
+                const dy = this.targetCell.gridY - this.gridY;
+                
+                // Score each move based on how well it moves toward the target
+                // Higher score = better move
+                const scoredMoves = validMoves.map(move => {
+                  // How much closer to target this move gets us
+                  const newDx = this.targetCell.gridX - move.x;
+                  const newDy = this.targetCell.gridY - move.y;
+                  
+                  // Manhattan distance improvement
+                  const currentDist = Math.abs(dx) + Math.abs(dy);
+                  const newDist = Math.abs(newDx) + Math.abs(newDy);
+                  const improvement = currentDist - newDist;
+                  
+                  // Add some randomness (0-0.3) for natural movement
+                  const randomFactor = Math.random() * 0.3;
+                  
+                  return {
+                    move,
+                    score: improvement + randomFactor
+                  };
+                });
+                
+                // Sort by score (highest first)
+                scoredMoves.sort((a, b) => b.score - a.score);
+                
+                // Choose first move, or a random move from top 3 with diminishing probability
+                let selectedMove;
+                if (Math.random() < 0.7) {
+                  // 70% chance to take best move
+                  selectedMove = scoredMoves[0].move;
+                } else if (scoredMoves.length > 1 && Math.random() < 0.8) {
+                  // 24% chance (0.3 * 0.8) to take second best move
+                  selectedMove = scoredMoves[1].move;
+                } else if (scoredMoves.length > 2) {
+                  // 6% chance to take third best move
+                  selectedMove = scoredMoves[2].move;
+                } else {
+                  // Fallback to first move if not enough options
+                  selectedMove = scoredMoves[0].move;
+                }
                 
                 // Apply the movement
                 this.x = selectedMove.x * cellSize;
@@ -308,49 +543,40 @@ class Animal {
             }
             // Otherwise continue the chase
             else {
-              // Determine primary move direction (horizontal or vertical)
-              let moveX = 0, moveY = 0;
+              // Similar approach but prioritize moves toward prey
+              const cellKey = `${this.gridX},${this.gridY}`;
+              const validMoves = validMovesLookup[cellKey] || [];
               
-              // Decide which direction to move more strongly
-              if (Math.abs(dx) >= Math.abs(dy)) {
-                // Move horizontally
-                moveX = dx > 0 ? 1 : -1;
-              } else {
-                // Move vertically
-                moveY = dy > 0 ? 1 : -1;
-              }
-              
-              // Try to find an empty cell in the chase direction
-              const possibleMoves = [
-                { x: this.gridX + moveX, y: this.gridY + moveY }, // Primary chase direction
-                { x: this.gridX + moveX, y: this.gridY }, // Horizontal component
-                { x: this.gridX, y: this.gridY + moveY }, // Vertical component
-                { x: this.gridX, y: this.gridY } // Stay put if no other option
-              ];
-              
-              // Find the first possible move that's on an empty cell
-              for (const move of possibleMoves) {
-                if (emptyCells.some(cell => cell.x === move.x && cell.y === move.y)) {
-                  // Apply the movement immediately
-                  this.x = move.x * cellSize;
-                  this.y = move.y * cellSize;
-                  this.gridX = move.x;
-                  this.gridY = move.y;
+              if (validMoves.length > 0) {
+                // Sort moves by how much closer they get us to the prey
+                const scoredMoves = validMoves.map(move => {
+                  // Calculate Manhattan distance to prey after this move
+                  const newDist = calcManhattanDistance(
+                    move.x, move.y, 
+                    this.targetAnimal.gridX, this.targetAnimal.gridY
+                  );
                   
-                  // Reset timer since we just moved
-                  this.timeSinceLastMove = 0;
-                  break;
-                }
-              }
-              
-              // If prey suddenly out of detection, look for a new one after a while
-              if (this.stateTimer > 2000 && manhattanDistance > this.detectionRange) {
-                const newPrey = this.detectNearbyAnimals().find(a => !a.isPredator && a.isAlive);
-                if (newPrey && newPrey !== this.targetAnimal) {
-                  console.log(`${this.type} (${this.gridX}, ${this.gridY}) switching to new prey target`);
-                  this.targetAnimal = newPrey;
-                  this.stateTimer = 0;
-                }
+                  // Lower distance = better move (higher score)
+                  return {
+                    move,
+                    score: 100 - newDist // Invert so higher is better
+                  };
+                });
+                
+                // Sort by score (highest first)
+                scoredMoves.sort((a, b) => b.score - a.score);
+                
+                // Take the best move (predators are more direct)
+                const selectedMove = scoredMoves[0].move;
+                
+                // Apply the movement
+                this.x = selectedMove.x * cellSize;
+                this.y = selectedMove.y * cellSize;
+                this.gridX = selectedMove.x;
+                this.gridY = selectedMove.y;
+                
+                // Reset move timer
+                this.timeSinceLastMove = 0;
               }
             }
           }
@@ -446,9 +672,9 @@ class Animal {
             const randomIndex = Math.floor(Math.random() * outsideRingLakeBorders.length);
             this.targetCell = outsideRingLakeBorders[randomIndex];
             
-            // Only calculate the actual distance for logging, not for game logic
+          /*   // Only calculate the actual distance for logging, not for game logic
             console.log(`🔍 ${this.type} (${this.gridX}, ${this.gridY}) targeting random water at (${this.targetCell.gridX}, ${this.targetCell.gridY}). Distance: ${Math.sqrt(calcDistanceSquared(this.gridX, this.gridY, this.targetCell.gridX, this.targetCell.gridY)).toFixed(1)} cells`);
-            
+             */
             // Find a path to the water
             const pathResult = this.findPathToTarget({x: this.targetCell.gridX, y: this.targetCell.gridY});
             if (!pathResult) {
@@ -529,42 +755,42 @@ class Animal {
               break;
             }
             
-            // Find the closest berry bush - directly using gridX and gridY
-            const berries = gBushesPositions
-              .filter(bush => bush.gridX !== undefined && bush.gridY !== undefined)
-              .sort((a, b) => {
-                // Use Manhattan distance for grid-based sorting - fastest possible comparison
+            // Find berries within 6 cell radius using Manhattan distance
+            const BERRY_SEARCH_RADIUS = 6;
+            const nearbyBerries = gBushesPositions.filter(bush => {
+              if (!bush.gridX || !bush.gridY) return false;
+              const distance = calcManhattanDistance(this.gridX, this.gridY, bush.gridX, bush.gridY);
+              return distance <= BERRY_SEARCH_RADIUS;
+            });
+
+            // If found nearby berries, pick the closest one
+            if (nearbyBerries.length > 0) {
+              // Sort by distance and take the closest
+              this.targetCell = nearbyBerries.sort((a, b) => {
                 const distA = calcManhattanDistance(this.gridX, this.gridY, a.gridX, a.gridY);
                 const distB = calcManhattanDistance(this.gridX, this.gridY, b.gridX, b.gridY);
                 return distA - distB;
-              });
-            
-            if (berries.length === 0) {
-              console.log(`${this.type} (${this.gridX}, ${this.gridY}) found no valid berry coordinates`);
-              this.state = "seekingWater";
-              this.targetCell = null;
-              this.stateTimer = 0;
-              this.currentPath = null;
-              break;
-            }
-            
-            this.targetCell = berries[0];
-            
-            // Only calculate the actual distance for logging, not for game logic
-            console.log(`🔍 ${this.type} (${this.gridX}, ${this.gridY}) targeting berries at (${this.targetCell.gridX}, ${this.targetCell.gridY}). Distance: ${Math.sqrt(calcDistanceSquared(this.gridX, this.gridY, this.targetCell.gridX, this.targetCell.gridY)).toFixed(1)} cells`);
-            
-            // Find a path to the berries
-            const berryPathResult = this.findPathToTarget({x: this.targetCell.gridX, y: this.targetCell.gridY});
-            if (!berryPathResult) {
-              console.log(`🚫 ${this.type} (${this.gridX}, ${this.gridY}) couldn't find path to berries at (${this.targetCell.gridX}, ${this.targetCell.gridY})`);
-              // Switch to water if no path found
-              this.state = "seekingWater";
-              this.targetCell = null;
-              this.stateTimer = 0;
-              this.currentPath = null;
-              break;
+              })[0];
+
+              // Try to find a path to the closest berry
+              const berryPathResult = this.findPathToTarget({x: this.targetCell.gridX, y: this.targetCell.gridY});
+              if (!berryPathResult) {
+                console.log(`🚫 ${this.type} (${this.gridX}, ${this.gridY}) couldn't find path to nearby berries`);
+                this.state = "seekingWater";
+                this.targetCell = null;
+                this.stateTimer = 0;
+                this.currentPath = null;
+                break;
+              }
+              console.log(`✅ ${this.type} (${this.gridX}, ${this.gridY}) found path to nearby berries. Length: ${this.currentPath.length} steps`);
             } else {
-              console.log(`✅ ${this.type} (${this.gridX}, ${this.gridY}) found path to berries. Length: ${this.currentPath.length} steps`);
+              // No berries within radius, switch to water
+              console.log(`🔍 ${this.type} (${this.gridX}, ${this.gridY}) no berries within ${BERRY_SEARCH_RADIUS} cells`);
+              this.state = "seekingWater";
+              this.targetCell = null;
+              this.stateTimer = 0;
+              this.currentPath = null;
+              break;
             }
           }
           
@@ -628,70 +854,108 @@ class Animal {
       return false;
     }
     
+    // If path is on cooldown and we already have a path, keep using it
+    if (this.pathCooldown > 0 && this.currentPath && this.currentPath.length > 0) {
+      return true;
+    }
+    
+    // Skip if the target hasn't changed and we still have a valid path
+    if (this.lastPathTarget && 
+        this.lastPathTarget.x === targetX && 
+        this.lastPathTarget.y === targetY &&
+        this.currentPath && 
+        this.pathIndex < this.currentPath.length) {
+      return true;
+    }
+    
     const start = { x: this.gridX, y: this.gridY };
     const end = { x: targetX, y: targetY };
+    
+    // Generate cache key
+    const cacheKey = `${start.x},${start.y}-${end.x},${end.y}`;
+    
+    // Check if we have a valid cached path
+    if (pathCache[cacheKey] && 
+        Date.now() - pathCache[cacheKey].timestamp < PATH_CACHE_TTL) {
+      this.currentPath = pathCache[cacheKey].path;
+      this.pathIndex = 0;
+      this.lastPathTarget = { x: targetX, y: targetY };
+      return true;
+    }
     
     // Use existing findPath function from the game
     const path = findPath(start, end, true);
     
     if (path && path.length > 0) {
+      // Cache the result
+      pathCache[cacheKey] = {
+        path: path,
+        timestamp: Date.now()
+      };
+      
+      // Set the current path
       this.currentPath = path;
       this.pathIndex = 0;
+      this.lastPathTarget = { x: targetX, y: targetY };
+      
+      // Set cooldown to prevent recalculating too often
+      this.pathCooldown = Animal.PATH_RECALC_COOLDOWN;
+      
       return true;
     } else {
       console.log(`No path found for ${this.type} from (${start.x}, ${start.y}) to (${end.x}, ${end.y})`);
+      // Still set a cooldown to prevent hammering the pathfinding
+      this.pathCooldown = Animal.PATH_RECALC_COOLDOWN * 0.5; // Half cooldown for failed paths
       return false;
     }
   }
 
   // Find a path away from a predator
   findEscapePath(predator) {
-    // Calculate direct direction away from predator
+    const cellKey = `${this.gridX},${this.gridY}`;
+    const validMoves = validMovesLookup[cellKey] || [];
+    
+    if (validMoves.length === 0) {
+      console.log(`${this.type} (${this.gridX}, ${this.gridY}) tried to flee but is trapped!`);
+      return false;
+    }
+    
+    // Calculate direction away from predator
     const dx = this.gridX - predator.gridX;
     const dy = this.gridY - predator.gridY;
     
-    // Set the primary flee direction (horizontal or vertical)
-    let moveX = 0, moveY = 0;
+    // Score each move based on how well it moves away from the predator
+    const scoredMoves = validMoves.map(move => {
+      // How much further from predator this move gets us
+      const newDx = move.x - predator.gridX;
+      const newDy = move.y - predator.gridY;
+      
+      // Manhattan distance from predator after move
+      const distFromPredator = Math.abs(newDx) + Math.abs(newDy);
+      
+      return {
+        move,
+        score: distFromPredator // Higher distance = better move
+      };
+    });
     
-    // Decide which direction to flee more strongly
-    if (Math.abs(dx) >= Math.abs(dy)) {
-      // Flee horizontally
-      moveX = dx > 0 ? 1 : -1;
-    } else {
-      // Flee vertically
-      moveY = dy > 0 ? 1 : -1;
-    }
+    // Sort by score (highest first)
+    scoredMoves.sort((a, b) => b.score - a.score);
     
-    // Try to find an empty cell in the flee direction
-    const possibleMoves = [
-      { x: this.gridX + moveX, y: this.gridY + moveY }, // Primary flee direction
-      { x: this.gridX + moveX, y: this.gridY }, // Horizontal component
-      { x: this.gridX, y: this.gridY + moveY }, // Vertical component
-      { x: this.gridX - moveX, y: this.gridY }, // Opposite horizontal (last resort)
-      { x: this.gridX, y: this.gridY - moveY }  // Opposite vertical (last resort)
-    ];
+    // Always choose the best escape path
+    const bestMove = scoredMoves[0].move;
     
-    // Find the first possible move that's on an empty cell
-    for (const move of possibleMoves) {
-      if (emptyCells.some(cell => cell.x === move.x && cell.y === move.y)) {
-        // Set the next position directly
-        this.targetCell = { gridX: move.x, gridY: move.y };
-        this.currentPath = null; // Clear any existing path
-        
-        // Apply the movement immediately
-        this.x = move.x * cellSize;
-        this.y = move.y * cellSize;
-        this.gridX = move.x;
-        this.gridY = move.y;
-        
-        console.log(`${this.type} (${this.gridX}, ${this.gridY}) fleeing from predator at (${predator.gridX}, ${predator.gridY})`);
-        return true;
-      }
-    }
+    // Apply the movement immediately
+    this.targetCell = { gridX: bestMove.x, gridY: bestMove.y };
+    this.currentPath = null; // Clear any existing path
     
-    // If no valid move found, stay put
-    console.log(`${this.type} (${this.gridX}, ${this.gridY}) tried to flee but is trapped!`);
-    return false;
+    this.x = bestMove.x * cellSize;
+    this.y = bestMove.y * cellSize;
+    this.gridX = bestMove.x;
+    this.gridY = bestMove.y;
+    
+    console.log(`${this.type} (${this.gridX}, ${this.gridY}) fleeing from predator at (${predator.gridX}, ${predator.gridY})`);
+    return true;
   }
 
   handleMovement(deltaTime) {
@@ -716,6 +980,19 @@ class Animal {
       this.timeSinceLastMove = 0;
     }
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   checkReproduction(deltaTime) {
     if (this.moveInterval === this.chaseSpeed || animals.length >= Animal.MAX_ANIMALS) return;
@@ -859,8 +1136,6 @@ function starterAnimalPopulations(amount = 20) {
       
       const animal = new Animal(cell.x, cell.y, type);
       animals.push(animal);
-      //log
-      console.log(`Placed ${type} at ${cell.x}, ${cell.y}`);
     }
   }
 
@@ -926,6 +1201,17 @@ function moveCoyote(coyote, prey = null) {
 
 // Add code to update the spatial grid regularly
 function updateGameState(deltaTime) {
+  // Initialize lookups if needed
+  if (!validMovesLookup || Object.keys(validMovesLookup).length === 0) {
+    precomputeValidMoves();
+    initWalkableCellsLookup(); // Initialize walkable cells lookup
+  }
+  
+  // Clean up path cache periodically (every ~5 seconds based on 60 FPS)
+  if (Math.random() < 0.01) {
+    cleanupPathCache();
+  }
+  
   // Update the spatial grid first so animals can use it
   updateAnimalSpatialGrid();
   
@@ -935,4 +1221,84 @@ function updateGameState(deltaTime) {
   }
   
   // Rest of game update logic...
+}
+
+// Call this whenever the game world changes
+function updateValidMovesLookup(changedCells) {
+  // For each changed cell, update both lookups
+  for (const cell of changedCells) {
+    const key = `${cell.x},${cell.y}`;
+    
+    // Check if this cell is now empty or not
+    const isEmpty = emptyCells.some(c => c.x === cell.x && c.y === cell.y);
+    
+    // Update walkable cells lookup
+    if (isEmpty) {
+      walkableCellsLookup.add(key);
+    } else {
+      walkableCellsLookup.delete(key);
+    }
+    
+    // Rest of the existing updateValidMovesLookup function...
+    if (isEmpty) {
+      const possibleMoves = [
+        { x: cell.x + 1, y: cell.y }, { x: cell.x - 1, y: cell.y },
+        { x: cell.x, y: cell.y + 1 }, { x: cell.x, y: cell.y - 1 },
+        { x: cell.x + 1, y: cell.y + 1 }, { x: cell.x - 1, y: cell.y - 1 },
+        { x: cell.x + 1, y: cell.y - 1 }, { x: cell.x - 1, y: cell.y + 1 }
+      ];
+      
+      validMovesLookup[key] = possibleMoves.filter(move => 
+        walkableCellsLookup.has(`${move.x},${move.y}`) // Use new lookup here too
+      );
+    } else {
+      delete validMovesLookup[key];
+    }
+    
+    // Update adjacent cells
+    const adjacentOffsets = [
+      [1, 0], [-1, 0], [0, 1], [0, -1], 
+      [1, 1], [-1, -1], [1, -1], [-1, 1]
+    ];
+    
+    for (const [dx, dy] of adjacentOffsets) {
+      const adjacentX = cell.x + dx;
+      const adjacentY = cell.y + dy;
+      const adjacentKey = `${adjacentX},${adjacentY}`;
+      
+      // If this adjacent cell is walkable, update its valid moves
+      if (walkableCellsLookup.has(adjacentKey)) {
+        const possibleMoves = [
+          { x: adjacentX + 1, y: adjacentY }, { x: adjacentX - 1, y: adjacentY },
+          { x: adjacentX, y: adjacentY + 1 }, { x: adjacentX, y: adjacentY - 1 },
+          { x: adjacentX + 1, y: adjacentY + 1 }, { x: adjacentX - 1, y: adjacentY - 1 },
+          { x: adjacentX + 1, y: adjacentY - 1 }, { x: adjacentX - 1, y: adjacentY + 1 }
+        ];
+        
+        validMovesLookup[adjacentKey] = possibleMoves.filter(move => 
+          walkableCellsLookup.has(`${move.x},${move.y}`) // Use new lookup here too
+        );
+      }
+    }
+  }
+}
+
+// Add function to analyze map connectivity
+function analyzeMapConnectivity() {
+  const regions = new Map();
+  let regionId = 0;
+  
+  // Flood fill to identify disconnected regions
+  for (const cell of emptyCells) {
+    if (!regions.has(`${cell.x},${cell.y}`)) {
+      const region = floodFill(cell);
+      regions.set(regionId++, region);
+    }
+  }
+  
+  // Log connectivity info
+  console.log(`Map has ${regions.size} disconnected regions`);
+  regions.forEach((region, id) => {
+    console.log(`Region ${id}: ${region.size} cells, ${countWaterSources(region)} water sources`);
+  });
 }

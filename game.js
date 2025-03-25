@@ -23,7 +23,7 @@ const targetFrameRate = 60; // 60 FPS for smooth rendering
 const simulationBaseInterval = 1000; // Base simulation update every 1s
 const cycleLength = 3; // Added: Controls major activity cycles (every 3rd simulation tick)
 let loopCounter = 0;
-let isPaused = false;
+let isPaused = true;
 
 
 // Toggle function reused by button and keypress
@@ -66,6 +66,7 @@ startColony.addEventListener("click", function () {
 
 // Fast render loop (60 FPS)
 function renderLoop(timestamp) {
+  
   gameLoopInterval = requestAnimationFrame(renderLoop);
 
   const deltaTime = timestamp - lastTimestamp;
@@ -120,13 +121,14 @@ function updateSimulation() {
     window.isSimulationRunning = true;
     console.time("simulation");
     
-    loopCounter = (loopCounter + 1) % cycleLength; // Line 96: Now defined
+    loopCounter = (loopCounter + 1) % cycleLength; 
     const isMajorActivitiesLoop = loopCounter === 0;
 
     // Major activities (e.g., every 3rd simulation tick)
     if (isMajorActivitiesLoop) {
       year++;
-      updatePopulationChart(year, npcs.length);
+
+      //updatePopulationChart(year, npcs.length);
       npcTableHeader.textContent = `Total Population ${npcs.length}`;
 
       let totalSalaries = 0;

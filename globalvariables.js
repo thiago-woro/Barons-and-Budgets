@@ -36,8 +36,9 @@ let treePercentageofLand = 0.09
 let usableLand = 0.045
 
 let flatLandCells = [];
-
+let islands = [];
 let pathCells = [];
+
 
 
 //npcs
@@ -45,7 +46,7 @@ const NPC_LIMIT = 700; // Maximum number of NPCs allowed
 let npcs = [];
 let animals = [];
 let huntedAnimalsCount = 0; // Track number of animals hunted by Hunter NPCs
-let year = 2700;
+let year = 0;
 const startingPopulation = 25;
 const populationIncreaseSpeed = 0.15;
 var deathRate = 0.001;

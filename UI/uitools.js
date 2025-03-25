@@ -295,6 +295,16 @@ loadGameWelcomeScreen.addEventListener("click", function () {
   startMapGeneration(gridSize, gridSize, perlinNoiseScale);
 });
 
+
+toggleBorders.addEventListener("click", function () {
+    // Toggle the visibility
+    islandsVisible = !islandsVisible;
+    drawIslands(islandsVisible, islandsVisible);
+    
+    // Update button text to reflect current state
+    toggleBorders.textContent = islandsVisible ? "Hide Islands" : "Show Islands";
+});
+
 function hideWelcomeScreen() {
   welcomePopup.style.visibility = "collapse";
   welcomeScreen.style.visibility = "collapse";

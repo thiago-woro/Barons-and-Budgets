@@ -361,12 +361,14 @@ function afterMapGen() { //after basic terrain generation, adds enviromental det
   drawGrass(treeCtx, 0.45);
 
 
+identifyIslands(false, false);
+
   // startNPCs(npcCtx, cellSize);
  // initializeFishingResources();
 
       gameLoopInterval = requestAnimationFrame(renderLoop);
     simulationInterval = setInterval(updateSimulation, simulationBaseInterval / (gameLoopSpeed / 90));
-    startButton.textContent = "Pause Game";
+    //startButton.textContent = "Pause Game";
    // isPaused = false;
   
   // Remove loading screen after everything is complete
@@ -967,3 +969,227 @@ function placeLakes() {
     drawTerrainLayer(groundCtx, groundCells, cellSize);
     drawTerrainLayer(waterCtx, waterCells, cellSize);
 }
+
+// Helper function to generate random island names
+function generateIslandName() {
+  const prefixes = ['North', 'South', 'East', 'West', 'Great', 'Little', 'New', 'Old'];
+  const roots = ['haven', 'isle', 'land', 'shore', 'bay', 'crest', 'peak', 'vale'];
+  const suffixes = ['Island', 'Isle', 'Peninsula', 'Shores', 'Lands'];
+  
+  return `${prefixes[Math.floor(Math.random() * prefixes.length)]} ${
+    roots[Math.floor(Math.random() * roots.length)]}${
+    Math.random() > 0.5 ? ' ' + suffixes[Math.floor(Math.random() * suffixes.length)] : ''}`;
+}
+
+// Main function to identify and process islands (now only identifies and stores data)
+function identifyIslands() {
+  // Create a visited set to track processed cells
+  const visited = new Set();
+  islands = [];
+  
+  // Helper function for flood fill
+  function floodFill(startCell, islandCells) {
+    const queue = [startCell];
+    const key = `${startCell.x},${startCell.y}`;
+    visited.add(key);
+    islandCells.push(startCell);
+    
+    while (queue.length > 0) {
+      const current = queue.shift();
+      
+      // Check all 8 adjacent cells
+      for (let dx = -1; dx <= 1; dx++) {
+        for (let dy = -1; dy <= 1; dy++) {
+          const newX = current.x + dx;
+          const newY = current.y + dy;
+          const newKey = `${newX},${newY}`;
+          
+          // Find the cell in groundCells
+          const adjacentCell = groundCells.find(cell => cell.x === newX && cell.y === newY);
+          
+          if (adjacentCell && !visited.has(newKey) && parseFloat(adjacentCell.noise) > 0) {
+            visited.add(newKey);
+            queue.push(adjacentCell);
+            islandCells.push(adjacentCell);
+          }
+        }
+      }
+    }
+  }
+  
+  // Helper function to find center of mass for an island
+  function findIslandCenter(cells) {
+    const sum = cells.reduce((acc, cell) => {
+      return {
+        x: acc.x + cell.x,
+        y: acc.y + cell.y
+      };
+    }, { x: 0, y: 0 });
+    
+    return {
+      x: (sum.x / cells.length) * cellSize,
+      y: (sum.y / cells.length) * cellSize
+    };
+  }
+
+  // Process each unvisited ground cell
+  for (const cell of groundCells) {
+    const key = `${cell.x},${cell.y}`;
+    if (!visited.has(key) && parseFloat(cell.noise) > 0) {
+      const islandCells = [];
+      floodFill(cell, islandCells);
+      
+      // Only consider as island if it has more than 10 cells
+      if (islandCells.length > 10) {
+        // Generate random color for the island
+        const color = `hsla(${Math.random() * 360}, 70%, 50%, 0.3)`;
+        const name = generateIslandName();
+        
+        const island = {
+          islandName: name,
+          cells: islandCells,
+          color: color,
+          size: islandCells.length,
+          center: findIslandCenter(islandCells)
+        };
+        
+        islands.push(island);
+      }
+    }
+  }
+  
+  // Sort islands by size (largest first)
+  islands.sort((a, b) => b.size - a.size);
+  
+  return {
+    count: islands.length,
+    islands: islands
+  };
+}
+
+// Add a global variable to track visibility state
+let islandsVisible = false;
+
+// Modify drawIslands to handle clearing
+function drawIslands(shouldPaint = false, shouldLabel = false) {
+  if (!islands || islands.length === 0) {
+    console.log('No islands data available to draw');
+    return;
+  }
+
+  // Clear previous drawings first
+  groundCtx.save(); // Save the current state
+  groundCtx.globalCompositeOperation = 'source-over';
+  drawTerrainLayer(groundCtx, groundCells, cellSize); // Redraw terrain
+  groundCtx.restore();
+  
+  // Clear previous labels
+  oreDepositsCtx.clearRect(0, 0, oreDepositsCtx.canvas.width, oreDepositsCtx.canvas.height);
+  
+  // If we're turning off visibility, just return after clearing
+  if (!shouldPaint && !shouldLabel) {
+    islandsVisible = false;
+    return;
+  }
+
+  islands.forEach(island => {
+    // Paint the island if requested
+    if (shouldPaint) {
+      const ctx = groundCtx;
+      ctx.fillStyle = island.color;
+      island.cells.forEach(cell => {
+        ctx.fillRect(cell.x * cellSize, cell.y * cellSize, cellSize, cellSize);
+      });
+    }
+    
+    // Draw island name if requested
+    if (shouldLabel) {
+      const ctx = oreDepositsCtx;
+      ctx.save();
+      
+      ctx.font = '40px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      
+      // Create white outline
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 6;
+      ctx.strokeText(island.islandName, island.center.x, island.center.y);
+      
+      // Draw actual text in dark color
+      ctx.fillStyle = '#fff';
+      ctx.fillText(island.islandName, island.center.x, island.center.y);
+      
+      ctx.restore();
+    }
+  });
+
+  islandsVisible = shouldPaint || shouldLabel;
+}
+
+
+
+let potablePuddleCells = [];
+
+function addPotablePuddleCell(island, amountPuddles, puddleSize = 2) {
+    if (!island || !island.cells || island.cells.length === 0) {
+        console.log('Invalid island data for puddle generation');
+        return;
+    }
+
+    // Clear any existing puddles for this island
+    potablePuddleCells = potablePuddleCells.filter(puddle => 
+        !island.cells.some(cell => cell.x === puddle.x && cell.y === puddle.y)
+    );
+
+    // Select random cells from the island for puddles
+    for (let i = 0; i < amountPuddles; i++) {
+        // Get random cell from island
+        const randomIndex = Math.floor(Math.random() * island.cells.length);
+        const baseCell = island.cells[randomIndex];
+
+        // Create a small cluster of puddle cells around the base cell
+        for (let dx = -puddleSize; dx <= puddleSize; dx++) {
+            for (let dy = -puddleSize; dy <= puddleSize; dy++) {
+                // Add some randomness to puddle shape
+                if (Math.random() < 0.7) { // 70% chance to add each adjacent cell
+                    const puddleCell = {
+                        x: baseCell.x + dx,
+                        y: baseCell.y + dy,
+                        color: '#4d7ea8', // Light blue color for puddles
+                        type: 'puddle'
+                    };
+
+                    // Check if this cell is actually part of the island
+                    if (island.cells.some(cell => cell.x === puddleCell.x && cell.y === puddleCell.y)) {
+                        potablePuddleCells.push(puddleCell);
+                    }
+                }
+            }
+        }
+    }
+
+    // Draw the puddles
+    drawPuddles();
+}
+
+// Separate function to draw puddles
+function drawPuddles() {
+    if (potablePuddleCells.length === 0) return;
+
+    const ctx = waterCtx; // Using water canvas for puddles
+    ctx.save();
+    
+    potablePuddleCells.forEach(puddle => {
+        ctx.fillStyle = puddle.color;
+        ctx.globalAlpha = 0.4; // Make puddles semi-transparent
+        ctx.fillRect(puddle.x * cellSize, puddle.y * cellSize, cellSize, cellSize);
+    });
+    
+    ctx.restore();
+}
+
+// Example usage:
+// addPotablePuddleCell(someIsland, 3, 2); // Creates 3 puddles of size 2 on the island
+    
+    
