@@ -134,28 +134,69 @@ class Animal {
           } else {
             // No prey, so patrol (move with purpose)
             this.state = "patrolling";
-            // If no target or target reached, set new target at the edge of detection
-            if (!this.targetCell || this.hasReachedTarget()) {
-              // Pick a cell at the edge of detection range in a random direction
+            
+            // If no target or target reached, set new target and move toward it
+            if (!this.targetCell || this.hasReachedTarget() || this.stateTimer > 3000) {
+              // Pick a random direction to patrol
               const angle = Math.random() * Math.PI * 2;
               const distance = this.detectionRange;
               const targetX = Math.floor(this.gridX + Math.cos(angle) * distance);
               const targetY = Math.floor(this.gridY + Math.sin(angle) * distance);
               
-              // Find the closest empty cell to this target point
-              let closest = null;
-              let closestDist = Infinity;
-              for (const cell of emptyCells) {
-                const dist = calcDistance(targetX, targetY, cell.x, cell.y);
-                if (dist < closestDist) {
-                  closestDist = dist;
-                  closest = cell;
-                }
-              }
-              this.targetCell = closest || emptyCells[Math.floor(Math.random() * emptyCells.length)];
+              // Set as target for visualization/reference, but don't use pathfinding
+              this.targetCell = { gridX: targetX, gridY: targetY };
+              this.currentPath = null;
+              this.stateTimer = 0;
+            }
+            
+            // If we have a move timer ready, move toward target
+            if (this.timeSinceLastMove >= this.moveInterval) {
+              // Calculate direction toward patrol point
+              const dx = this.targetCell.gridX - this.gridX;
+              const dy = this.targetCell.gridY - this.gridY;
               
-              // Find a path to the target
-              this.findPathToTarget(this.targetCell);
+              // Determine primary move direction (horizontal or vertical)
+              let moveX = 0, moveY = 0;
+              
+              // Decide which direction to move more strongly
+              if (Math.abs(dx) >= Math.abs(dy)) {
+                // Move horizontally
+                moveX = dx > 0 ? 1 : -1;
+              } else {
+                // Move vertically
+                moveY = dy > 0 ? 1 : -1;
+              }
+              
+              // Try to find an empty cell in the patrol direction
+              const possibleMoves = [
+                { x: this.gridX + moveX, y: this.gridY + moveY }, // Primary direction
+                { x: this.gridX + moveX, y: this.gridY },         // Horizontal component
+                { x: this.gridX, y: this.gridY + moveY },         // Vertical component
+                // Add some randomness for more natural movement
+                { x: this.gridX + (Math.random() > 0.5 ? 1 : -1), y: this.gridY },
+                { x: this.gridX, y: this.gridY + (Math.random() > 0.5 ? 1 : -1) }
+              ];
+              
+              // Filter to only valid moves
+              const validMoves = possibleMoves.filter(move => 
+                emptyCells.some(cell => cell.x === move.x && cell.y === move.y)
+              );
+              
+              // Choose a move
+              if (validMoves.length > 0) {
+                // Prefer the direct path move, but with some randomness
+                const moveIndex = Math.random() < 0.7 ? 0 : Math.floor(Math.random() * validMoves.length);
+                const selectedMove = validMoves[Math.min(moveIndex, validMoves.length - 1)];
+                
+                // Apply the movement
+                this.x = selectedMove.x * cellSize;
+                this.y = selectedMove.y * cellSize;
+                this.gridX = selectedMove.x;
+                this.gridY = selectedMove.y;
+                
+                // Reset move timer
+                this.timeSinceLastMove = 0;
+              }
             }
           }
           break;
@@ -166,31 +207,15 @@ class Animal {
             this.targetAnimal = null;
             this.currentPath = null;
           } else {
-            // Update path to the prey every few seconds to avoid constant recalculation
-            if (!this.currentPath || this.stateTimer % 500 < 20) {
-              // Only recalculate path if prey has moved significantly
-              const target = { 
-                x: this.targetAnimal.gridX, 
-                y: this.targetAnimal.gridY 
-              };
-              
-              if (target.x && target.y) {
-                this.findPathToTarget(target);
-                
-                if (!this.currentPath) {
-                  // If no path to prey, try to find a new prey
-                  const newPrey = this.detectNearbyAnimals().find(a => !a.isPredator && a.isAlive);
-                  if (newPrey && newPrey !== this.targetAnimal) {
-                    console.log(`${this.type} (${this.gridX}, ${this.gridY}) switching to new prey target`);
-                    this.targetAnimal = newPrey;
-                    this.findPathToTarget({ x: newPrey.gridX, y: newPrey.gridY });
-                  }
-                }
-              }
-            }
-            
+            // Calculate direction toward prey
+            const dx = this.targetAnimal.gridX - this.gridX;
+            const dy = this.targetAnimal.gridY - this.gridY;
             const distance = calcDistance(this.gridX, this.gridY, this.targetAnimal.gridX, this.targetAnimal.gridY);
             
+            // Set movement speed to chase speed
+            this.moveInterval = this.chaseSpeed;
+            
+            // If we've reached the prey, try to kill it
             if (distance <= Animal.KILL_DISTANCE) {
               this.checkForKills();
               if (!this.targetAnimal?.isAlive) {
@@ -200,11 +225,60 @@ class Animal {
                 this.currentPath = null;
                 console.log(`${this.type} (${this.gridX}, ${this.gridY}) killed prey and reduced hunger to ${this.hunger.toFixed(1)}`);
               }
-            } else if (distance > this.detectionRange * 1.3 || this.stateTimer >= 5000) {
+            } 
+            // If prey is too far, give up chase
+            else if (distance > this.detectionRange * 1.3 || this.stateTimer >= 5000) {
               console.log(`${this.type} (${this.gridX}, ${this.gridY}) gave up chase after ${Math.floor(this.stateTimer/1000)}s`);
               this.state = "patrolling";
               this.targetAnimal = null;
               this.currentPath = null;
+            }
+            // Otherwise continue the chase
+            else {
+              // Determine primary move direction (horizontal or vertical)
+              let moveX = 0, moveY = 0;
+              
+              // Decide which direction to move more strongly
+              if (Math.abs(dx) >= Math.abs(dy)) {
+                // Move horizontally
+                moveX = dx > 0 ? 1 : -1;
+              } else {
+                // Move vertically
+                moveY = dy > 0 ? 1 : -1;
+              }
+              
+              // Try to find an empty cell in the chase direction
+              const possibleMoves = [
+                { x: this.gridX + moveX, y: this.gridY + moveY }, // Primary chase direction
+                { x: this.gridX + moveX, y: this.gridY }, // Horizontal component
+                { x: this.gridX, y: this.gridY + moveY }, // Vertical component
+                { x: this.gridX, y: this.gridY } // Stay put if no other option
+              ];
+              
+              // Find the first possible move that's on an empty cell
+              for (const move of possibleMoves) {
+                if (emptyCells.some(cell => cell.x === move.x && cell.y === move.y)) {
+                  // Apply the movement immediately
+                  this.x = move.x * cellSize;
+                  this.y = move.y * cellSize;
+                  this.gridX = move.x;
+                  this.gridY = move.y;
+                  
+                  // Reset timer since we just moved
+                  this.timeSinceLastMove = 0;
+                  break;
+                }
+              }
+              
+              // If prey suddenly out of detection, look for a new one after a while
+              if (this.stateTimer > 2000 && distance > this.detectionRange) {
+                const newPrey = this.detectNearbyAnimals().find(a => !a.isPredator && a.isAlive);
+                if (newPrey && newPrey !== this.targetAnimal) {
+                  console.log(`${this.type} (${this.gridX}, ${this.gridY}) switching to new prey target`);
+                  this.targetAnimal = newPrey;
+                  this.stateTimer = 0;
+                }
+              }
             }
           }
           break;
@@ -273,60 +347,35 @@ class Animal {
             break;
           }
 
-          if (this.stateTimer >= 5000) {
-            console.log(`⏱️ ${this.type} (${this.gridX}, ${this.gridY}) gave up searching for water after ${Math.floor(this.stateTimer/1000)}s.`);
-            this.state = "seekingBerries"; // Try berries instead
-            this.targetCell = null;
-            this.attemptedTargets.clear();
-            this.stateTimer = 0;
-            this.currentPath = null;
-            break;
-          }
-          
           if (!this.targetCell) {
-            // DEBUG: Log water positions to see their structure
-            console.log(`Water data debug - first water cell:`, outsideRingLakeBorders[0]);
-          
-            // Find the closest water source - make sure to handle different property formats
-            const waterCells = outsideRingLakeBorders
-              .map(cell => {
-                // Create a standard format with x,y coordinates
-                return {
-                  x: cell.x || cell.gridX || 0,
-                  y: cell.y || cell.gridY || 0,
-                  original: cell
-                };
-              })
-              .filter(cell => !this.attemptedTargets.has(`${cell.x},${cell.y}`))
-              .filter(cell => cell.x !== 0 || cell.y !== 0) // Filter out invalid water cells
-              .sort((a, b) => {
-                return calcDistance(this.gridX, this.gridY, a.x, a.y) - 
-                       calcDistance(this.gridX, this.gridY, b.x, b.y);
-              });
-
-            if (!waterCells.length) {
-              console.log(`❌ ${this.type} (${this.gridX}, ${this.gridY}) no accessible water cells found. Total attempted: ${this.attemptedTargets.size}`);
-              // Mark that this animal doesn't have access to water
+            // Just pick any random water cell - no need to track attempted targets
+            if (outsideRingLakeBorders.length > 0) {
+              const randomIndex = Math.floor(Math.random() * outsideRingLakeBorders.length);
+              this.targetCell = outsideRingLakeBorders[randomIndex];
+              
+              console.log(`🔍 ${this.type} (${this.gridX}, ${this.gridY}) targeting random water at (${this.targetCell.gridX}, ${this.targetCell.gridY}). Distance: ${calcDistance(this.gridX, this.gridY, this.targetCell.gridX, this.targetCell.gridY).toFixed(1)} cells`);
+              
+              // Find a path to the water
+              const pathResult = this.findPathToTarget({x: this.targetCell.gridX, y: this.targetCell.gridY});
+              if (!pathResult) {
+                console.log(`🚫 ${this.type} (${this.gridX}, ${this.gridY}) couldn't find path to water, switching to berries`);
+                // If no path is found, just switch to seeking berries
+                this.state = "seekingBerries";
+                this.targetCell = null;
+                this.stateTimer = 0;
+                this.currentPath = null;
+                break;
+              } else {
+                console.log(`✅ ${this.type} (${this.gridX}, ${this.gridY}) found path to water. Length: ${this.currentPath.length} steps`);
+              }
+            } else {
+              // This shouldn't happen due to the earlier check, but just in case
               this.noLakesNearby = true;
-              this.state = "seekingBerries"; // Try berries instead
+              this.state = "seekingBerries";
               this.targetCell = null;
-              this.attemptedTargets.clear();
               this.stateTimer = 0;
               this.currentPath = null;
               break;
-            }
-
-            this.targetCell = waterCells[0];
-            this.attemptedTargets.add(`${this.targetCell.x},${this.targetCell.y}`);
-            console.log(`🔍 ${this.type} (${this.gridX}, ${this.gridY}) targeting water at (${this.targetCell.x}, ${this.targetCell.y}). Distance: ${calcDistance(this.gridX, this.gridY, this.targetCell.x, this.targetCell.y).toFixed(1)} cells`);
-            
-            // Find a path to the water
-            const pathResult = this.findPathToTarget(this.targetCell);
-            if (!pathResult) {
-              console.log(`🚫 ${this.type} (${this.gridX}, ${this.gridY}) couldn't find path to water at (${this.targetCell.x}, ${this.targetCell.y})`);
-              this.targetCell = null; // Reset target to try another water source
-            } else {
-              console.log(`✅ ${this.type} (${this.gridX}, ${this.gridY}) found path to water. Length: ${this.currentPath.length} steps`);
             }
           }
 
@@ -371,15 +420,6 @@ class Animal {
             break;
           }
 
-          if (this.stateTimer >= 5000) {
-            console.log(`⏱️ ${this.type} (${this.gridX}, ${this.gridY}) gave up searching for berries after ${Math.floor(this.stateTimer/1000)}s.`);
-            this.state = "seekingWater"; // Try water instead
-            this.targetCell = null;
-            this.stateTimer = 0;
-            this.currentPath = null;
-            break;
-          }
-
           if (!this.targetCell) {
             if (!gBushesPositions.length) {
               console.log(`${this.type} (${this.gridX}, ${this.gridY}) failed to find berries - none exist on map`);
@@ -390,26 +430,13 @@ class Animal {
               break;
             }
             
-            // DEBUG: Log berry positions to see their structure
-            console.log(`Berry data debug - first bush:`, gBushesPositions[0]);
-
-            /* bushes
-            {
-  "gridX": 15,
-  "gridY": 147
-}
-            
-             */
-            
-            // Find closest berry bush - make sure to handle different property formats
-            const berries = gBushesPositions.map(bush => {
-              // Create a standard format with x,y coordinates regardless of the original format
-              return {
-                x: bush.x || bush.gridX || 0,
-                y: bush.y || bush.gridY || 0,
-                original: bush
-              };
-            }).filter(b => b.x !== 0 || b.y !== 0); // Filter out invalid berries
+            // Find the closest berry bush - directly using gridX and gridY
+            const berries = gBushesPositions
+              .filter(bush => bush.gridX !== undefined && bush.gridY !== undefined)
+              .sort((a, b) => 
+                calcDistance(this.gridX, this.gridY, a.gridX, a.gridY) - 
+                calcDistance(this.gridX, this.gridY, b.gridX, b.gridY)
+              );
             
             if (berries.length === 0) {
               console.log(`${this.type} (${this.gridX}, ${this.gridY}) found no valid berry coordinates`);
@@ -420,20 +447,14 @@ class Animal {
               break;
             }
             
-            // Sort by distance
-            const closest = berries.sort((a, b) => 
-              calcDistance(this.gridX, this.gridY, a.x, a.y) - 
-              calcDistance(this.gridX, this.gridY, b.x, b.y)
-            )[0];
+            this.targetCell = berries[0];
             
-            this.targetCell = closest;
-            
-            console.log(`🔍 ${this.type} (${this.gridX}, ${this.gridY}) targeting berries at (${this.targetCell.x}, ${this.targetCell.y}). Distance: ${calcDistance(this.gridX, this.gridY, this.targetCell.x, this.targetCell.y).toFixed(1)} cells`);
+            console.log(`🔍 ${this.type} (${this.gridX}, ${this.gridY}) targeting berries at (${this.targetCell.gridX}, ${this.targetCell.gridY}). Distance: ${calcDistance(this.gridX, this.gridY, this.targetCell.gridX, this.targetCell.gridY).toFixed(1)} cells`);
             
             // Find a path to the berries
-            const berryPathResult = this.findPathToTarget(this.targetCell);
+            const berryPathResult = this.findPathToTarget({x: this.targetCell.gridX, y: this.targetCell.gridY});
             if (!berryPathResult) {
-              console.log(`🚫 ${this.type} (${this.gridX}, ${this.gridY}) couldn't find path to berries at (${this.targetCell.x}, ${this.targetCell.y})`);
+              console.log(`🚫 ${this.type} (${this.gridX}, ${this.gridY}) couldn't find path to berries at (${this.targetCell.gridX}, ${this.targetCell.gridY})`);
               this.targetCell = null; // Reset target to try another berry bush
             } else {
               console.log(`✅ ${this.type} (${this.gridX}, ${this.gridY}) found path to berries. Length: ${this.currentPath.length} steps`);
@@ -516,46 +537,61 @@ class Animal {
 
   // Find a path away from a predator
   findEscapePath(predator) {
-    // Calculate a position in the opposite direction of the predator
+    // Calculate direct direction away from predator
     const dx = this.gridX - predator.gridX;
     const dy = this.gridY - predator.gridY;
-    const distance = Math.max(3, this.detectionRange); // Minimum escape distance
     
-    // Normalize and scale the direction vector
-    const length = Math.sqrt(dx * dx + dy * dy);
-    const escapeX = Math.floor(this.gridX + (dx / length) * distance);
-    const escapeY = Math.floor(this.gridY + (dy / length) * distance);
+    // Set the primary flee direction (horizontal or vertical)
+    let moveX = 0, moveY = 0;
     
-    // Find the closest empty cell to this escape point
-    let bestCell = null;
-    let bestDistance = Infinity;
+    // Decide which direction to flee more strongly
+    if (Math.abs(dx) >= Math.abs(dy)) {
+      // Flee horizontally
+      moveX = dx > 0 ? 1 : -1;
+    } else {
+      // Flee vertically
+      moveY = dy > 0 ? 1 : -1;
+    }
     
-    for (const cell of emptyCells) {
-      const dist = calcDistance(escapeX, escapeY, cell.x, cell.y);
-      if (dist < bestDistance) {
-        bestDistance = dist;
-        bestCell = cell;
+    // Try to find an empty cell in the flee direction
+    const possibleMoves = [
+      { x: this.gridX + moveX, y: this.gridY + moveY }, // Primary flee direction
+      { x: this.gridX + moveX, y: this.gridY }, // Horizontal component
+      { x: this.gridX, y: this.gridY + moveY }, // Vertical component
+      { x: this.gridX - moveX, y: this.gridY }, // Opposite horizontal (last resort)
+      { x: this.gridX, y: this.gridY - moveY }  // Opposite vertical (last resort)
+    ];
+    
+    // Find the first possible move that's on an empty cell
+    for (const move of possibleMoves) {
+      if (emptyCells.some(cell => cell.x === move.x && cell.y === move.y)) {
+        // Set the next position directly
+        this.targetCell = { gridX: move.x, gridY: move.y };
+        this.currentPath = null; // Clear any existing path
+        
+        // Apply the movement immediately
+        this.x = move.x * cellSize;
+        this.y = move.y * cellSize;
+        this.gridX = move.x;
+        this.gridY = move.y;
+        
+        console.log(`${this.type} (${this.gridX}, ${this.gridY}) fleeing from predator at (${predator.gridX}, ${predator.gridY})`);
+        return true;
       }
     }
     
-    if (bestCell) {
-      this.targetCell = bestCell;
-      this.findPathToTarget(bestCell);
-      if (this.currentPath) {
-        console.log(`${this.type} (${this.gridX}, ${this.gridY}) fleeing predator to (${bestCell.x}, ${bestCell.y})`);
-      } else {
-        // If we can't find a valid escape path, try to move away blindly
-        this.currentPath = null;
-      }
-    }
+    // If no valid move found, stay put
+    console.log(`${this.type} (${this.gridX}, ${this.gridY}) tried to flee but is trapped!`);
+    return false;
   }
 
   handleMovement(deltaTime) {
     this.timeSinceLastMove += deltaTime;
-    if (this.timeSinceLastMove < this.moveInterval) return;
     
-    // If we have a path, follow it
-    if (this.currentPath && this.pathIndex < this.currentPath.length) {
+    // For states that still use pathfinding (everything except hunting and fleeing),
+    // the movement is still handled here
+    if (this.currentPath && this.pathIndex < this.currentPath.length && 
+        this.timeSinceLastMove >= this.moveInterval) {
       const nextCell = this.currentPath[this.pathIndex];
       this.x = nextCell.x * cellSize;
       this.y = nextCell.y * cellSize;
@@ -565,8 +601,9 @@ class Animal {
       this.checkForKills();
       this.timeSinceLastMove = 0;
     }
-    // If no path or at the end of the path, stay put
-    else {
+    // For hunting and fleeing states, the movement is applied directly in the state handlers
+    // just reset the timer to prevent multiple movements in the same frame
+    else if (this.timeSinceLastMove >= this.moveInterval && ["hunting", "fleeing", "patrolling"].includes(this.state)) {
       this.timeSinceLastMove = 0;
     }
   }
