@@ -1,4 +1,44 @@
+// Euclidean distance - most accurate for real-world movement but computationally expensive
+// Use when visual appearance of diagonal and straight movement should look natural
 const calcDistance = (x1, y1, x2, y2) => Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+
+// Squared Euclidean distance - much faster than Euclidean because it avoids the square root
+// Perfect for comparisons (e.g., "is this closer than that?") since relative ordering is preserved
+// Use when comparing distances or when exact distance isn't needed
+const calcDistanceSquared = (x1, y1, x2, y2) => (x2 - x1) ** 2 + (y2 - y1) ** 2;
+
+// Manhattan distance (taxicab geometry) - fastest calculation, perfect for grid-based movement
+// Distance is measured along axes at right angles (like city blocks)
+// Use for grid-based pathfinding or when diagonal movement costs the same as straight movement
+const calcManhattanDistance = (x1, y1, x2, y2) => Math.abs(x2 - x1) + Math.abs(y2 - y1);
+
+// Add a spatial grid for faster animal lookups
+let animalSpatialGrid = {};
+const GRID_CELL_SIZE = 10; // Size of each spatial grid cell (in game grid cells)
+
+// Function to update the spatial grid
+function updateAnimalSpatialGrid() {
+  // Clear the existing grid
+  animalSpatialGrid = {};
+  
+  // Add all living animals to the grid
+  for (const animal of animals) {
+    if (!animal.isAlive) continue;
+    
+    // Calculate the grid cell coordinates
+    const gridCellX = Math.floor(animal.gridX / GRID_CELL_SIZE);
+    const gridCellY = Math.floor(animal.gridY / GRID_CELL_SIZE);
+    const key = `${gridCellX},${gridCellY}`;
+    
+    // Create the grid cell if it doesn't exist
+    if (!animalSpatialGrid[key]) {
+      animalSpatialGrid[key] = [];
+    }
+    
+    // Add the animal to the cell
+    animalSpatialGrid[key].push(animal);
+  }
+}
 
 class Animal {
   static PREY_BASE_SPEED = 2000;
@@ -108,11 +148,40 @@ class Animal {
 
   detectNearbyAnimals() {
     if (!this.isAlive) return [];
-    return animals.filter(a => {
-      if (a === this || !a.isAlive) return false;
-      const distance = calcDistance(this.gridX, this.gridY, a.gridX, a.gridY);
-      return distance <= this.detectionRange;
-    });
+    
+    const nearbyAnimals = [];
+    
+    // Using Manhattan distance is more appropriate for a grid-based game
+    // For animals to detect each other within a certain grid range
+    const detectionRange = this.detectionRange * 1.5; // Adjust the multiplier to account for Manhattan vs Euclidean
+    
+    // Get the grid cell this animal is in
+    const gridCellX = Math.floor(this.gridX / GRID_CELL_SIZE);
+    const gridCellY = Math.floor(this.gridY / GRID_CELL_SIZE);
+    
+    // Check the animal's cell and all adjacent cells
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        const checkKey = `${gridCellX + dx},${gridCellY + dy}`;
+        const cellAnimals = animalSpatialGrid[checkKey] || [];
+        
+        // Check each animal in this cell
+        for (const animal of cellAnimals) {
+          if (animal === this || !animal.isAlive) continue;
+          
+          // Use Manhattan distance for grid-based detection - much faster than squared calculations
+          const manhattanDist = calcManhattanDistance(
+            this.gridX, this.gridY, animal.gridX, animal.gridY
+          );
+          
+          if (manhattanDist <= detectionRange) {
+            nearbyAnimals.push(animal);
+          }
+        }
+      }
+    }
+    
+    return nearbyAnimals;
   }
 
   updateBehavior(deltaTime) {
@@ -210,13 +279,17 @@ class Animal {
             // Calculate direction toward prey
             const dx = this.targetAnimal.gridX - this.gridX;
             const dy = this.targetAnimal.gridY - this.gridY;
-            const distance = calcDistance(this.gridX, this.gridY, this.targetAnimal.gridX, this.targetAnimal.gridY);
+            
+            // Use Manhattan distance for hunting checks - faster and grid-appropriate
+            const manhattanDistance = calcManhattanDistance(
+              this.gridX, this.gridY, this.targetAnimal.gridX, this.targetAnimal.gridY
+            );
             
             // Set movement speed to chase speed
             this.moveInterval = this.chaseSpeed;
             
             // If we've reached the prey, try to kill it
-            if (distance <= Animal.KILL_DISTANCE) {
+            if (manhattanDistance <= Animal.KILL_DISTANCE) {
               this.checkForKills();
               if (!this.targetAnimal?.isAlive) {
                 this.hunger = Math.max(0, this.hunger - 70);
@@ -227,7 +300,7 @@ class Animal {
               }
             } 
             // If prey is too far, give up chase
-            else if (distance > this.detectionRange * 1.3 || this.stateTimer >= 5000) {
+            else if (manhattanDistance > this.detectionRange * 2 || this.stateTimer >= 5000) {
               console.log(`${this.type} (${this.gridX}, ${this.gridY}) gave up chase after ${Math.floor(this.stateTimer/1000)}s`);
               this.state = "patrolling";
               this.targetAnimal = null;
@@ -271,7 +344,7 @@ class Animal {
               }
               
               // If prey suddenly out of detection, look for a new one after a while
-              if (this.stateTimer > 2000 && distance > this.detectionRange) {
+              if (this.stateTimer > 2000 && manhattanDistance > this.detectionRange) {
                 const newPrey = this.detectNearbyAnimals().find(a => !a.isPredator && a.isAlive);
                 if (newPrey && newPrey !== this.targetAnimal) {
                   console.log(`${this.type} (${this.gridX}, ${this.gridY}) switching to new prey target`);
@@ -303,7 +376,14 @@ class Animal {
 
         case "fleeing":
           const predator = nearby.find(a => a.isPredator && a.isAlive);
-          if (!predator || calcDistance(this.gridX, this.gridY, predator.gridX, predator.gridY) > this.detectionRange * 1.5) {
+          // Use Manhattan distance for the predator distance check - faster and grid-appropriate
+          const predatorDistance = predator ? 
+              calcManhattanDistance(this.gridX, this.gridY, predator.gridX, predator.gridY) : Infinity;
+          
+          // Adjusted threshold for Manhattan distance (which is usually larger than Euclidean)
+          const fleeThreshold = this.detectionRange * 2;
+          
+          if (!predator || predatorDistance > fleeThreshold) {
             // Resume previous activity or find new one
             this.state = this.thirst >= this.hunger ? "seekingWater" : "seekingBerries";
             this.targetCell = null;
@@ -347,35 +427,40 @@ class Animal {
             break;
           }
 
-          if (!this.targetCell) {
-            // Just pick any random water cell - no need to track attempted targets
-            if (outsideRingLakeBorders.length > 0) {
-              const randomIndex = Math.floor(Math.random() * outsideRingLakeBorders.length);
-              this.targetCell = outsideRingLakeBorders[randomIndex];
-              
-              console.log(`🔍 ${this.type} (${this.gridX}, ${this.gridY}) targeting random water at (${this.targetCell.gridX}, ${this.targetCell.gridY}). Distance: ${calcDistance(this.gridX, this.gridY, this.targetCell.gridX, this.targetCell.gridY).toFixed(1)} cells`);
-              
-              // Find a path to the water
-              const pathResult = this.findPathToTarget({x: this.targetCell.gridX, y: this.targetCell.gridY});
-              if (!pathResult) {
-                console.log(`🚫 ${this.type} (${this.gridX}, ${this.gridY}) couldn't find path to water, switching to berries`);
-                // If no path is found, just switch to seeking berries
-                this.state = "seekingBerries";
-                this.targetCell = null;
-                this.stateTimer = 0;
-                this.currentPath = null;
-                break;
-              } else {
-                console.log(`✅ ${this.type} (${this.gridX}, ${this.gridY}) found path to water. Length: ${this.currentPath.length} steps`);
-              }
-            } else {
-              // This shouldn't happen due to the earlier check, but just in case
-              this.noLakesNearby = true;
+          // If we already have a path, follow it instead of finding a new target
+          if (this.currentPath && this.pathIndex < this.currentPath.length) {
+            // Path exists and is being followed, no need to do anything here
+            // The handleMovement method will follow the path
+          }
+          // If we have a target but no path, we need to switch to berries
+          else if (this.targetCell && !this.currentPath) {
+            console.log(`🔄 ${this.type} (${this.gridX}, ${this.gridY}) no valid path to water, switching to berries`);
+            this.state = "seekingBerries";
+            this.targetCell = null;
+            this.stateTimer = 0;
+            break;
+          }
+          // If we don't have a target, find one
+          else if (!this.targetCell) {
+            // Just pick any random water cell
+            const randomIndex = Math.floor(Math.random() * outsideRingLakeBorders.length);
+            this.targetCell = outsideRingLakeBorders[randomIndex];
+            
+            // Only calculate the actual distance for logging, not for game logic
+            console.log(`🔍 ${this.type} (${this.gridX}, ${this.gridY}) targeting random water at (${this.targetCell.gridX}, ${this.targetCell.gridY}). Distance: ${Math.sqrt(calcDistanceSquared(this.gridX, this.gridY, this.targetCell.gridX, this.targetCell.gridY)).toFixed(1)} cells`);
+            
+            // Find a path to the water
+            const pathResult = this.findPathToTarget({x: this.targetCell.gridX, y: this.targetCell.gridY});
+            if (!pathResult) {
+              console.log(`🚫 ${this.type} (${this.gridX}, ${this.gridY}) couldn't find path to water, switching to berries`);
+              // If no path is found, just switch to seeking berries
               this.state = "seekingBerries";
               this.targetCell = null;
               this.stateTimer = 0;
               this.currentPath = null;
               break;
+            } else {
+              console.log(`✅ ${this.type} (${this.gridX}, ${this.gridY}) found path to water. Length: ${this.currentPath.length} steps`);
             }
           }
 
@@ -420,7 +505,21 @@ class Animal {
             break;
           }
 
-          if (!this.targetCell) {
+          // If we already have a path, follow it instead of finding a new target
+          if (this.currentPath && this.pathIndex < this.currentPath.length) {
+            // Path exists and is being followed, no need to do anything here
+            // The handleMovement method will follow the path
+          }
+          // If we have a target but no path, we need to switch to water
+          else if (this.targetCell && !this.currentPath) {
+            console.log(`🔄 ${this.type} (${this.gridX}, ${this.gridY}) no valid path to berries, switching to water`);
+            this.state = "seekingWater";
+            this.targetCell = null;
+            this.stateTimer = 0;
+            break;
+          }
+          // If we don't have a target, find one
+          else if (!this.targetCell) {
             if (!gBushesPositions.length) {
               console.log(`${this.type} (${this.gridX}, ${this.gridY}) failed to find berries - none exist on map`);
               this.state = "seekingWater"; // Try water instead
@@ -433,10 +532,12 @@ class Animal {
             // Find the closest berry bush - directly using gridX and gridY
             const berries = gBushesPositions
               .filter(bush => bush.gridX !== undefined && bush.gridY !== undefined)
-              .sort((a, b) => 
-                calcDistance(this.gridX, this.gridY, a.gridX, a.gridY) - 
-                calcDistance(this.gridX, this.gridY, b.gridX, b.gridY)
-              );
+              .sort((a, b) => {
+                // Use Manhattan distance for grid-based sorting - fastest possible comparison
+                const distA = calcManhattanDistance(this.gridX, this.gridY, a.gridX, a.gridY);
+                const distB = calcManhattanDistance(this.gridX, this.gridY, b.gridX, b.gridY);
+                return distA - distB;
+              });
             
             if (berries.length === 0) {
               console.log(`${this.type} (${this.gridX}, ${this.gridY}) found no valid berry coordinates`);
@@ -449,13 +550,19 @@ class Animal {
             
             this.targetCell = berries[0];
             
-            console.log(`🔍 ${this.type} (${this.gridX}, ${this.gridY}) targeting berries at (${this.targetCell.gridX}, ${this.targetCell.gridY}). Distance: ${calcDistance(this.gridX, this.gridY, this.targetCell.gridX, this.targetCell.gridY).toFixed(1)} cells`);
+            // Only calculate the actual distance for logging, not for game logic
+            console.log(`🔍 ${this.type} (${this.gridX}, ${this.gridY}) targeting berries at (${this.targetCell.gridX}, ${this.targetCell.gridY}). Distance: ${Math.sqrt(calcDistanceSquared(this.gridX, this.gridY, this.targetCell.gridX, this.targetCell.gridY)).toFixed(1)} cells`);
             
             // Find a path to the berries
             const berryPathResult = this.findPathToTarget({x: this.targetCell.gridX, y: this.targetCell.gridY});
             if (!berryPathResult) {
               console.log(`🚫 ${this.type} (${this.gridX}, ${this.gridY}) couldn't find path to berries at (${this.targetCell.gridX}, ${this.targetCell.gridY})`);
-              this.targetCell = null; // Reset target to try another berry bush
+              // Switch to water if no path found
+              this.state = "seekingWater";
+              this.targetCell = null;
+              this.stateTimer = 0;
+              this.currentPath = null;
+              break;
             } else {
               console.log(`✅ ${this.type} (${this.gridX}, ${this.gridY}) found path to berries. Length: ${this.currentPath.length} steps`);
             }
@@ -503,7 +610,9 @@ class Animal {
     
     if (targetX === 0 && targetY === 0) return false; // Invalid target
     
-    return calcDistance(this.gridX, this.gridY, targetX, targetY) <= 1;
+    // Use Manhattan distance for grid-based "reached target" check
+    // An animal is considered to have reached the target if within 1 cell
+    return calcManhattanDistance(this.gridX, this.gridY, targetX, targetY) <= 1;
   }
 
   // Find a path to the target using the pathfinding algorithm
@@ -633,11 +742,15 @@ class Animal {
   checkForKills() {
     if (!this.isPredator || !this.isAlive || this.isFrozen) return;
     
+    // Use Manhattan distance for grid-based kill checks
+    // Animal is considered within kill range if Manhattan distance <= KILL_DISTANCE
+    const killRange = Animal.KILL_DISTANCE;
+    
     const prey = animals.find(a => 
       a !== this && 
       !a.isPredator && 
       a.isAlive && 
-      calcDistance(this.gridX, this.gridY, a.gridX, a.gridY) <= Animal.KILL_DISTANCE
+      calcManhattanDistance(this.gridX, this.gridY, a.gridX, a.gridY) <= killRange
     );
     
     if (prey) this.killAnimal(prey);
@@ -810,3 +923,16 @@ function moveCoyote(coyote, prey = null) {
   return true;
 }
  */
+
+// Add code to update the spatial grid regularly
+function updateGameState(deltaTime) {
+  // Update the spatial grid first so animals can use it
+  updateAnimalSpatialGrid();
+  
+  // Update all animals
+  for (const animal of animals) {
+    animal.update(deltaTime);
+  }
+  
+  // Rest of game update logic...
+}

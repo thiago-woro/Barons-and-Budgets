@@ -118,7 +118,7 @@ function updateSimulation() {
 
   if (!window.isSimulationRunning) {
     window.isSimulationRunning = true;
-    //console.time("simulation");
+    console.time("simulation");
     
     loopCounter = (loopCounter + 1) % cycleLength; // Line 96: Now defined
     const isMajorActivitiesLoop = loopCounter === 0;
@@ -170,11 +170,16 @@ function updateSimulation() {
       }
     });
 
+    // Update the animal spatial grid before processing animals
+    if (typeof updateAnimalSpatialGrid === 'function') {
+      updateAnimalSpatialGrid();
+    }
+
     // Animal simulation updates
     animals.forEach(animal => {
       animal.update(simulationBaseInterval / (gameLoopSpeed / 50)); // Scaled deltaTime
     });
-    //console.timeEnd("simulation");
+    console.timeEnd("simulation");
     window.isSimulationRunning = false;
   }
 }
