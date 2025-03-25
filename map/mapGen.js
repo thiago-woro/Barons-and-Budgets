@@ -357,11 +357,23 @@ function afterMapGen() { //after basic terrain generation, adds enviromental det
     animalCtx.clearRect(0, 0, animalCanvas.width, animalCanvas.height);
             animals.forEach(animal => animal.draw(animalCtx));
   
+
+identifyIslands(false, false);
+// Example usage in your code:
+islands.forEach(island => {
+    // Add 2-3 puddles based on island size
+    const numPuddles = Math.max(2, Math.floor(island.size / 900));
+    addPotablePuddleCell(island, numPuddles, 2);
+    
+});
+
   // Draw grass patches at the end
   drawGrass(treeCtx, 0.45);
 
 
-identifyIslands(false, false);
+/* END OF ALL TERRAIN RELATED GENERATIONS */
+
+
 
   // startNPCs(npcCtx, cellSize);
  // initializeFishingResources();
@@ -1136,17 +1148,25 @@ function addPotablePuddleCell(island, amountPuddles, puddleSize = 2) {
         console.log('Invalid island data for puddle generation');
         return;
     }
+    
+    potablePuddleCells = [];
+    
+    // Filter suitable cells for puddles (flat terrain between 0.2 and 0.4 noise)
+    const suitableCells = island.cells.filter(cell => {
+        const noiseValue = parseFloat(cell.noise);
+        return noiseValue > 0.2 && noiseValue < 0.4;
+    });
 
-    // Clear any existing puddles for this island
-    potablePuddleCells = potablePuddleCells.filter(puddle => 
-        !island.cells.some(cell => cell.x === puddle.x && cell.y === puddle.y)
-    );
+    if (suitableCells.length === 0) {
+        console.log(`No suitable flat areas for puddles on ${island.islandName}`);
+        return;
+    }
 
-    // Select random cells from the island for puddles
+    // Select random cells from the filtered suitable cells for puddles
     for (let i = 0; i < amountPuddles; i++) {
-        // Get random cell from island
-        const randomIndex = Math.floor(Math.random() * island.cells.length);
-        const baseCell = island.cells[randomIndex];
+        // Get random cell from suitable cells
+        const randomIndex = Math.floor(Math.random() * suitableCells.length);
+        const baseCell = suitableCells[randomIndex];
 
         // Create a small cluster of puddle cells around the base cell
         for (let dx = -puddleSize; dx <= puddleSize; dx++) {
@@ -1160,8 +1180,15 @@ function addPotablePuddleCell(island, amountPuddles, puddleSize = 2) {
                         type: 'puddle'
                     };
 
-                    // Check if this cell is actually part of the island
-                    if (island.cells.some(cell => cell.x === puddleCell.x && cell.y === puddleCell.y)) {
+                    // Check if this cell is actually part of the island AND in suitable terrain
+                    const islandCell = island.cells.find(cell => 
+                        cell.x === puddleCell.x && 
+                        cell.y === puddleCell.y && 
+                        parseFloat(cell.noise) > 0.2 && 
+                        parseFloat(cell.noise) < 0.4
+                    );
+
+                    if (islandCell) {
                         potablePuddleCells.push(puddleCell);
                     }
                 }
@@ -1177,13 +1204,30 @@ function addPotablePuddleCell(island, amountPuddles, puddleSize = 2) {
 function drawPuddles() {
     if (potablePuddleCells.length === 0) return;
 
-    const ctx = waterCtx; // Using water canvas for puddles
+    const ctx = groundCtx; // Using ground canvas for puddles
     ctx.save();
     
     potablePuddleCells.forEach(puddle => {
+        // Check if there's a tree at the puddle's location
+        const treeExists = treePositions.some(tree => tree.gridX === puddle.x && tree.gridY === puddle.y);
+        if (treeExists) {
+            return; // Skip drawing this puddle cell
+        }
+
+        const randomAlpha = Math.floor(Math.random() * 0.1) + 0.5;
+
         ctx.fillStyle = puddle.color;
-        ctx.globalAlpha = 0.4; // Make puddles semi-transparent
-        ctx.fillRect(puddle.x * cellSize, puddle.y * cellSize, cellSize, cellSize);
+        ctx.globalAlpha = randomAlpha; // Make puddles semi-transparent
+        //random number between 1 and 7
+        const randomBorderRadius = Math.floor(Math.random() * 3) + 4;
+        drawRoundedRect(
+            ctx,
+            puddle.x * cellSize,
+            puddle.y * cellSize,
+            cellSize,
+            randomBorderRadius, // Rounded border radius
+            puddle.color
+        );
     });
     
     ctx.restore();

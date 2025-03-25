@@ -22,6 +22,17 @@ function drawGrass(ctx, grassDensity) {
   // Reset the grassCells array for this new drawing
   grassCells = [];
   
+  // Create a Set of puddle cell coordinates for faster lookup
+  const puddlePositions = new Set(
+    potablePuddleCells.map(puddle => `${puddle.x},${puddle.y}`)
+  );
+
+  // Filter ground cells to exclude puddle locations
+  const availableGrassCells = groundCells.filter(cell => {
+    // Skip if cell is a puddle location
+    return !puddlePositions.has(`${cell.x},${cell.y}`);
+  });
+
   // Filter cells that are:
   // 1. In emptyCells (walkable)
   // 2. Have a noise value between 0.1 and 0.4 (appropriate terrain for grass)
@@ -39,19 +50,12 @@ function drawGrass(ctx, grassDensity) {
     });
   }
 
-  // Create a set of water positions for faster lookups
-  const waterCellsSet = new Set();
-  if (waterCells && waterCells.length > 0) {
-    waterCells.forEach(cell => {
-      waterCellsSet.add(`${cell.x},${cell.y}`);
-    });
-  }
+
 
   // Additional check to make sure we're not drawing on water cells or tree positions
   grasslands = grasslands.filter(cell => {
-    // Make sure this cell is not in waterCells and not where a tree is
-    return !waterCellsSet.has(`${cell.x},${cell.y}`) && 
-           !treePositionsSet.has(`${cell.x},${cell.y}`);
+    // Make sure this cell is not in potablePuddleCells and not where a tree is
+    return !treePositionsSet.has(`${cell.x},${cell.y}`) && !potablePuddleCells.some(puddle => puddle.x === cell.x && puddle.y === cell.y);
   });
 
   console.log(`Found ${grasslands.length} potential grass cells after filtering water and trees`);
@@ -63,7 +67,7 @@ function drawGrass(ctx, grassDensity) {
       const y = cell.y;
       
       // Double-check this is a valid ground cell before drawing
-      if (!groundCells.some(gc => gc.x === x && gc.y === y && parseFloat(gc.noise) > 0)) {
+      if (!availableGrassCells.some(gc => gc.x === x && gc.y === y && parseFloat(gc.noise) > 0)) {
         continue; // Skip this cell if it's not valid ground
       }
       

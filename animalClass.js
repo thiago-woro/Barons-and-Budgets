@@ -1,6 +1,9 @@
 let timesUsedPathFinderFunction = 0;
 // Add at the top with other globals
 let walkableCellsLookup = new Set(); // Will store walkable cell coordinates as "x,y" strings
+let throttledPathfindingTimer = 0;
+let maxPathfindingCallsPerFrame = 3; // Limit pathfinding calls per frame
+let currentPathfindingCalls = 0;
 
 // Function to initialize walkable cells lookup
 function initWalkableCellsLookup() {
@@ -129,9 +132,33 @@ function findPath(start, target, targetIsTree = false) {
     return null;
 }
 
-
-
-
+// Add this after the findPath function and before the Animal class
+function findPathToNearestCell(startX, startY, targetCells) {
+    // Throttle excessive pathfinding calls
+    if (currentPathfindingCalls >= maxPathfindingCallsPerFrame) {
+        return null;
+    }
+    currentPathfindingCalls++;
+    
+    if (!targetCells || targetCells.length === 0) return null;
+    
+    // Sort target cells by Manhattan distance to start position
+    const sortedTargets = targetCells
+        .map(cell => ({
+            cell,
+            distance: calcManhattanDistance(startX, startY, cell.gridX || cell.x, cell.gridY || cell.y)
+        }))
+        .sort((a, b) => a.distance - b.distance);
+    
+    // Only try the closest target to reduce pathfinding calls
+    const target = sortedTargets[0].cell;
+    const path = findPath(
+        { x: startX, y: startY },
+        { x: target.gridX || target.x, y: target.gridY || target.y }
+    );
+    
+    return path;
+}
 
 /* end of movement logic */
 
@@ -159,6 +186,25 @@ const calcDistanceSquared = (x1, y1, x2, y2) => (x2 - x1) ** 2 + (y2 - y1) ** 2;
 // Distance is measured along axes at right angles (like city blocks)
 // Use for grid-based pathfinding or when diagonal movement costs the same as straight movement
 const calcManhattanDistance = (x1, y1, x2, y2) => Math.abs(x2 - x1) + Math.abs(y2 - y1);
+
+// Add after calcManhattanDistance function
+function getAdjacentEmptyCells(gridX, gridY) {
+  const adjacentCells = [];
+  const offsets = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+  
+  for (const [dx, dy] of offsets) {
+    const newX = gridX + dx;
+    const newY = gridY + dy;
+    const key = `${newX},${newY}`;
+    
+    // Check if the cell is walkable using our lookup
+    if (walkableCellsLookup.has(key)) {
+      adjacentCells.push({ gridX: newX, gridY: newY });
+    }
+  }
+  
+  return adjacentCells;
+}
 
 // Add a spatial grid for faster animal lookups
 let animalSpatialGrid = {};
@@ -668,25 +714,37 @@ class Animal {
           }
           // If we don't have a target, find one
           else if (!this.targetCell) {
-            // Just pick any random water cell
-            const randomIndex = Math.floor(Math.random() * outsideRingLakeBorders.length);
-            this.targetCell = outsideRingLakeBorders[randomIndex];
+            // Try to find path to lake first
+            const pathToLake = findPathToNearestCell(this.gridX, this.gridY, outsideRingLakeBorders);
             
-          /*   // Only calculate the actual distance for logging, not for game logic
-            console.log(`🔍 ${this.type} (${this.gridX}, ${this.gridY}) targeting random water at (${this.targetCell.gridX}, ${this.targetCell.gridY}). Distance: ${Math.sqrt(calcDistanceSquared(this.gridX, this.gridY, this.targetCell.gridX, this.targetCell.gridY)).toFixed(1)} cells`);
-             */
-            // Find a path to the water
-            const pathResult = this.findPathToTarget({x: this.targetCell.gridX, y: this.targetCell.gridY});
-            if (!pathResult) {
-              console.log(`🚫 ${this.type} (${this.gridX}, ${this.gridY}) couldn't find path to water, switching to berries`);
-              // If no path is found, just switch to seeking berries
-              this.state = "seekingBerries";
-              this.targetCell = null;
-              this.stateTimer = 0;
-              this.currentPath = null;
-              break;
+            if (!pathToLake) {
+                // Fallback 1: Check for potable puddles in 6 cell radius
+                const nearbyPuddles = potablePuddleCells?.filter(cell => 
+                    calcDistance(this.gridX, this.gridY, cell.gridX || cell.x, cell.gridY || cell.y) <= 6
+                );
+                
+                if (nearbyPuddles && nearbyPuddles.length > 0) {
+                    // Move to closest puddle
+                    const closestPuddle = nearbyPuddles.reduce((closest, current) => {
+                        const currentDist = calcDistance(this.gridX, this.gridY, current.gridX || current.x, current.gridY || current.y);
+                        const closestDist = calcDistance(this.gridX, this.gridY, closest.gridX || closest.x, closest.gridY || closest.y);
+                        return currentDist < closestDist ? current : closest;
+                    });
+                    this.targetCell = closestPuddle;
+                    console.log(`🌊 ${this.type} (${this.gridX}, ${this.gridY}) found nearby puddle`);
+                } else {
+                    // Fallback 2: No water sources found, switch to random movement
+                    this.state = "random";
+                    console.log(`🎲 ${this.type} (${this.gridX}, ${this.gridY}) no water found, moving randomly`);
+                }
             } else {
-              console.log(`✅ ${this.type} (${this.gridX}, ${this.gridY}) found path to water. Length: ${this.currentPath.length} steps`);
+                // Set the path from lake pathfinding
+                this.currentPath = pathToLake;
+                this.pathIndex = 0;
+                
+                // Set target to the end of the path
+                const endPoint = pathToLake[pathToLake.length - 1];
+                this.targetCell = { gridX: endPoint.x, gridY: endPoint.y };
             }
           }
 
@@ -820,6 +878,42 @@ class Animal {
             this.targetCell = null;
             this.stateTimer = 0;
             this.currentPath = null;
+          }
+          break;
+
+        case "random":
+          // Get all empty adjacent cells that are walkable
+          const adjacentCells = [];
+          const offsets = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+          
+          for (const [dx, dy] of offsets) {
+              const newX = this.gridX + dx;
+              const newY = this.gridY + dy;
+              const key = `${newX},${newY}`;
+              
+              // Check if the cell is walkable using our lookup
+              if (walkableCellsLookup.has(key)) {
+                  adjacentCells.push({ gridX: newX, gridY: newY });
+              }
+          }
+          
+          if (adjacentCells.length > 0) {
+              // Pick a random empty adjacent cell
+              const randomCell = adjacentCells[Math.floor(Math.random() * adjacentCells.length)];
+              this.targetCell = randomCell;
+              
+              // Apply movement immediately
+              this.x = randomCell.gridX * cellSize;
+              this.y = randomCell.gridY * cellSize;
+              this.gridX = randomCell.gridX;
+              this.gridY = randomCell.gridY;
+              
+              // After random movement, go back to seeking needs
+              this.state = this.thirst >= this.hunger ? "seekingWater" : "seekingBerries";
+          } else {
+              // If no walkable cells, try again next update
+              console.log(`⚠️ ${this.type} (${this.gridX}, ${this.gridY}) trapped with no walkable cells`);
+              this.state = "idle";
           }
           break;
       }
@@ -1104,6 +1198,8 @@ class Animal {
 function starterAnimalPopulations(amount = 20) {
   // Clear existing animals
   animals = [];
+  //clear animalsctx
+  
 
   // Group cells by terrain type
   const sandCells = emptyCells.filter(cell => parseFloat(cell.noise) < 0.05);
@@ -1116,14 +1212,20 @@ function starterAnimalPopulations(amount = 20) {
   // Distribution percentages
   const coyotePercent = 0.10;  // 15% coyotes
   const bearPercent = 0.10;    // 15% bears
-  const sheepPercent = 0.45;   // 35% sheep
-  const chickenPercent = 0.35; // 35% chickens
+  const sheepPercent = 0.2;   // 35% sheep
+  const chickenPercent = 0.2; // 35% chickens
+  const cowPercent = 0.2; // 5% cows
+  const pigPercent = 0.2; // 5% pigs
 
   // Calculate counts
   const coyoteCount = Math.floor(amount * coyotePercent);
   const bearCount = Math.floor(amount * bearPercent);
   const sheepCount = Math.floor(amount * sheepPercent);
   const chickenCount = Math.floor(amount * chickenPercent);
+  const cowCount = Math.floor(amount * cowPercent);
+  const pigCount = Math.floor(amount * pigPercent);
+
+
 
   // Helper function to place animals
   function placeAnimals(count, type, cells) {
@@ -1146,6 +1248,8 @@ function starterAnimalPopulations(amount = 20) {
   // Place prey
   placeAnimals(sheepCount, 'Sheep', middleCells);
   placeAnimals(chickenCount, 'Chicken', middleCells);
+  placeAnimals(cowCount, 'Cow', middleCells);
+  placeAnimals(pigCount, 'Pig', middleCells);
 
   console.log(`Distributed ${animals.length} animals:`,
     `${coyoteCount} coyotes,`,
@@ -1199,8 +1303,11 @@ function moveCoyote(coyote, prey = null) {
 }
  */
 
-// Add code to update the spatial grid regularly
+// Add this to the updateGameState function
 function updateGameState(deltaTime) {
+  // Reset pathfinding call counter each frame
+  currentPathfindingCalls = 0;
+  
   // Initialize lookups if needed
   if (!validMovesLookup || Object.keys(validMovesLookup).length === 0) {
     precomputeValidMoves();
