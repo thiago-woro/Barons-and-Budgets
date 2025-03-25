@@ -15,11 +15,11 @@ let cellSize = 20;
 var gridSize = 10; // seems to be unused
 
 let terrainGrid;
-let perlinNoiseScale = 0.03; //original number is 0.025
+let perlinNoiseScale = 0.025; //original number is 0.025
 rows = 200;  //maximum 300 rows recommend, mid range gpu
 
 
-let offset = 0.75; //og is 0.35
+let offset = 0.85; //og is 0.35
 let noiseValues = [];
 let terrainMap = [];
 let groundCells = [];

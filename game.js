@@ -23,7 +23,7 @@ const targetFrameRate = 60; // 60 FPS for smooth rendering
 const simulationBaseInterval = 1000; // Base simulation update every 1s
 const cycleLength = 3; // Added: Controls major activity cycles (every 3rd simulation tick)
 let loopCounter = 0;
-let isPaused = true;
+let isPaused = false;
 
 
 // Toggle function reused by button and keypress
@@ -31,9 +31,8 @@ function toggleGame() {
   if (gameLoopInterval === null) {
     gameLoopInterval = requestAnimationFrame(renderLoop);
     simulationInterval = setInterval(updateSimulation, simulationBaseInterval / (gameLoopSpeed / 50));
-   // startButton.textContent = "Pause Game";
-   // isPaused = false;
-    isPaused = true;
+   startButton.textContent = "Pause Game";
+    isPaused = false;
 
     console.log(`Game started`);
   } else {
@@ -119,7 +118,7 @@ function updateSimulation() {
 
   if (!window.isSimulationRunning) {
     window.isSimulationRunning = true;
-    console.time("simulation");
+    //console.time("simulation");
     
     loopCounter = (loopCounter + 1) % cycleLength; // Line 96: Now defined
     const isMajorActivitiesLoop = loopCounter === 0;
@@ -175,7 +174,7 @@ function updateSimulation() {
     animals.forEach(animal => {
       animal.update(simulationBaseInterval / (gameLoopSpeed / 50)); // Scaled deltaTime
     });
-    console.timeEnd("simulation");
+    //console.timeEnd("simulation");
     window.isSimulationRunning = false;
   }
 }

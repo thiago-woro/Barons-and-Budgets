@@ -119,6 +119,7 @@ function updateWoodcutter(npc) {
             //50% chance of npc.state idle
             if (Math.random() < 0.9) {
                 npc.setState("idle");
+                break;
             }
             break;
 

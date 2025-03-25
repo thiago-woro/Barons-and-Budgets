@@ -1,5 +1,5 @@
-  let selectedEmoji = '';
-  let selectedToolName = '';
+let selectedEmoji = '';
+let selectedToolName = '';
 
 document.addEventListener('DOMContentLoaded', () => {
     const ToolState = {
@@ -13,10 +13,19 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentToolState = ToolState.SELECTING;
     let selectedTool = null;
 
+    // Add this object to track last selected tool per tab
+    const tabToolState = {
+        buildings: null,
+        terrain: null,
+        creatures: null,
+        animals: null,
+        budgets: null
+    };
+
     const removeActiveClass = (selector) => document.querySelectorAll(selector).forEach(el => el.classList.remove('active'));
     const addActiveClass = (selector, id) => document.getElementById(id).classList.add('active');
 
-    // Unified function to handle card clicks
+    // Modified handleCardClick to save tool state
     const handleCardClick = (card) => {
         const cardId = card.id;
         selectedEmoji = card.dataset.emoji;
@@ -25,9 +34,11 @@ document.addEventListener('DOMContentLoaded', () => {
         addActiveClass('.bottomCard', cardId);
         selectedTool = cardId;
         document.body.style.cursor = 'auto';
-        console.log(`Tool selected: ${cardId}`);
-
-        // Only set the tool state based on the tab - don't draw anything here
+        
+        // Save the selected tool for current tab
+        tabToolState[window.activeTabBottomLeft] = cardId;
+        
+        // Set tool state based on tab
         currentToolState = (() => {
             switch (window.activeTabBottomLeft) {
                 case 'animals': return ToolState.PLACING_ANIMAL;
@@ -88,7 +99,9 @@ document.addEventListener('DOMContentLoaded', () => {
             Animal.PREDATOR_MAX_AGE : Animal.MAX_AGE;
         const randomAge = Math.floor(Math.random() * (maxAge * 0.9 - maxAge * 0.15) + maxAge * 0.15);
 
-        animals.push(new Animal(coords.cellCol, coords.cellRow, toolId, randomAge));
+        let animalSpecies = toolId.includes('Coyote') ? 'Coyote' : toolId.includes('Bear') ? 'Bear' : toolId.includes('Sheep') ? 'Sheep' : 'Chicken';
+
+        animals.push(new Animal(coords.cellCol, coords.cellRow, animalSpecies, randomAge));
         animalCtx.clearRect(0, 0, animalCanvas.width, animalCanvas.height);
         animals.forEach(animal => animal.draw(animalCtx));
         console.log("Placed animal:", animals[animals.length - 1]);
@@ -304,19 +317,65 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    document.querySelectorAll('#leftMenuHeaderTabs .bottomTabs span').forEach(tab => {
+    // Modified tab click handler
+    document.querySelectorAll('#leftMenuHeaderTabs .bottomTabs').forEach(tab => {
         tab.addEventListener('click', () => {
-            const tabId = tab.id.replace('Tab', '').toLowerCase();
+            // Get the tab id from the first span (which contains the tab name)
+            const tabSpan = tab.querySelector('span:first-child');
+            const tabId = tabSpan.id.replace('Tab', '').toLowerCase();
             window.activeTabBottomLeft = tabId;
+            
             removeActiveClass('#leftMenuHeaderTabs .bottomTabs');
-            tab.parentElement.classList.add('active');
+            tab.classList.add('active');
+            
+            // Hide/show appropriate rows
             ['terrainRow', 'creaturesRow', 'animalsRow', 'budgetsRow', 'buildingsRow'].forEach(rowId => {
-                document.getElementById(rowId).style.display = rowId.replace('Row', '').toLowerCase() === tabId ? 'flex' : 'none';
+                document.getElementById(rowId).style.display = 
+                    rowId.replace('Row', '').toLowerCase() === tabId ? 'flex' : 'none';
             });
-            document.body.style.cursor = 'auto';
-            console.log(`Tab: ${window.activeTabBottomLeft}`)
+
+            // Restore last selected tool for this tab or select default
+            const rowElement = document.getElementById(`${tabId}Row`);
+            if (rowElement) {
+                const savedTool = tabToolState[tabId];
+                if (savedTool && document.getElementById(savedTool)) {
+                    // Restore previously selected tool
+                    handleCardClick(document.getElementById(savedTool));
+                } else {
+                    // Select first tool (usually the Select tool) as default
+                    const firstTool = rowElement.querySelector('.bottomCard');
+                    if (firstTool) {
+                        handleCardClick(firstTool);
+                    }
+                }
+            }
         });
     });
+
+    // Modified setDefaultSelectTools
+    const setDefaultSelectTools = () => {
+        // First clear all active tabs and rows
+        removeActiveClass('#leftMenuHeaderTabs .bottomTabs');
+        ['terrainRow', 'creaturesRow', 'animalsRow', 'budgetsRow', 'buildingsRow'].forEach(rowId => {
+            document.getElementById(rowId).style.display = 'none';
+        });
+
+        // Set buildings tab as initial active tab
+        const buildingsTab = document.getElementById('buildingsTab');
+        if (buildingsTab) {
+            buildingsTab.parentElement.classList.add('active');
+            document.getElementById('buildingsRow').style.display = 'flex';
+            window.activeTabBottomLeft = 'buildings';
+
+            // Select first tool in buildings tab
+            const firstBuildingTool = document.querySelector('#buildingsRow .bottomCard');
+            if (firstBuildingTool) {
+                handleCardClick(firstBuildingTool);
+            }
+        }
+    };
+
+    setDefaultSelectTools();
 });
 
 // A* pathfinding algorithm to find a path between two cells

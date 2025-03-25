@@ -1,207 +1,11 @@
-// Base Task class
-class Task {
-  constructor(animal) {
-    this.animal = animal;
-    this.isComplete = false;
-  }
-
-  update(deltaTime) {}
-  onComplete() { this.isComplete = true; }
-}
-
-// Utility function for distance calculation
 const calcDistance = (x1, y1, x2, y2) => Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
 
-// FleeTask
-class FleeTask extends Task {
-  constructor(animal, predator) {
-    super(animal);
-    this.predator = predator;
-    this.fleeingTime = 0;
-    this.maxFleeingTime = 3000;
-  }
-
-  update(deltaTime) {
-    if (!this.predator?.isAlive) return this.onComplete();
-
-    const myGrid = this.animal.gridPos();
-    const predGrid = this.predator.gridPos();
-    const distance = calcDistance(myGrid.x, myGrid.y, predGrid.x, predGrid.y);
-
-    if (distance > this.animal.detectionRange * 1.5) return this.onComplete();
-
-    this.animal.setMovement("away", this.predator);
-    this.fleeingTime += deltaTime;
-    if (this.fleeingTime >= this.maxFleeingTime) this.onComplete();
-  }
-}
-
-// HuntTask
-class HuntTask extends Task {
-  constructor(animal, prey) {
-    super(animal);
-    this.prey = prey;
-    this.huntingTime = 0;
-    this.maxHuntingTime = 5000;
-  }
-
-  update(deltaTime) {
-    if (!this.prey?.isAlive) return this.onComplete();
-
-    const myGrid = this.animal.gridPos();
-    const preyGrid = this.prey.gridPos();
-    const distance = calcDistance(myGrid.x, myGrid.y, preyGrid.x, preyGrid.y);
-
-    if (distance <= Animal.KILL_DISTANCE) {
-      this.animal.checkForKills();
-      if (!this.prey.isAlive) {
-        this.animal.hunger = Math.max(0, this.animal.hunger - 70);
-        return this.onComplete();
-      }
-    }
-
-    if (distance > this.animal.detectionRange * 1.3) return this.onComplete();
-
-    this.animal.setMovement("towards", this.prey);
-    this.huntingTime += deltaTime;
-    if (this.huntingTime >= this.maxHuntingTime) this.onComplete();
-  }
-}
-
-// FindWaterTask
-class FindWaterTask extends Task {
-  constructor(animal) {
-    super(animal);
-    this.targetWaterCell = null;
-    this.drinkingTime = 0;
-    this.maxDrinkingTime = 2000;
-    this.isDrinking = false;
-    this.searchTimeout = 0;
-    this.maxSearchTime = 5000;
-    this.attemptedTargets = new Set();
-    console.log(`🚿 ${animal.type} (${animal.gridPosStr()}) started looking for water`);
-  }
-
-  update(deltaTime) {
-    const myGrid = this.animal.gridPos();
-
-    if (this.isDrinking) {
-      this.drinkingTime += deltaTime;
-      if (this.drinkingTime >= this.maxDrinkingTime) {
-        this.animal.thirst = Math.max(0, this.animal.thirst - 60);
-        console.log(`🚰 ${this.animal.type} (${myGrid.x}, ${myGrid.y}) finished drinking, thirst: ${this.animal.thirst}`);
-        this.onComplete();
-      }
-      return;
-    }
-
-    this.searchTimeout += deltaTime;
-    if (this.searchTimeout >= this.maxSearchTime) {
-      console.log(`⏱️ ${this.animal.type} (${myGrid.x}, ${myGrid.y}) gave up searching for water`);
-      return this.onComplete();
-    }
-
-    if (!this.targetWaterCell) {
-      const waterCells = outsideRingLakeBorders.slice(0, 50);
-      if (!waterCells.length) {
-        console.log(`❌ ${this.animal.type} (${myGrid.x}, ${myGrid.y}) found no water`);
-        return this.onComplete();
-      }
-
-      this.targetWaterCell = waterCells
-        .filter(cell => !this.attemptedTargets.has(`${cell.x},${cell.y}`))
-        .sort((a, b) => calcDistance(myGrid.x, myGrid.y, a.x, a.y) - calcDistance(myGrid.x, myGrid.y, b.x, b.y))[0];
-
-      if (!this.targetWaterCell) {
-        console.log(`🚫 ${this.animal.type} (${myGrid.x}, ${myGrid.y}) tried all water cells`);
-        return this.onComplete();
-      }
-      this.attemptedTargets.add(`${this.targetWaterCell.x},${this.targetWaterCell.y}`);
-      console.log(`🔍 ${this.animal.type} (${myGrid.x}, ${myGrid.y}) targeting water at (${this.targetWaterCell.x}, ${this.targetWaterCell.y})`);
-    }
-
-    const distance = calcDistance(myGrid.x, myGrid.y, this.targetWaterCell.x, this.targetWaterCell.y);
-    if (distance <= 1) {
-      this.isDrinking = true;
-      this.animal.movementMode = "random";
-      console.log(`💧 ${this.animal.type} (${myGrid.x}, ${myGrid.y}) reached water`);
-      return;
-    }
-
-    this.animal.setMovement("towards", null, this.targetWaterCell);
-    this.checkStuck(deltaTime, distance);
-  }
-
-  checkStuck(deltaTime, distance) {
-    if (this.lastDistance && Math.abs(this.lastDistance - distance) < 0.1) {
-      this.stuckTime = (this.stuckTime || 0) + deltaTime;
-      if (this.stuckTime > 1000) {
-        console.log(`⚠️ ${this.animal.type} (${this.animal.gridPosStr()}) stuck, retrying`);
-        this.targetWaterCell = null;
-        this.stuckTime = 0;
-      }
-    } else {
-      this.stuckTime = 0;
-    }
-    this.lastDistance = distance;
-  }
-
-  onComplete() {
-    console.log(`✅ ${this.animal.type} (${this.animal.gridPosStr()}) completed water task, attempted ${this.attemptedTargets.size} targets`);
-    super.onComplete();
-  }
-}
-
-// FindBerriesTask
-class FindBerriesTask extends Task {
-  constructor(animal) {
-    super(animal);
-    this.targetBerryCell = null;
-    this.eatingTime = 0;
-    this.maxEatingTime = 2000;
-    this.isEating = false;
-  }
-
-  update(deltaTime) {
-    const myGrid = this.animal.gridPos();
-
-    if (this.isEating) {
-      this.eatingTime += deltaTime;
-      if (this.eatingTime >= this.maxEatingTime) {
-        this.animal.hunger = Math.max(0, this.animal.hunger - 50);
-        this.onComplete();
-      }
-      return;
-    }
-
-    if (!this.targetBerryCell) {
-      if (!gBushesPositions.length) {
-        console.log(`${this.animal.type} failed to find berries`);
-        this.animal.currentTask = new FindWaterTask(this.animal);
-        return this.onComplete();
-      }
-      this.targetBerryCell = gBushesPositions
-        .sort((a, b) => calcDistance(myGrid.x, myGrid.y, a.x, a.y) - calcDistance(myGrid.x, myGrid.y, b.x, b.y))[0];
-    }
-
-    const distance = calcDistance(myGrid.x, myGrid.y, this.targetBerryCell.x, this.targetBerryCell.y);
-    if (distance <= 1) {
-      this.isEating = true;
-      this.animal.movementMode = "random";
-      return;
-    }
-
-    this.animal.setMovement("towards", null, this.targetBerryCell);
-  }
-}
-
-// Animal class
 class Animal {
   static PREY_BASE_SPEED = 2000;
   static PREDATOR_SPEED_MULTIPLIER = 2;
   static KILL_DISTANCE = 1;
   static REPRODUCTION_INTERVAL = 15000;
-  static MAX_AGE = 30000;
+  static MAX_AGE = 60000;
   static PREDATOR_MAX_AGE = 20000;
   static MAX_ANIMALS = Math.floor(maxLandPopulation);
   static BABY_EMOJI_DURATION = 5000;
@@ -213,15 +17,20 @@ class Animal {
   constructor(x, y, type, age = 0) {
     this.x = x * cellSize;
     this.y = y * cellSize;
+    this.gridX = x;
+    this.gridY = y;
     this.type = type;
-    this.isPredator = this.checkIfPredator();
+    this.isPredator = ['Bear', 'Coyote'].includes(type);
     this.emoji = this.getEmoji();
     this.isAlive = true;
     this.age = age;
-   // this.isPaused = false;
     this.birthDate = Date.now();
     this.fontSize = this.getSpeciesFontSize();
+    this.isPaused = false;
+    this.isFrozen = false;
+    this.id = Math.random().toString(36).substring(2, 15);
 
+    // Movement
     this.moveInterval = this.isPredator ? Animal.PREY_BASE_SPEED / Animal.PREDATOR_SPEED_MULTIPLIER : Animal.PREY_BASE_SPEED;
     this.normalSpeed = this.moveInterval;
     this.chaseSpeed = this.moveInterval * 0.8;
@@ -229,47 +38,58 @@ class Animal {
     this.currentDirection = Math.floor(Math.random() * 4);
     this.directionChangeChance = this.isPredator ? 0.2 : 0.4;
     this.detectionRange = this.isPredator ? 5 : 4;
+    this.movementMode = "random";
+    this.targetAnimal = null;
+    this.targetPosition = null;
 
-    this.timeSinceLastReproduction = Math.random() * Animal.REPRODUCTION_INTERVAL;
+    // Path finding
+    this.currentPath = null;
+    this.pathIndex = 0;
+    this.inaccessibleTargets = new Set();
+
+    // Needs
     this.hunger = 0;
     this.thirst = 0;
     this.maxNeed = 100;
     this.hungerRate = this.isPredator ? 0.6 : 0.5;
     this.thirstRate = 0.3;
-    this.currentTask = null;
-    this.movementMode = "random";
-    this.targetPosition = null;
-    this.targetAnimal = null;
-  }
 
-  gridPos() { return { x: Math.floor(this.x / cellSize), y: Math.floor(this.y / cellSize) }; }
-  gridPosStr() { const pos = this.gridPos(); return `${pos.x}, ${pos.y}`; }
+    // Reproduction
+    this.timeSinceLastReproduction = Math.random() * Animal.REPRODUCTION_INTERVAL;
+
+    // Behavior state
+    this.state = "idle"; // idle, fleeing, hunting, seekingWater, seekingBerries, drinking, eating
+    this.stateTimer = 0;
+    this.targetCell = null;
+    this.attemptedTargets = new Set();
+  }
 
   setMovement(mode, targetAnimal = null, targetCell = null) {
     this.movementMode = mode;
     this.targetAnimal = targetAnimal;
-    this.targetPosition = targetCell ? { x: targetCell.x * cellSize, y: targetCell.y * cellSize } : null;
+    this.targetPosition = targetCell ? { x: targetCell.gridX * cellSize, y: targetCell.gridY * cellSize } : null;
+    
+    // Clear any existing path when setting a new movement target
+    this.currentPath = null;
+    this.pathIndex = 0;
   }
 
   getSpeciesFontSize() {
-    return { creaturesCardSheep: 20, creaturesCardCow: 21, creaturesCardChicken: 17, creaturesCardPig: 19, creaturesCardBear: 23, creaturesCardCoyote: 19 }[this.type] || 20;
+    return { Sheep: 20, Cow: 21, Chicken: 17, Pig: 19, Bear: 23, Coyote: 19 }[this.type] || 20;
   }
 
   getFontSize() {
     return (Date.now() - this.birthDate < Animal.BABY_EMOJI_DURATION) ? Math.floor(this.fontSize * 0.65) : this.fontSize;
   }
 
-  checkIfPredator() {
-    return ['creaturesCardBear', 'creaturesCardCoyote'].includes(this.type);
-  }
-
   getEmoji() {
-    return { creaturesCardSheep: '🐑', creaturesCardCow: '🐄', creaturesCardChicken: '🐔', creaturesCardPig: '🐖', creaturesCardBear: '🐻', creaturesCardCoyote: '🐺' }[this.type] || '❓';
+    return { Sheep: '🐑',Cow: '🐄', Chicken: '🐔', Pig: '🐖', Bear: '🐻', Coyote: '🐺' }[this.type] || '❓';
   }
 
   update(deltaTime) {
     if (!this.isAlive || this.isPaused || this.isFrozen) return;
 
+    // Update needs and age
     this.age = Math.min(this.age + deltaTime, this.isPredator ? Animal.PREDATOR_MAX_AGE : Animal.MAX_AGE);
     this.hunger = Math.min(this.hunger + this.hungerRate * (deltaTime / 1000), this.maxNeed);
     this.thirst = Math.min(this.thirst + this.thirstRate * (deltaTime / 1000), this.maxNeed);
@@ -280,128 +100,456 @@ class Animal {
       return;
     }
 
-    this.updateTask(deltaTime);
+    this.updateBehavior(deltaTime);
     this.handleMovement(deltaTime);
     this.checkReproduction(deltaTime);
   }
 
   detectNearbyAnimals() {
     if (!this.isAlive) return [];
-    const myGrid = this.gridPos();
-    return animals.filter(a => a !== this && a.isAlive && calcDistance(myGrid.x, myGrid.y, a.gridPos().x, a.gridPos().y) <= this.detectionRange);
+    return animals.filter(a => {
+      if (a === this || !a.isAlive) return false;
+      const distance = calcDistance(this.gridX, this.gridY, a.gridX, a.gridY);
+      return distance <= this.detectionRange;
+    });
   }
 
-  updateTask(deltaTime) {
+  updateBehavior(deltaTime) {
     const nearby = this.detectNearbyAnimals();
-    if (this.isPredator) {
-      const prey = nearby.find(a => !a.isPredator && a.isAlive);
-      this.currentTask = (this.hunger > this.maxNeed * 0.7 && prey) ? new HuntTask(this, prey) : (!this.currentTask || this.currentTask.isComplete) ? null : this.currentTask;
-    } else {
-      const predator = nearby.find(a => a.isPredator && a.isAlive);
-      this.currentTask = predator ? new FleeTask(this, predator) :
-        this.thirst > this.maxNeed ? new FindWaterTask(this) :
-        this.hunger > this.maxNeed ? new FindBerriesTask(this) :
-        (!this.currentTask || this.currentTask.isComplete) ? (this.currentTask instanceof FindWaterTask ? new FindBerriesTask(this) : new FindWaterTask(this)) : this.currentTask;
-    }
+    this.stateTimer += deltaTime;
 
-    if (this.currentTask) {
-      this.currentTask.update(deltaTime);
-      if (this.currentTask.isComplete) this.currentTask = null;
+    // Predator behavior (hunt or patrol)
+    if (this.isPredator) {
+      switch (this.state) {
+        case "idle":
+        case "patrolling":
+          // Always look for prey first
+          const prey = nearby.find(a => !a.isPredator && a.isAlive);
+          if (prey) {
+            this.state = "hunting";
+            this.targetAnimal = prey;
+            this.stateTimer = 0;
+            this.currentPath = null; // Clear any existing path
+          } else {
+            // No prey, so patrol (move with purpose)
+            this.state = "patrolling";
+            // If no target or target reached, set new target at the edge of detection
+            if (!this.targetCell || this.hasReachedTarget()) {
+              // Pick a cell at the edge of detection range in a random direction
+              const angle = Math.random() * Math.PI * 2;
+              const distance = this.detectionRange;
+              const targetX = Math.floor(this.gridX + Math.cos(angle) * distance);
+              const targetY = Math.floor(this.gridY + Math.sin(angle) * distance);
+              
+              // Find the closest empty cell to this target point
+              let closest = null;
+              let closestDist = Infinity;
+              for (const cell of emptyCells) {
+                const dist = calcDistance(targetX, targetY, cell.x, cell.y);
+                if (dist < closestDist) {
+                  closestDist = dist;
+                  closest = cell;
+                }
+              }
+              this.targetCell = closest || emptyCells[Math.floor(Math.random() * emptyCells.length)];
+              
+              // Find a path to the target
+              this.findPathToTarget(this.targetCell);
+            }
+          }
+          break;
+
+        case "hunting":
+          if (!this.targetAnimal?.isAlive) {
+            this.state = "patrolling";
+            this.targetAnimal = null;
+            this.currentPath = null;
+          } else {
+            // Update path to the prey every few seconds to avoid constant recalculation
+            if (!this.currentPath || this.stateTimer % 500 < 20) {
+              // Only recalculate path if prey has moved significantly
+              const target = { 
+                x: this.targetAnimal.gridX, 
+                y: this.targetAnimal.gridY 
+              };
+              
+              if (target.x && target.y) {
+                this.findPathToTarget(target);
+                
+                if (!this.currentPath) {
+                  // If no path to prey, try to find a new prey
+                  const newPrey = this.detectNearbyAnimals().find(a => !a.isPredator && a.isAlive);
+                  if (newPrey && newPrey !== this.targetAnimal) {
+                    console.log(`${this.type} (${this.gridX}, ${this.gridY}) switching to new prey target`);
+                    this.targetAnimal = newPrey;
+                    this.findPathToTarget({ x: newPrey.gridX, y: newPrey.gridY });
+                  }
+                }
+              }
+            }
+            
+            const distance = calcDistance(this.gridX, this.gridY, this.targetAnimal.gridX, this.targetAnimal.gridY);
+            
+            if (distance <= Animal.KILL_DISTANCE) {
+              this.checkForKills();
+              if (!this.targetAnimal?.isAlive) {
+                this.hunger = Math.max(0, this.hunger - 70);
+                this.state = "patrolling";
+                this.targetAnimal = null;
+                this.currentPath = null;
+                console.log(`${this.type} (${this.gridX}, ${this.gridY}) killed prey and reduced hunger to ${this.hunger.toFixed(1)}`);
+              }
+            } else if (distance > this.detectionRange * 1.3 || this.stateTimer >= 5000) {
+              console.log(`${this.type} (${this.gridX}, ${this.gridY}) gave up chase after ${Math.floor(this.stateTimer/1000)}s`);
+              this.state = "patrolling";
+              this.targetAnimal = null;
+              this.currentPath = null;
+            }
+          }
+          break;
+      }
+    } 
+    // Prey behavior (seek berries/water or flee)
+    else {
+      switch (this.state) {
+        case "idle":
+          // Prey alternates between seeking water and berries based on needs
+          if (this.thirst >= this.hunger) {
+            this.state = "seekingWater";
+            this.targetCell = null;
+            this.attemptedTargets = new Set();
+          } else {
+            this.state = "seekingBerries";
+            this.targetCell = null;
+          }
+          this.stateTimer = 0;
+          this.currentPath = null;
+          break;
+
+        case "fleeing":
+          const predator = nearby.find(a => a.isPredator && a.isAlive);
+          if (!predator || calcDistance(this.gridX, this.gridY, predator.gridX, predator.gridY) > this.detectionRange * 1.5) {
+            // Resume previous activity or find new one
+            this.state = this.thirst >= this.hunger ? "seekingWater" : "seekingBerries";
+            this.targetCell = null;
+            this.targetAnimal = null;
+            this.currentPath = null;
+          } else {
+            // Find a direction away from the predator
+            this.targetAnimal = predator;
+            this.findEscapePath(predator);
+          }
+          break;
+
+        case "seekingWater":
+          // Check if a predator is nearby - flee takes priority
+          const nearbyPredatorWater = nearby.find(a => a.isPredator && a.isAlive);
+          if (nearbyPredatorWater) {
+            this.state = "fleeing";
+            this.targetAnimal = nearbyPredatorWater;
+            this.stateTimer = 0;
+            this.currentPath = null;
+            break;
+          }
+
+          if (this.stateTimer >= 5000) {
+            console.log(`⏱️ ${this.type} (${this.gridX}, ${this.gridY}) gave up searching for water after ${Math.floor(this.stateTimer/1000)}s.`);
+            this.state = "seekingBerries"; // Try berries instead
+            this.targetCell = null;
+            this.attemptedTargets.clear();
+            this.stateTimer = 0;
+            this.currentPath = null;
+            break;
+          }
+          
+          if (!this.targetCell) {
+            // DEBUG: Log water positions to see their structure
+            if (outsideRingLakeBorders.length > 0) {
+              console.log(`Water data debug - first water cell:`, outsideRingLakeBorders[0]);
+            } else {
+              console.log(`No water cells in outsideRingLakeBorders array`);
+            }
+          
+            // Find the closest water source - make sure to handle different property formats
+            const waterCells = outsideRingLakeBorders
+              .map(cell => {
+                // Create a standard format with x,y coordinates
+                return {
+                  x: cell.x || cell.gridX || 0,
+                  y: cell.y || cell.gridY || 0,
+                  original: cell
+                };
+              })
+              .filter(cell => !this.attemptedTargets.has(`${cell.x},${cell.y}`))
+              .filter(cell => cell.x !== 0 || cell.y !== 0) // Filter out invalid water cells
+              .sort((a, b) => {
+                return calcDistance(this.gridX, this.gridY, a.x, a.y) - 
+                       calcDistance(this.gridX, this.gridY, b.x, b.y);
+              });
+
+            if (!waterCells.length) {
+              console.log(`❌ ${this.type} (${this.gridX}, ${this.gridY}) no accessible water cells found. Total attempted: ${this.attemptedTargets.size}`);
+              this.state = "seekingBerries"; // Try berries instead
+              this.targetCell = null;
+              this.attemptedTargets.clear();
+              this.stateTimer = 0;
+              this.currentPath = null;
+              break;
+            }
+
+            this.targetCell = waterCells[0];
+            this.attemptedTargets.add(`${this.targetCell.x},${this.targetCell.y}`);
+            console.log(`🔍 ${this.type} (${this.gridX}, ${this.gridY}) targeting water at (${this.targetCell.x}, ${this.targetCell.y}). Distance: ${calcDistance(this.gridX, this.gridY, this.targetCell.x, this.targetCell.y).toFixed(1)} cells`);
+            
+            // Find a path to the water
+            const pathResult = this.findPathToTarget(this.targetCell);
+            if (!pathResult) {
+              console.log(`🚫 ${this.type} (${this.gridX}, ${this.gridY}) couldn't find path to water at (${this.targetCell.x}, ${this.targetCell.y})`);
+              this.targetCell = null; // Reset target to try another water source
+            } else {
+              console.log(`✅ ${this.type} (${this.gridX}, ${this.gridY}) found path to water. Length: ${this.currentPath.length} steps`);
+            }
+          }
+
+          if (this.hasReachedTarget()) {
+            this.state = "drinking";
+            this.stateTimer = 0;
+            console.log(`💧 ${this.type} (${this.gridX}, ${this.gridY}) reached water`);
+          }
+          break;
+
+        case "drinking":
+          // Check if a predator is nearby - flee takes priority
+          const nearbyPredatorDrinking = nearby.find(a => a.isPredator && a.isAlive);
+          if (nearbyPredatorDrinking) {
+            this.state = "fleeing";
+            this.targetAnimal = nearbyPredatorDrinking;
+            this.stateTimer = 0;
+            this.currentPath = null;
+            break;
+          }
+
+          if (this.stateTimer >= 2000) {
+            this.thirst = Math.max(0, this.thirst - 60);
+            console.warn(`🚰 ${this.type} (${this.gridX}, ${this.gridY}) finished drinking, thirst: ${this.thirst.toFixed(1)}`);
+            // Always go to berries after drinking
+            this.state = "seekingBerries";
+            this.targetCell = null;
+            this.attemptedTargets.clear();
+            this.stateTimer = 0;
+            this.currentPath = null;
+          }
+          break;
+
+        case "seekingBerries":
+          // Check if a predator is nearby - flee takes priority
+          const nearbyPredatorBerries = nearby.find(a => a.isPredator && a.isAlive);
+          if (nearbyPredatorBerries) {
+            this.state = "fleeing";
+            this.targetAnimal = nearbyPredatorBerries;
+            this.stateTimer = 0;
+            this.currentPath = null;
+            break;
+          }
+
+          if (this.stateTimer >= 5000) {
+            console.log(`⏱️ ${this.type} (${this.gridX}, ${this.gridY}) gave up searching for berries after ${Math.floor(this.stateTimer/1000)}s.`);
+            this.state = "seekingWater"; // Try water instead
+            this.targetCell = null;
+            this.stateTimer = 0;
+            this.currentPath = null;
+            break;
+          }
+
+          if (!this.targetCell) {
+            if (!gBushesPositions.length) {
+              console.log(`${this.type} (${this.gridX}, ${this.gridY}) failed to find berries - none exist on map`);
+              this.state = "seekingWater"; // Try water instead
+              this.targetCell = null;
+              this.stateTimer = 0;
+              this.currentPath = null;
+              break;
+            }
+            
+            // DEBUG: Log berry positions to see their structure
+            console.log(`Berry data debug - first bush:`, gBushesPositions[0]);
+
+            /* bushes
+            {
+  "gridX": 15,
+  "gridY": 147
+}
+            
+             */
+            
+            // Find closest berry bush - make sure to handle different property formats
+            const berries = gBushesPositions.map(bush => {
+              // Create a standard format with x,y coordinates regardless of the original format
+              return {
+                x: bush.x || bush.gridX || 0,
+                y: bush.y || bush.gridY || 0,
+                original: bush
+              };
+            }).filter(b => b.x !== 0 || b.y !== 0); // Filter out invalid berries
+            
+            if (berries.length === 0) {
+              console.log(`${this.type} (${this.gridX}, ${this.gridY}) found no valid berry coordinates`);
+              this.state = "seekingWater";
+              this.targetCell = null;
+              this.stateTimer = 0;
+              this.currentPath = null;
+              break;
+            }
+            
+            // Sort by distance
+            const closest = berries.sort((a, b) => 
+              calcDistance(this.gridX, this.gridY, a.x, a.y) - 
+              calcDistance(this.gridX, this.gridY, b.x, b.y)
+            )[0];
+            
+            this.targetCell = closest;
+            
+            console.log(`🔍 ${this.type} (${this.gridX}, ${this.gridY}) targeting berries at (${this.targetCell.x}, ${this.targetCell.y}). Distance: ${calcDistance(this.gridX, this.gridY, this.targetCell.x, this.targetCell.y).toFixed(1)} cells`);
+            
+            // Find a path to the berries
+            const berryPathResult = this.findPathToTarget(this.targetCell);
+            if (!berryPathResult) {
+              console.log(`🚫 ${this.type} (${this.gridX}, ${this.gridY}) couldn't find path to berries at (${this.targetCell.x}, ${this.targetCell.y})`);
+              this.targetCell = null; // Reset target to try another berry bush
+            } else {
+              console.log(`✅ ${this.type} (${this.gridX}, ${this.gridY}) found path to berries. Length: ${this.currentPath.length} steps`);
+            }
+          }
+          
+          if (this.hasReachedTarget()) {
+            this.state = "eating";
+            this.stateTimer = 0;
+            console.log(`🍓 ${this.type} (${this.gridX}, ${this.gridY}) reached berries`);
+          }
+          break;
+
+        case "eating":
+          // Check if a predator is nearby - flee takes priority
+          const nearbyPredatorEating = nearby.find(a => a.isPredator && a.isAlive);
+          if (nearbyPredatorEating) {
+            this.state = "fleeing";
+            this.targetAnimal = nearbyPredatorEating;
+            this.stateTimer = 0;
+            this.currentPath = null;
+            break;
+          }
+
+          if (this.stateTimer >= 2000) {
+            this.hunger = Math.max(0, this.hunger - 50);
+            console.log(`🍽️ ${this.type} (${this.gridX}, ${this.gridY}) finished eating, hunger: ${this.hunger.toFixed(1)}`);
+            // Always go to water after eating
+            this.state = "seekingWater";
+            this.targetCell = null;
+            this.stateTimer = 0;
+            this.currentPath = null;
+          }
+          break;
+      }
+    }
+  }
+
+  // Check if the animal has reached its current target
+  hasReachedTarget() {
+    if (!this.targetCell) return false;
+    
+    // Get target coordinates regardless of format
+    const targetX = this.targetCell.x || this.targetCell.gridX || 0;
+    const targetY = this.targetCell.y || this.targetCell.gridY || 0;
+    
+    if (targetX === 0 && targetY === 0) return false; // Invalid target
+    
+    return calcDistance(this.gridX, this.gridY, targetX, targetY) <= 1;
+  }
+
+  // Find a path to the target using the pathfinding algorithm
+  findPathToTarget(target) {
+    if (!target) return false;
+    
+    // Get target coordinates regardless of format
+    const targetX = target.x || target.gridX || 0;
+    const targetY = target.y || target.gridY || 0;
+    
+    if (targetX === 0 && targetY === 0) {
+      console.log(`Invalid target coordinates for ${this.type}: `, target);
+      return false;
+    }
+    
+    const start = { x: this.gridX, y: this.gridY };
+    const end = { x: targetX, y: targetY };
+    
+    // Use existing findPath function from the game
+    const path = findPath(start, end, true);
+    
+    if (path && path.length > 0) {
+      this.currentPath = path;
+      this.pathIndex = 0;
+      return true;
+    } else {
+      console.log(`No path found for ${this.type} from (${start.x}, ${start.y}) to (${end.x}, ${end.y})`);
+      return false;
+    }
+  }
+
+  // Find a path away from a predator
+  findEscapePath(predator) {
+    // Calculate a position in the opposite direction of the predator
+    const dx = this.gridX - predator.gridX;
+    const dy = this.gridY - predator.gridY;
+    const distance = Math.max(3, this.detectionRange); // Minimum escape distance
+    
+    // Normalize and scale the direction vector
+    const length = Math.sqrt(dx * dx + dy * dy);
+    const escapeX = Math.floor(this.gridX + (dx / length) * distance);
+    const escapeY = Math.floor(this.gridY + (dy / length) * distance);
+    
+    // Find the closest empty cell to this escape point
+    let bestCell = null;
+    let bestDistance = Infinity;
+    
+    for (const cell of emptyCells) {
+      const dist = calcDistance(escapeX, escapeY, cell.x, cell.y);
+      if (dist < bestDistance) {
+        bestDistance = dist;
+        bestCell = cell;
+      }
+    }
+    
+    if (bestCell) {
+      this.targetCell = bestCell;
+      this.findPathToTarget(bestCell);
+      if (this.currentPath) {
+        console.log(`${this.type} (${this.gridX}, ${this.gridY}) fleeing predator to (${bestCell.x}, ${bestCell.y})`);
+      } else {
+        // If we can't find a valid escape path, try to move away blindly
+        this.currentPath = null;
+      }
     }
   }
 
   handleMovement(deltaTime) {
     this.timeSinceLastMove += deltaTime;
     if (this.timeSinceLastMove < this.moveInterval) return;
-
-    const current = this.gridPos();
-    const nextCell = this.getNextCell(current.x, current.y);
     
-    // Add safety check for undefined nextCell
-    if (!nextCell) {
-      console.warn(`⚠️ ${this.type} at (${current.x}, ${current.y}) got undefined nextCell`);
-      this.timeSinceLastMove = 0;
-      return;
-    }
-    
-    if (emptyCells.some(cell => cell && cell.x === nextCell.x && cell.y === nextCell.y)) {
+    // If we have a path, follow it
+    if (this.currentPath && this.pathIndex < this.currentPath.length) {
+      const nextCell = this.currentPath[this.pathIndex];
       this.x = nextCell.x * cellSize;
       this.y = nextCell.y * cellSize;
+      this.gridX = nextCell.x;
+      this.gridY = nextCell.y;
+      this.pathIndex++;
       this.checkForKills();
+      this.timeSinceLastMove = 0;
     }
-    this.timeSinceLastMove = 0;
-  }
-
-  getNextCell(x, y) {
-    let isChasing = false;
-    const targetGrid = this.movementMode === "towards" && this.targetAnimal ? this.targetAnimal.gridPos() :
-                      this.movementMode === "away" && this.targetAnimal ? this.targetAnimal.gridPos() :
-                      this.movementMode === "towards" && this.targetPosition ? { x: Math.floor(this.targetPosition.x / cellSize), y: Math.floor(this.targetPosition.y / cellSize) } : null;
-
-    if (targetGrid) {
-      this.currentDirection = this.getDirectionTowardsOrAway(targetGrid.x, targetGrid.y, this.movementMode === "towards");
-      isChasing = true;
-    } else {
-      const nearby = this.detectNearbyAnimals();
-      const relevant = nearby.find(a => this.isPredator ? !a.isPredator : a.isPredator);
-      if (relevant) {
-        const target = relevant.gridPos();
-        this.currentDirection = this.getDirectionTowardsOrAway(target.x, target.y, this.isPredator);
-        isChasing = true;
-      } else if (this.isPredator) {
-        const moves = [{ x: x + 1, y }, { x, y: y + 1 }, { x: x - 1, y }, { x, y: y - 1 }];
-        const desirability = moves.map(m => ({ move: m, value: this.evaluateCellDesirability(emptyCells.find(c => c && c.x === m.x && c.y === m.y)) }));
-        
-        if (Math.random() < 0.85) {
-          const values = desirability.map(d => d.value);
-          // Make sure we have valid values before finding max
-          if (values.length > 0) {
-            const maxVal = Math.max(...values);
-            const best = desirability.filter(d => d.value === maxVal);
-            
-            // Check if best array has elements before accessing it
-            if (best && best.length > 0) {
-              const selectedBest = best[Math.floor(Math.random() * best.length)];
-              // Make sure selectedBest exists and has a move property
-              if (selectedBest && selectedBest.move) {
-                const selectedMove = selectedBest.move;
-                const index = moves.findIndex(m => m.x === selectedMove.x && m.y === selectedMove.y);
-                // Ensure index is valid
-                if (index !== -1) {
-                  this.currentDirection = index;
-                }
-              }
-            }
-          }
-        } else {
-          this.currentDirection = (this.currentDirection + (Math.random() < 0.5 ? 1 : -1) + 4) % 4;
-        }
-      } else if (Math.random() < this.directionChangeChance) {
-        this.currentDirection = (this.currentDirection + (Math.random() < 0.5 ? 1 : -1) + 4) % 4;
-      }
+    // If no path or at the end of the path, stay put
+    else {
+      this.timeSinceLastMove = 0;
     }
-
-    // Ensure current direction is valid
-    this.currentDirection = ((this.currentDirection % 4) + 4) % 4;
-    
-    this.moveInterval = isChasing ? this.chaseSpeed : this.normalSpeed;
-    const moves = [{ x: x + 1, y }, { x, y: y + 1 }, { x: x - 1, y }, { x, y: y - 1 }];
-    return moves[this.currentDirection];
-  }
-
-  getDirectionTowardsOrAway(tx, ty, towards) {
-    const { x, y } = this.gridPos();
-    const dx = tx - x, dy = ty - y;
-    const dirX = towards ? Math.sign(dx) : -Math.sign(dx);
-    const dirY = towards ? Math.sign(dy) : -Math.sign(dy);
-    return Math.abs(dx) > Math.abs(dy) ? (dirX > 0 ? 0 : 2) : (dirY > 0 ? 1 : 3);
-  }
-
-  evaluateCellDesirability(cell) {
-    if (!cell?.noise) return 0.5;
-    const noise = parseFloat(cell.noise);
-    return this.type === 'creaturesCardCoyote' ? (noise < 0.09 ? 1 : 0.2) :
-           this.type === 'creaturesCardBear' ? (noise > 0.24 ? 1 : 0.2) : 0.5;
   }
 
   checkReproduction(deltaTime) {
@@ -412,11 +560,11 @@ class Animal {
     const sameSpecies = animals.filter(a => a.type === this.type && a.isAlive);
     if (sameSpecies.length < 2) return;
 
-    const { x, y } = this.gridPos();
-    const adjacent = [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]
-      .map(([x, y]) => ({ x, y }))
-      .filter(cell => emptyCells.some(g => g.x === cell.x && g.y === cell.y));
-
+    const adjacent = [[this.gridX + 1, this.gridY], [this.gridX - 1, this.gridY], 
+                    [this.gridX, this.gridY + 1], [this.gridX, this.gridY - 1]]
+                    .map(([x, y]) => ({ x, y }))
+                    .filter(c => emptyCells.some(g => g.x === c.x && g.y === c.y));
+    
     if (adjacent.length) {
       const birthCell = adjacent[Math.floor(Math.random() * adjacent.length)];
       const newAnimal = new Animal(birthCell.x, birthCell.y, this.type);
@@ -428,8 +576,14 @@ class Animal {
 
   checkForKills() {
     if (!this.isPredator || !this.isAlive || this.isFrozen) return;
-    const { x, y } = this.gridPos();
-    const prey = animals.find(a => a !== this && !a.isPredator && a.isAlive && calcDistance(x, y, a.gridPos().x, a.gridPos().y) <= Animal.KILL_DISTANCE);
+    
+    const prey = animals.find(a => 
+      a !== this && 
+      !a.isPredator && 
+      a.isAlive && 
+      calcDistance(this.gridX, this.gridY, a.gridX, a.gridY) <= Animal.KILL_DISTANCE
+    );
+    
     if (prey) this.killAnimal(prey);
   }
 
@@ -440,10 +594,7 @@ class Animal {
     prey.animateEmoji('small', prey.emoji, 500);
     setTimeout(() => prey.animateEmoji('fade', '🥩', 500), 500);
     this.animateEmoji('fade', this.emoji, 500);
-    setTimeout(() => {
-      prey.isAlive = false;
-      animals.splice(animals.indexOf(prey), 1);
-    }, 2000);
+    setTimeout(() => { prey.isAlive = false; animals.splice(animals.indexOf(prey), 1); }, 2000);
     setTimeout(() => this.isFrozen = false, 3000);
   }
 
@@ -470,6 +621,36 @@ class Animal {
       ctx.fillStyle = 'black';
       ctx.font = `${this.getFontSize()}px Arial`;
       ctx.fillText(this.emoji, this.x, this.y);
+    }
+    
+    // Optionally visualize the current path for debugging
+    if (this.currentPath && this.currentPath.length > 0) {
+      ctx.strokeStyle = this.isPredator ? "rgba(255,0,0,0.5)" : "rgba(0,255,0,0.5)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      
+      // Start from current position
+      ctx.moveTo(this.x + cellSize/2, this.y + cellSize/2);
+      
+      // Draw path from current index to target
+      for (let i = this.pathIndex; i < this.currentPath.length && i; i++) {
+        const cell = this.currentPath[i];
+          ctx.lineTo(cell.x * cellSize + cellSize/2, cell.y * cellSize + cellSize/2);
+        
+      }
+      ctx.stroke();
+      
+      // Draw a circle at the target
+      if (this.targetCell) {
+        const targetX = this.targetCell.x || this.targetCell.gridX || 0;
+        const targetY = this.targetCell.y || this.targetCell.gridY || 0;
+        if (targetX !== 0 || targetY !== 0) {
+          ctx.beginPath();
+          ctx.arc(targetX * cellSize + cellSize/2, targetY * cellSize + cellSize/2, cellSize/3, 0, Math.PI * 2);
+          ctx.fillStyle = this.isPredator ? "rgba(255,0,0,0.3)" : "rgba(0,255,0,0.3)";
+          ctx.fill();
+        }
+      }
     }
   }
 }
@@ -509,16 +690,18 @@ function starterAnimalPopulations(amount = 20) {
       
       const animal = new Animal(cell.x, cell.y, type);
       animals.push(animal);
+      //log
+      console.log(`Placed ${type} at ${cell.x}, ${cell.y}`);
     }
   }
 
   // Place predators
-  placeAnimals(coyoteCount, 'creaturesCardCoyote', sandCells);
-  placeAnimals(bearCount, 'creaturesCardBear', mountainCells);
+  placeAnimals(coyoteCount, 'Coyote', sandCells);
+  placeAnimals(bearCount, 'Bear', mountainCells);
 
   // Place prey
-  placeAnimals(sheepCount, 'creaturesCardSheep', middleCells);
-  placeAnimals(chickenCount, 'creaturesCardChicken', middleCells);
+  placeAnimals(sheepCount, 'Sheep', middleCells);
+  placeAnimals(chickenCount, 'Chicken', middleCells);
 
   console.log(`Distributed ${animals.length} animals:`,
     `${coyoteCount} coyotes,`,
