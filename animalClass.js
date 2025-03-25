@@ -331,6 +331,7 @@ class Animal {
     this.isPaused = false;
     this.isFrozen = false;
     this.id = Math.random().toString(36).substring(2, 15);
+    this.eatsGrass = ['Cow', 'Chicken'].includes(type); // Flag for animals that eat grass
 
     // Movement
     this.moveInterval = this.isPredator ? Animal.PREY_BASE_SPEED / Animal.PREDATOR_SPEED_MULTIPLIER : Animal.PREY_BASE_SPEED;
@@ -633,13 +634,18 @@ class Animal {
     else {
       switch (this.state) {
         case "idle":
-          // Prey alternates between seeking water and berries based on needs
+          // Prey alternates between seeking water and food based on needs
           if (this.thirst >= this.hunger) {
             this.state = "seekingWater";
             this.targetCell = null;
             this.attemptedTargets = new Set();
           } else {
-            this.state = "seekingBerries";
+            // Choose appropriate food seeking behavior based on animal type
+            if (this.eatsGrass) {
+              this.state = "seekingGrass";
+            } else {
+              this.state = "seekingBerries";
+            }
             this.targetCell = null;
           }
           this.stateTimer = 0;
@@ -769,8 +775,12 @@ class Animal {
           if (this.stateTimer >= 2000) {
             this.thirst = Math.max(0, this.thirst - 60);
             console.warn(`🚰 ${this.type} (${this.gridX}, ${this.gridY}) finished drinking, thirst: ${this.thirst.toFixed(1)}`);
-            // Always go to berries after drinking
-            this.state = "seekingBerries";
+            // Go to appropriate food source based on animal type
+            if (this.eatsGrass) {
+              this.state = "seekingGrass";
+            } else {
+              this.state = "seekingBerries";
+            }
             this.targetCell = null;
             this.attemptedTargets.clear();
             this.stateTimer = 0;
@@ -872,12 +882,63 @@ class Animal {
 
           if (this.stateTimer >= 2000) {
             this.hunger = Math.max(0, this.hunger - 50);
-            console.log(`🍽️ ${this.type} (${this.gridX}, ${this.gridY}) finished eating, hunger: ${this.hunger.toFixed(1)}`);
-            // Always go to water after eating
             this.state = "seekingWater";
             this.targetCell = null;
             this.stateTimer = 0;
+          }
+          break;
+
+        case "seekingGrass":
+          // Check if a predator is nearby - flee takes priority
+          const nearbyPredatorGrass = nearby.find(a => a.isPredator && a.isAlive);
+          if (nearbyPredatorGrass) {
+            this.state = "fleeing";
+            this.targetAnimal = nearbyPredatorGrass;
+            this.stateTimer = 0;
             this.currentPath = null;
+            break;
+          }
+
+          // Look for grass in adjacent cells - this is simple since grass is everywhere
+          const adjacentGrassCells = getAdjacentEmptyCells(this.gridX, this.gridY);
+          
+          if (adjacentGrassCells.length > 0) {
+            // Just pick the first available grass cell
+            this.targetCell = adjacentGrassCells[0];
+            
+            // Move to the grass cell
+            this.x = this.targetCell.gridX * cellSize;
+            this.y = this.targetCell.gridY * cellSize;
+            this.gridX = this.targetCell.gridX;
+            this.gridY = this.targetCell.gridY;
+            
+            // Start eating
+            this.state = "eatingGrass";
+            this.stateTimer = 0;
+            console.log(`🌿 ${this.type} (${this.gridX}, ${this.gridY}) found grass`);
+          } else {
+            // No grass found nearby, switch to random movement
+            console.log(`🔍 ${this.type} (${this.gridX}, ${this.gridY}) no grass nearby`);
+            this.state = "random";
+          }
+          break;
+
+        case "eatingGrass":
+          // Check if a predator is nearby - flee takes priority
+          const nearbyPredatorEatingGrass = nearby.find(a => a.isPredator && a.isAlive);
+          if (nearbyPredatorEatingGrass) {
+            this.state = "fleeing";
+            this.targetAnimal = nearbyPredatorEatingGrass;
+            this.stateTimer = 0;
+            this.currentPath = null;
+            break;
+          }
+
+          if (this.stateTimer >= 1500) { // Grass is easier/faster to eat than berries
+            this.hunger = Math.max(0, this.hunger - 40);
+            this.state = "seekingWater";
+            this.targetCell = null;
+            this.stateTimer = 0;
           }
           break;
 
@@ -1075,24 +1136,26 @@ class Animal {
     }
   }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
   checkReproduction(deltaTime) {
-    if (this.moveInterval === this.chaseSpeed || animals.length >= Animal.MAX_ANIMALS) return;
+    // Don't reproduce in these cases:
+    // 1. While chasing (moveInterval === chaseSpeed)
+    // 2. When at max animal capacity
+    // 3. When eating or drinking (not moving)
+    if (this.moveInterval === this.chaseSpeed || 
+        animals.length >= Animal.MAX_ANIMALS ||
+        this.state === "eating" ||
+        this.state === "drinking" ||
+        this.state === "eatingGrass") {
+      return;
+    }
+    
     this.timeSinceLastReproduction += deltaTime;
     if (this.timeSinceLastReproduction < Animal.REPRODUCTION_INTERVAL) return;
 
+    // Only allow reproduction during active movement states
+    const movementStates = ["seekingWater", "seekingBerries", "seekingGrass", "patrolling", "random"];
+    if (!movementStates.includes(this.state)) return;
+    
     const sameSpecies = animals.filter(a => a.type === this.type && a.isAlive);
     if (sameSpecies.length < 2) return;
 
@@ -1102,10 +1165,12 @@ class Animal {
                     .filter(c => emptyCells.some(g => g.x === c.x && g.y === c.y));
     
     if (adjacent.length) {
+      // Reproduction happens in an adjacent cell
       const birthCell = adjacent[Math.floor(Math.random() * adjacent.length)];
       const newAnimal = new Animal(birthCell.x, birthCell.y, this.type);
       animals.push(newAnimal);
       newAnimal.animateEmoji('pulse', newAnimal.emoji, 800);
+      console.log(`🐣 ${this.type} (${this.gridX}, ${this.gridY}) reproduced while ${this.state}`);
     }
     this.timeSinceLastReproduction = 0;
   }
