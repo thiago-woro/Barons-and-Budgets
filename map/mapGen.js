@@ -876,7 +876,9 @@ function placeLakes() {
                         outsideRingLakeBorders.push({
                             x: neighborX,
                             y: neighborY,
-                            noise: groundCell.noise
+                            noise: groundCell.noise,
+                            gridX: neighborX,
+                            gridY: neighborY
                         });
                     }
                 }

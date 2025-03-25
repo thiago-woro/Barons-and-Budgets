@@ -62,6 +62,7 @@ class Animal {
     this.stateTimer = 0;
     this.targetCell = null;
     this.attemptedTargets = new Set();
+    this.noLakesNearby = false; // Flag to indicate if this animal can't find lakes
   }
 
   setMovement(mode, targetAnimal = null, targetCell = null) {
@@ -252,6 +253,26 @@ class Animal {
             break;
           }
 
+          // If we already know there are no lakes nearby, don't waste time searching
+          if (this.noLakesNearby) {
+            this.state = "seekingBerries";
+            this.targetCell = null;
+            this.stateTimer = 0;
+            this.currentPath = null;
+            break;
+          }
+
+          // Handle case where outsideRingLakeBorders doesn't exist or is empty
+          if (!outsideRingLakeBorders || outsideRingLakeBorders.length === 0) {
+            console.log(`🏝️ ${this.type} (${this.gridX}, ${this.gridY}) no lakes exist on this map`);
+            this.noLakesNearby = true;
+            this.state = "seekingBerries";
+            this.targetCell = null;
+            this.stateTimer = 0;
+            this.currentPath = null;
+            break;
+          }
+
           if (this.stateTimer >= 5000) {
             console.log(`⏱️ ${this.type} (${this.gridX}, ${this.gridY}) gave up searching for water after ${Math.floor(this.stateTimer/1000)}s.`);
             this.state = "seekingBerries"; // Try berries instead
@@ -264,11 +285,7 @@ class Animal {
           
           if (!this.targetCell) {
             // DEBUG: Log water positions to see their structure
-            if (outsideRingLakeBorders.length > 0) {
-              console.log(`Water data debug - first water cell:`, outsideRingLakeBorders[0]);
-            } else {
-              console.log(`No water cells in outsideRingLakeBorders array`);
-            }
+            console.log(`Water data debug - first water cell:`, outsideRingLakeBorders[0]);
           
             // Find the closest water source - make sure to handle different property formats
             const waterCells = outsideRingLakeBorders
@@ -289,6 +306,8 @@ class Animal {
 
             if (!waterCells.length) {
               console.log(`❌ ${this.type} (${this.gridX}, ${this.gridY}) no accessible water cells found. Total attempted: ${this.attemptedTargets.size}`);
+              // Mark that this animal doesn't have access to water
+              this.noLakesNearby = true;
               this.state = "seekingBerries"; // Try berries instead
               this.targetCell = null;
               this.attemptedTargets.clear();
