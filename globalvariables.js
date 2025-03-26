@@ -30,7 +30,9 @@ let trees = [];
 let treePositions = [];  //array format: treePositions.push({ x, y, emoji: selectedEmoji });
 let logStorageCabinPositions = [];
 let outsideRingLakeBorders = [];
-
+let allGrassEaten = []
+let allBerriesEaten = []
+let allWaterDrankByAnimals = []
 
 let treePercentageofLand = 0.09
 let usableLand = 0.045

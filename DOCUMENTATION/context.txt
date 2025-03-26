@@ -31,15 +31,10 @@ Do not change style.css
 
 
 j:\BaronsBudgets/
-├── .cursor
-├── .git
-├── .gitignore
-├── .prettierrc
-├── .vscode
+
 ├── animalClass.js
 │   └── Definitions:
 │       ├── class Animal
-│       │   ├── setAllPaused()
 │       │   ├── herbivoreFindFood()
 │       │   ├── getSpeciesFontSize()
 │       │   ├── getFontSize()
@@ -63,9 +58,8 @@ j:\BaronsBudgets/
 │           ├── to()
 │           │   └── nested functions: placeAnimals
 │           ├── placeAnimals()
-│           │   └── nested functions: placeAnimals
-│           └── moveCoyote()
-│               └── nested functions: moveCoyote
+│               └── nested functions: placeAnimals
+│   
 ├── animations.js
 │   └── Definitions:
 │       └── class Animation
@@ -74,7 +68,6 @@ j:\BaronsBudgets/
 │           ├── switch()
 │           ├── updatePosition()
 │           └── isComplete()
-├── artistsThankYou.txt
 ├── game.js
 │   └── Definitions:
 │       ├── gameLoop()

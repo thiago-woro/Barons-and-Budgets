@@ -597,3 +597,43 @@ function closeInsideBuilding() {
     console.log("Closed inside building view");
   }
 }
+
+
+
+  // Common method for drawing information text above NPCs
+  function drawInfoText(ctx = npcInfoOverlayCtx, infoText = "---", additionalInfo, progressBar) {
+    ///console.log(`drawInfoText , ctx: ${ctx} ${infoText}, ${additionalInfo.text}, ${progressBar.progress}`);
+
+    // Draw main info text with shadow
+    ctx.font = "10px Arial";
+    ctx.textAlign = "center";
+    
+    // Draw text shadow first
+    ctx.fillStyle = "rgba(0, 0, 0)";
+    ctx.fillText(infoText, this.x + 1, this.y - 24);
+    
+    // Draw main text on top
+    ctx.fillStyle = "white";
+    ctx.fillText(infoText, this.x, this.y - 25);
+    
+    // Draw additional info if provided
+    if (additionalInfo) {
+      ctx.fillStyle = additionalInfo.color;
+      ctx.fillText(additionalInfo.text, this.x, this.y - 45);
+    }
+    
+    // Draw progress bar if provided
+    if (progressBar && progressBar.progress !== undefined) {
+      const maxWidth = progressBar.width || 20;
+      const barWidth = maxWidth * progressBar.progress;
+      
+      // Draw background
+      ctx.fillStyle = progressBar.bgColor || "rgba(0, 0, 0, 0.3)";
+      ctx.fillRect(this.x - maxWidth / 2, this.y - 15, maxWidth, 3);
+      
+      // Draw progress
+      ctx.fillStyle = progressBar.color || "orange";
+      ctx.fillRect(this.x - maxWidth / 2, this.y - 15, barWidth, 3);
+    }
+  }
+  
