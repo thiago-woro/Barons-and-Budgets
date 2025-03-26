@@ -7,7 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
         PLACING_ANIMAL: 'placing_animal',
         PLACING_BUILDING: 'placing_building',
         TERRAIN_TOOL: 'terrain_tool',
-        SELECTING_NPC: 'selecting_npc'
+        SELECTING_NPC: 'selecting_npc',
+        SELECTING_ANIMAL: 'selecting_animal'
     };
 
     let currentToolState = ToolState.SELECTING;
@@ -268,12 +269,29 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     };
 
+    const selectAnimal = (coords) => {
+        for (const animal of animals) {
+            if (animal.gridX === coords.cellCol && animal.gridY === coords.cellRow) {
+                console.log(`Found animal at ${coords.cellCol}, ${coords.cellRow}`);
+                showAnimalInfo(animal);
+                currentAnimalSelected = animal; 
+                break;
+            }
+        }
+    };
+
     //MAIN CLICK DETECTOR    THIAGO
     container.addEventListener("click", (event) => {
         if (isDragging) return;
         const coords = getClickCoordinates(event);
         switch (currentToolState) {
-            case ToolState.PLACING_ANIMAL: placeAnimal(coords, selectedTool); break;
+            case ToolState.PLACING_ANIMAL: 
+                if (selectedTool === "animalSelectTool") {
+                    selectAnimal(coords);
+                } else {
+                    placeAnimal(coords, selectedTool);
+                }
+                break;
             case ToolState.PLACING_BUILDING: selectedTool === "buildingsCardSelectTool" ? selectBuilding(coords) : placeBuilding(coords, selectedTool); break;
             case ToolState.TERRAIN_TOOL: handleTerrainTool(coords, selectedTool); break;
             case ToolState.SELECTING_NPC:
@@ -294,20 +312,27 @@ document.addEventListener('DOMContentLoaded', () => {
         container.style.visibility = 'visible';
     });
 
-    const setActiveAnimalCard = (name, emoji) => {
+    const setActiveAnimalCard = (id, emoji) => {
         removeActiveClass('#animalsRow .bottomCard');
-        const card = document.querySelector(`#animalsRow .bottomCard#creaturesCard${name}`);
+        const card = document.querySelector(`#animalsRow .bottomCard#${id}`);
         if (card) {
             card.classList.add('active');
-            document.body.style.cursor = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><text x="0" y="24" font-size="14">${emoji}</text></svg>'), auto`;
+            selectedTool = id;
+            
+            if (id !== "animalSelectTool") {
+                document.body.style.cursor = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><text x="0" y="24" font-size="14">${emoji}</text></svg>'), auto`;
+            } else {
+                document.body.style.cursor = 'auto';
+            }
             window.activeTabBottomLeft = "animals";
+            currentToolState = ToolState.PLACING_ANIMAL;
         }
-        document.body.style.cursor = 'auto';
     };
 
-    document.querySelectorAll('#animalsRow .bottomCard').forEach(c => {
-        c.addEventListener('click', function () {
-            setActiveAnimalCard(this.id.replace('creaturesCard', ''), this.querySelector('h3').textContent.trim());
+    document.querySelectorAll('#animalsRow .bottomCard').forEach(card => {
+        card.addEventListener('click', function() {
+            const emoji = this.querySelector('h3').textContent.trim();
+            setActiveAnimalCard(this.id, emoji);
         });
     });
 
@@ -438,3 +463,212 @@ function viewPath(coords) {
     }
 }
 
+  //npc card details
+function showAnimalInfo(animal) {
+  const infoPanel = document.getElementById('infoPanel');
+  let infoHtml = `
+    <strong>${animal.type} ${animal.emoji}</strong><br/>
+    Position: ${animal.gridX}, ${animal.gridY}<br/>
+    Age: <strong>${animal.age}</strong><br/>
+    Is Predator: <strong>${animal.isPredator}</strong><br/>
+    Eats Grass: <strong>${animal.eatsGrass}</strong><br/>
+    Eats Plants: <strong>${animal.eatsPlants}</strong><br/>
+    Eats Animals: <strong>${animal.eatsAnimals}</strong><br/>
+    Hunger: <strong>${animal.hunger}</strong><br/>
+    Thirst: <strong>${animal.thirst}</strong><br/>
+   
+    State: <strong>${animal.state}</strong><br/>
+    Last State: <strong>${animal.lastState}</strong><br/>
+    Time Since Last Reproduction: <strong>${animal.timeSinceLastReproduction}</strong><br/>
+    Move Interval: <strong>${animal.moveInterval}</strong><br/>
+    Move Cooldown: <strong>${animal.moveCooldown}</strong><br/>
+    Resource Cooldown: <strong>${animal.resourceCooldown}</strong><br/>
+    Wander Duration: <strong>${animal.wanderDuration}</strong><br/>
+    Target Animal: <strong>${animal.targetAnimal}</strong><br/>
+    Target Cell: <strong>${animal.targetCell}</strong><br/>
+    Last Move From X: <strong>${animal.lastMoveFromX}</strong><br/>
+    Last Move From Y: <strong>${animal.lastMoveFromY}</strong><br/>
+    <br/>
+    <br/>
+    <br/>
+    #${animal.id}<br/><br/>
+    <button id="animateAnimalToRandomBushButton">Animate Animal to Random Bush</button>
+  `;
+
+  infoPanel.innerHTML = infoHtml; // Set the content 
+
+  // Make the info panel visible
+  infoPanel.style.visibility = 'visible';
+  infoPanel.style.display = 'block';
+  
+  // Add event listener to the button AFTER it's added to the DOM
+  document.getElementById('animateAnimalToRandomBushButton').addEventListener('click', () => {
+    // Pass the current animal to the animation function
+    animateAnimalToRandomBush(animal);
+  });
+}
+
+
+let animateAnimalButton = document.getElementById('animateAnimalToRandomBushButton');
+
+
+
+/**
+ * Animates an animal moving diagonally to a random bush location using a curved path.
+ * This is a visual-only animation that ignores game logic and pathfinding.
+ * @param {Animal} animal - The animal object to animate.
+ */
+function animateAnimalToRandomBush(animal) {
+  if (!animal) {
+    animal = currentAnimalSelected;
+  }
+/* 
+bush object is:
+{
+  "gridX": 155,
+  "gridY": 92
+}
+
+ ANIMAL OBJECT IS
+ {
+  "x": 840,
+  "y": 2260,
+  "gridX": 42,
+  "gridY": 113,
+}
+ 
+  */
+  console.log("Animating animal to random bush", animal.id);
+
+  // Select a random bush position
+  const targetBush = gBushesPositions[Math.floor(Math.random() * gBushesPositions.length)];
+  
+  // Important: Bush coordinates are in grid units, need to convert to pixel coordinates
+  const targetGridX = targetBush.gridX;
+  const targetGridY = targetBush.gridY;
+  const targetPixelX = targetGridX * cellSize; // Convert grid to pixel for animation
+  const targetPixelY = targetGridY * cellSize; // Convert grid to pixel for animation
+
+  console.log("Target bush", targetBush, "gridX:", targetGridX, "gridY:", targetGridY, 
+              "pixelX:", targetPixelX, "pixelY:", targetPixelY);
+  
+  // Store starting position (already in pixels)
+  const startX = animal.x;
+  const startY = animal.y;
+  
+  // Animation duration in milliseconds
+  const duration = 2000; // Reduced from 10000 to 2000 for faster animation
+  const startTime = performance.now();
+  
+  // Midpoint for curve calculation (slightly above direct path)
+  const midX = (startX + targetPixelX) / 2;
+  const midY = (startY + targetPixelY) / 2 - 50; // Offset upward for arc effect
+  
+  function animate(currentTime) {
+    // Calculate progress (0 to 1)
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    
+    // Clear previous frame - need to redraw all animals
+    animalCtx.clearRect(0, 0, animalCanvas.width, animalCanvas.height);
+    
+    if (progress < 1) {
+      // Quadratic Bezier curve calculation for smooth arcing movement
+      const t = progress;
+      const oneMinusT = 1 - t;
+      
+      // Calculate new position along the curve (in pixels)
+      const newX = oneMinusT * oneMinusT * startX + 2 * oneMinusT * t * midX + t * t * targetPixelX;
+      const newY = oneMinusT * oneMinusT * startY + 2 * oneMinusT * t * midY + t * t * targetPixelY;
+      
+      // Update animal position for rendering only
+      animal.x = newX;
+      animal.y = newY;
+      
+      // Redraw all animals (including our animated one at the new position)
+      animals.forEach(a => a.draw(animalCtx));
+      
+      // Continue animation
+      requestAnimationFrame(animate);
+    } else {
+      // Animation complete - update both pixel and grid coordinates
+      animal.x = targetPixelX;
+      animal.y = targetPixelY;
+      animal.gridX = targetGridX;
+      animal.gridY = targetGridY;
+      
+      // Redraw all animals
+      animals.forEach(a => a.draw(animalCtx));
+      
+      console.log(`Animation complete! Animal moved to bush at grid(${targetGridX}, ${targetGridY}), pixel(${targetPixelX}, ${targetPixelY})`);
+    }
+  }
+  
+  // Start the animation
+  requestAnimationFrame(animate);
+}
+
+
+
+/* 
+DO NOT TOUCH THIS
+function animateAnimalToRandomBush(animal = null) {
+    console.log("Animating animal to random bush");
+  if ( !gBushesPositions || gBushesPositions.length === 0) {
+    console.log("No animal or bush positions available.");
+    return;
+  }
+
+  if (!animal) {
+    animal = currentAnimalSelected;
+    return;
+  }
+
+  // Select a random bush position
+  const targetBush = gBushesPositions[Math.floor(Math.random() * gBushesPositions.length)];
+  const targetX = targetBush.x * cellSize;
+  const targetY = targetBush.y * cellSize;
+
+  // Calculate the distance to the target
+  const distanceX = targetX - animal.x;
+  const distanceY = targetY - animal.y;
+
+  // Calculate the number of steps (animation frames)
+  const steps = 1; // You can adjust this for faster/slower animation
+
+  // Calculate the increment for each step
+  const incrementX = distanceX / steps;
+  const incrementY = distanceY / steps;
+
+  let currentStep = 0;
+
+  function animateStep() {
+    if (currentStep >= steps) {
+      // Animation complete
+      animal.x = targetX; // Ensure the final position is exact
+      animal.y = targetY;
+      animal.gridX = targetBush.x;
+      animal.gridY = targetBush.y;
+      animalCtx.clearRect(0, 0, animalCanvas.width, animalCanvas.height);
+      animal.draw(animalCtx);
+      console.log("Animal animation complete at bush:", targetBush);
+      return;
+    }
+
+    // Update animal position
+    animal.x += incrementX;
+    animal.y += incrementY;
+
+    // Clear and redraw the animal
+    animalCtx.clearRect(0, 0, animalCanvas.width, animalCanvas.height);
+    animal.draw(animalCtx);
+
+    currentStep++;
+
+    // Request the next animation frame
+    requestAnimationFrame(animateStep);
+  }
+
+  // Start the animation
+  animateStep();
+}  */

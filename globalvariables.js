@@ -6,6 +6,8 @@ let kingdomName = "Elven Kingdom";
 let playerName = "OrcXSlayer777";
 let playedHours = 0;
 let currentNPCselected = null;
+let currentAnimalSelected = null;
+
 
 // Global variable for mouse tracking
 let isDragging = false; // Ensure isDragging is defined globally

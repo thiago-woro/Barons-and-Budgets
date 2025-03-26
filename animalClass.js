@@ -1,13 +1,5 @@
-let timesUsedPathFinderFunction = 0;
-// Add at the top with other globals
+// Global variables for animal behavior
 let walkableCellsLookup = new Set(); // Will store walkable cell coordinates as "x,y" strings
-let throttledPathfindingTimer = 0;
-let maxPathfindingCallsPerFrame = 3; // Limit pathfinding calls per frame
-let pathfindingCallsThisFrame = 0; // Track how many calls we've made this frame
-let globalPathfindingEnabled = true; // Global switch to disable pathfinding when too intensive
-let pathfindingDisabledUntil = 0; // Timestamp when to re-enable pathfinding
-let pathfindingCooldown = 5000; // 5 seconds cooldown when pathfinding is disabled
-const PATH_FINDING_COOLDOWN = 5000; // Constant for cooldown duration
 
 // Constants for animal behavior
 const THIRST_THRESHOLD = 60; // When to start seeking water
@@ -19,8 +11,9 @@ const EATING_RATE = 20; // How fast hunger is reduced when eating
 const MIN_STATE_DURATION = 500; // Minimum time (ms) to stay in a state
 const MAX_SEEKING_DURATION = 5000; // Maximum time to look for resources
 const STATE_HISTORY_SIZE = 5; // How many recent states to track
-const WANDER_MIN_DURATION = 3000; // Minimum time to stay in wandering state (ms)
-const WANDER_MAX_DURATION = 8000; // Maximum time to stay in wandering state (ms)
+const WANDER_MIN_DURATION = 5000; // Minimum time to stay in wandering state (ms)
+const WANDER_MAX_DURATION = 12000; // Maximum time to stay in wandering state (ms)
+const MAX_WANDER_RADIUS = 15; // Maximum cells radius to look for wandering targets
 const WANDER_RADIUS = 6; // Cell radius to wander within
 
 // Function to initialize walkable cells lookup
@@ -117,28 +110,49 @@ function findResourceWithinRadius(startX, startY, radius, resourceType) {
   return cellsInRadius[0];
 }
 
-// Function to find a random cell within a radius
-function findRandomCellWithinRadius(startX, startY, radius) {
-  // Get all empty cells within the radius
-  const cellsInRadius = [];
+// Function to find a random cell at least MIN_WANDER_DISTANCE away
+function findDistantCellWithinRadius(startX, startY, minDistance, maxRadius) {
+  // Get all empty cells within the max radius that are at least minDistance away
+  const candidateCells = [];
+  
+  // Keep track of how many cells we've checked to avoid searching too many
+  let checkedCount = 0;
+  const maxCheck = 500; // Limit how many cells we check for performance
   
   for (const cell of emptyCells) {
+    checkedCount++;
+    if (checkedCount > maxCheck) break;
+    
     const distance = calcManhattanDistance(startX, startY, cell.x, cell.y);
-    if (distance <= radius && distance > 0) { // Exclude the starting cell
-      cellsInRadius.push({
-        gridX: cell.x,
-        gridY: cell.y,
-        distance
-      });
+    // Only consider cells that are at least minDistance away, but within maxRadius
+    if (distance >= minDistance && distance <= maxRadius) {
+      // Verify the cell is walkable
+      const key = `${cell.x},${cell.y}`;
+      if (walkableCellsLookup.has(key)) {
+        candidateCells.push({
+          gridX: cell.x,
+          gridY: cell.y,
+          distance
+        });
+      }
+      
+      // Early exit if we found enough candidate cells
+      if (candidateCells.length >= 20) break;
     }
   }
   
-  // If no cells found, return null
-  if (cellsInRadius.length === 0) return null;
+  // If no suitable cells found or we found very few, reduce the minimum distance
+  if (candidateCells.length < 5 && minDistance > 3) {
+    console.log(`Found only ${candidateCells.length} distant cells, reducing minimum distance`);
+    return findDistantCellWithinRadius(startX, startY, minDistance - 2, maxRadius);
+  }
   
-  // Return a random cell from those in radius
-  const randomIndex = Math.floor(Math.random() * cellsInRadius.length);
-  return cellsInRadius[randomIndex];
+  // If still no suitable cells found, return null
+  if (candidateCells.length === 0) return null;
+  
+  // Return a random cell from the candidates
+  const randomIndex = Math.floor(Math.random() * candidateCells.length);
+  return candidateCells[randomIndex];
 }
 
 // Add after calcManhattanDistance function
@@ -197,7 +211,6 @@ class Animal {
   static PREDATOR_MAX_AGE = 20000;
   static MAX_ANIMALS = Math.floor(maxLandPopulation);
   static BABY_EMOJI_DURATION = 5000;
-  static PATH_RECALC_COOLDOWN = 2000; // 2 seconds cooldown between path recalculations
 
   static setAllPaused(isPaused) {
     animals.forEach(animal => animal.isPaused = isPaused);
@@ -217,7 +230,7 @@ class Animal {
     this.fontSize = this.getSpeciesFontSize();
     this.isPaused = false;
     this.isFrozen = false;
-    this.id = Math.random().toString(36).substring(2, 15);
+    this.id = animals.length + 1;
     this.eatsGrass = ['Cow', 'Chicken'].includes(type); // Flag for animals that eat grass
     this.eatsPlants = !this.isPredator; // Non-predators eat plants
     this.eatsAnimals = this.isPredator; // Predators eat animals
@@ -329,13 +342,19 @@ class Animal {
           this.setState('hunting');
         }
       } else if (Math.random() < WANDER_CHANCE) {
+        // When wandering, don't set a target cell - let the AnimalWander module handle it
         this.setState('wandering');
-        this.wanderDuration = Math.random() * (WANDER_MAX_DURATION - WANDER_MIN_DURATION) + WANDER_MIN_DURATION;
+        this.targetCell = null; // Clear any target cell
       }
     }
 
     this.updateBehavior(deltaTime);
-    this.handleMovement(deltaTime);
+    
+    // Only handle movement if we're not in wandering state (handled by AnimalWander)
+    if (this.state !== 'wandering' || this.isPredator) {
+      this.handleMovement(deltaTime);
+    }
+    
     this.checkReproduction(deltaTime);
   }
 
@@ -447,6 +466,20 @@ class Animal {
       }
     }
     
+    // Handle wandering state with the new module
+    if (this.state === "wandering" && !this.isPredator) {
+      // Use the new AnimalWander module to handle wandering
+      if (AnimalWander.handleWandering(this)) {
+        // If wandering was successful, we'll already be at the destination
+        // and state will be set to idle by the handler
+        return;
+      }
+      
+      // If wandering failed, set state to idle
+      this.setState("idle");
+      return;
+    }
+    
     // Handle resource seeking behaviors using simplified approach
 
     // Search for water if in seekingWater state
@@ -546,44 +579,6 @@ class Animal {
       }
     }
     
-    // Handle wandering behavior
-    if (this.state === "wandering" && !this.targetCell) {
-      // If we've been wandering too long or finished our duration, pick a target
-      if (this.stateTimer >= this.wanderDuration || this.wanderDuration === 0) {
-        console.log(`🚶 ${this.type} (${this.gridX}, ${this.gridY}) choosing wandering destination`);
-        
-        // Find a random cell within the wander radius
-        const wanderCell = findRandomCellWithinRadius(this.gridX, this.gridY, WANDER_RADIUS);
-        
-        if (wanderCell) {
-          this.targetCell = wanderCell;
-          console.log(`${this.type} wandering to (${wanderCell.gridX}, ${wanderCell.gridY})`);
-          
-          // Set a new wander duration when we reach the target
-          this.wanderDuration = Math.random() * (WANDER_MAX_DURATION - WANDER_MIN_DURATION) + WANDER_MIN_DURATION;
-        } else {
-          // If no wander cell found, just wait
-          this.wanderDuration = 2000; // Wait and try again
-          console.log(`${this.type} couldn't find place to wander, waiting`);
-        }
-      }
-      
-      // Even while wandering, check periodically if needs have grown urgent
-      if (this.stateTimer > 5000) {
-        if (this.thirst > THIRST_THRESHOLD + 10) {
-          this.setState("seekingWater");
-          this.targetCell = null;
-        } else if (this.hunger > HUNGER_THRESHOLD + 10) {
-          if (this.eatsPlants) {
-            this.setState(Math.random() < 0.5 ? "seekingGrass" : "seekingBerries");
-          } else if (this.eatsAnimals) {
-            this.setState("hunting");
-          }
-          this.targetCell = null;
-        }
-      }
-    }
-    
     // If drinking but no longer on water, go back to seeking water
     if (this.state === "drinking" && !this.isOnWaterCell()) {
       this.setState("seekingWater");
@@ -603,7 +598,7 @@ class Animal {
     }
     
     // If drinking for long enough, become satiated
-    if (this.state === "drinking" && this.stateTimer >= 2000) {
+    if (this.state === "drinking" && this.stateTimer >= 6000) {
       this.thirst = Math.max(0, this.thirst - DRINKING_RATE);
       console.log(`🚰 ${this.type} (${this.gridX}, ${this.gridY}) finished drinking, thirst: ${this.thirst.toFixed(1)}`);
       
@@ -624,7 +619,7 @@ class Animal {
     }
     
     // If eating for long enough, become satiated
-    if (this.state === "eating" && this.stateTimer >= 2000) {
+    if (this.state === "eating" && this.stateTimer >= 5000) {
       this.hunger = Math.max(0, this.hunger - EATING_RATE);
       console.log(`🍽️ ${this.type} (${this.gridX}, ${this.gridY}) finished eating berries, hunger: ${this.hunger.toFixed(1)}`);
       
@@ -636,12 +631,11 @@ class Animal {
       }
       
       this.targetCell = null;
-      this.stateTimer = 0;
       return;
     }
 
     // If eating grass for long enough, become satiated
-    if (this.state === "eatingGrass" && this.stateTimer >= 1500) {
+    if (this.state === "eatingGrass" && this.stateTimer >= 4000) {
       this.hunger = Math.max(0, this.hunger - EATING_RATE);
       console.log(`🌿 ${this.type} (${this.gridX}, ${this.gridY}) finished eating grass, hunger: ${this.hunger.toFixed(1)}`);
       
@@ -653,7 +647,6 @@ class Animal {
       }
       
       this.targetCell = null;
-      this.stateTimer = 0;
       return;
     }
   }
@@ -674,6 +667,86 @@ class Animal {
     // Reset the move timer
     this.timeSinceLastMove = 0;
     
+    // For wandering state, we handle movement differently
+    if (this.state === "wandering") {
+      // Even if a target cell is set, we'll use a simpler approach
+      if (this.targetCell) {
+        const dx = this.targetCell.gridX - this.gridX;
+        const dy = this.targetCell.gridY - this.gridY;
+        
+        // If we're one step away, just move there directly
+        if (Math.abs(dx) + Math.abs(dy) <= 1) {
+          this.gridX = this.targetCell.gridX;
+          this.gridY = this.targetCell.gridY;
+          this.x = this.gridX * cellSize;
+          this.y = this.gridY * cellSize;
+          this.targetCell = null;
+          return;
+        }
+        
+        // Choose whether to move horizontally or vertically
+        if (Math.random() < 0.5 && dx !== 0 || dy === 0) {
+          // Try to move horizontally
+          const nextX = this.gridX + Math.sign(dx);
+          const key = `${nextX},${this.gridY}`;
+          if (walkableCellsLookup.has(key)) {
+            this.gridX = nextX;
+          }
+        } else {
+          // Try to move vertically
+          const nextY = this.gridY + Math.sign(dy);
+          const key = `${this.gridX},${nextY}`;
+          if (walkableCellsLookup.has(key)) {
+            this.gridY = nextY;
+          }
+        }
+        
+        // Update pixel position
+        this.x = this.gridX * cellSize;
+        this.y = this.gridY * cellSize;
+        
+        // Check if we've reached the target
+        if (this.gridX === this.targetCell.gridX && this.gridY === this.targetCell.gridY) {
+          console.log(`🏁 ${this.type} (${this.gridX}, ${this.gridY}) reached wander target`);
+          this.targetCell = null;
+        }
+        
+        // Check for resources at our new position
+        this.checkResourcesAfterQuickMove();
+      } else {
+        // If no target cell, just move randomly
+        const adjacentCells = getAdjacentEmptyCells(this.gridX, this.gridY);
+        
+        if (adjacentCells.length > 0) {
+          // Prefer cells we haven't just come from (for more natural movement)
+          const filteredCells = this.lastMoveFromX !== undefined ? 
+            adjacentCells.filter(cell => 
+              !(cell.gridX === this.lastMoveFromX && cell.gridY === this.lastMoveFromY)
+            ) : adjacentCells;
+          
+          // If all cells filtered out, use original list
+          const cellsToUse = filteredCells.length > 0 ? filteredCells : adjacentCells;
+          
+          // Pick a random adjacent cell
+          const randomIndex = Math.floor(Math.random() * cellsToUse.length);
+          const randomCell = cellsToUse[randomIndex];
+          
+          // Move to random cell
+          this.lastMoveFromX = this.gridX;
+          this.lastMoveFromY = this.gridY;
+          this.gridX = randomCell.gridX;
+          this.gridY = randomCell.gridY;
+          this.x = this.gridX * cellSize;
+          this.y = this.gridY * cellSize;
+          
+          // Check for resources at our new position
+          this.checkResourcesAfterQuickMove();
+        }
+      }
+      
+      return;
+    }
+    
     // If we have a target cell to move toward
     if (this.targetCell) {
       // Calculate direction to target
@@ -687,10 +760,22 @@ class Animal {
       // Simple movement - move one step in the direction of the target
       if (Math.abs(dx) > Math.abs(dy)) {
         // Move horizontally
-        this.gridX += Math.sign(dx);
+        const nextX = this.gridX + Math.sign(dx);
+        const key = `${nextX},${this.gridY}`;
+        
+        // Only move if the cell is walkable
+        if (walkableCellsLookup.has(key)) {
+          this.gridX = nextX;
+        }
       } else {
         // Move vertically
-        this.gridY += Math.sign(dy);
+        const nextY = this.gridY + Math.sign(dy);
+        const key = `${this.gridX},${nextY}`;
+        
+        // Only move if the cell is walkable
+        if (walkableCellsLookup.has(key)) {
+          this.gridY = nextY;
+        }
       }
       
       // Update pixel position
@@ -758,13 +843,13 @@ class Animal {
         this.y = this.gridY * cellSize;
       }
     }
-    // For wandering or patrolling states
-    else if (this.state === "wandering" || this.state === "patrolling") {
+    // For patrolling state only
+    else if (this.state === "patrolling") {
       // Get adjacent cells
       const adjacentCells = getAdjacentEmptyCells(this.gridX, this.gridY);
       
       if (adjacentCells.length > 0) {
-        // Prefer cells we haven't just come from (for more natural wandering)
+        // Prefer cells we haven't just come from (for more natural )
         const filteredCells = this.lastMoveFromX !== undefined ? 
           adjacentCells.filter(cell => 
             !(cell.gridX === this.lastMoveFromX && cell.gridY === this.lastMoveFromY)
@@ -876,55 +961,21 @@ class Animal {
     if (!this.isAlive || (this.isDying && Date.now() - this.deathTime >= 2000)) return;
     
     if (!this.drawAnimation(ctx)) {
+      let x = this.x + cellSize/2;
+      let y = this.y + cellSize/2;
       // Draw the animal emoji
       ctx.fillStyle = 'black';
       ctx.font = `${this.getFontSize()}px Arial`;
-      ctx.fillText(this.emoji, (this.x + cellSize/2), (this.y + cellSize/2));
+      ctx.fillText(this.emoji, x, y);
       //ctx.moveTo(this.x + cellSize/2, this.y + cellSize/2);
 
       // Draw state text with background for readability
       ctx.font = "10px Arial";
       ctx.textAlign = "center";
-      
-      // Choose color based on state
-      let stateColor;
-      switch(this.state) {
-        case "drinking":
-          stateColor = "#00BFFF"; // Deep sky blue for drinking
-          break;
-        case "eating":
-        case "eatingGrass":
-          stateColor = "#32CD32"; // Lime green for eating
-          break;
-        case "fleeing":
-          stateColor = "#FF0000"; // Red for fleeing
-          break;
-        case "hunting":
-          stateColor = "#FF4500"; // Orange red for hunting
-          break;
-        case "seekingWater":
-          stateColor = "#87CEEB"; // Sky blue for seeking water
-          break;
-        case "seekingBerries":
-        case "seekingGrass":
-          stateColor = "#9ACD32"; // Yellow green for seeking food
-          break;
-        case "wandering":
-          stateColor = "#9932CC"; // Dark orchid for wandering
-          break;
-        default:
-          stateColor = "#808080"; // Gray for other states
-      }
-      
-      // Draw text background for better readability
-      const stateText = this.state;
-      const textWidth = ctx.measureText(stateText).width;
-      ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-      ctx.fillRect(this.x - textWidth/2 - 2, this.y - 34, textWidth + 4, 12);
-      
+ 
       // Draw state text
-      ctx.fillStyle = stateColor;
-      ctx.fillText(stateText, this.x, this.y - 24);
+      ctx.fillStyle = 'black';
+      ctx.fillText(this.state, x, y + 10);
     }
 
     // Draw eating or drinking progress bar if applicable
@@ -935,8 +986,8 @@ class Animal {
                            (this.state === "eatingGrass" ? "#32CD32" : "#DA70D6");
       
       // Calculate progress as percentage of time elapsed
-      const maxTime = this.state === "drinking" ? 2000 : 
-                     (this.state === "eatingGrass" ? 1500 : 2000);
+      const maxTime = this.state === "drinking" ? 6000 : 
+                     (this.state === "eatingGrass" ? 4000 : 2000);
       const progress = Math.min(1, this.stateTimer / maxTime);
       
       // Draw progress bar with text
@@ -1068,6 +1119,38 @@ class Animal {
       }
     }
   }
+
+  // Check for resources at current position
+  checkResourcesAfterQuickMove() {
+    // If we've wandered onto a water cell and we're thirsty
+    if (this.isOnWaterCell() && this.thirst > THIRST_THRESHOLD) {
+      console.log(`💧 ${this.type} (${this.gridX}, ${this.gridY}) found water during movement, drinking`);
+      this.setState("drinking");
+      this.stateTimer = 0;
+      this.targetCell = null;
+      return true;
+    }
+    
+    // If we've wandered onto/next to berries and we're hungry
+    if (this.isOnBerryCell() && this.hunger > HUNGER_THRESHOLD) {
+      console.log(`🍒 ${this.type} (${this.gridX}, ${this.gridY}) found berries during movement, eating`);
+      this.setState("eating");
+      this.stateTimer = 0;
+      this.targetCell = null;
+      return true;
+    }
+    
+    // If grass-eater has found a suitable grass cell and is hungry
+    if (this.eatsGrass && this.hunger > HUNGER_THRESHOLD) {
+      console.log(`🌿 ${this.type} (${this.gridX}, ${this.gridY}) found grass during movement, eating`);
+      this.setState("eatingGrass");
+      this.stateTimer = 0;
+      this.targetCell = null;
+      return true;
+    }
+    
+    return false;
+  }
 }
 
 // Add helper function to get a random empty cell
@@ -1148,44 +1231,7 @@ function starterAnimalPopulations(amount = 20) {
 } 
 
 
-/* 
-function moveCoyote(coyote, prey = null) {
-  // If chasing prey, use normal movement logic
-  if (prey) {
-    // Use existing movement logic
-    return moveAnimal(coyote);
-  }
 
-  // If no sand cells available, use normal movement
-  if (sandCells.length === 0) {
-    return moveAnimal(coyote);
-  }
-
-  // Find nearby sand cells within movement range
-  const nearbySteps = 3; // How far the coyote can move
-  const nearbySand = sandCells.filter(cell => {
-    const distance = Math.sqrt(
-      Math.pow(cell.x - coyote.x, 2) + 
-      Math.pow(cell.y - coyote.y, 2)
-    );
-    return distance <= nearbySteps;
-  });
-
-  // If no nearby sand cells, stay in place
-  if (nearbySand.length === 0) {
-    return false;
-  }
-
-  // Choose a random nearby sand cell
-  const targetCell = nearbySand[Math.floor(Math.random() * nearbySand.length)];
-  
-  // Update coyote position
-  coyote.x = targetCell.x;
-  coyote.y = targetCell.y;
-  
-  return true;
-}
- */
 
 // Add this to the updateGameState function
 function updateGameState(deltaTime) {
@@ -1221,4 +1267,28 @@ function updateValidMovesLookup(changedCells) {
   }
   
   console.log(`Updated walkable cells lookup, now has ${walkableCellsLookup.size} cells`);
+}
+
+// Add a new helper function for nearby random cells
+function findRandomCellWithinRadius(startX, startY, radius) {
+  // Get all empty cells within the radius
+  const cellsInRadius = [];
+  
+  for (const cell of emptyCells) {
+    const distance = calcManhattanDistance(startX, startY, cell.x, cell.y);
+    if (distance <= radius && distance > 0) { // Exclude the starting cell
+      cellsInRadius.push({
+        gridX: cell.x,
+        gridY: cell.y,
+        distance
+      });
+    }
+  }
+  
+  // If no cells found, return null
+  if (cellsInRadius.length === 0) return null;
+  
+  // Return a random cell from those in radius
+  const randomIndex = Math.floor(Math.random() * cellsInRadius.length);
+  return cellsInRadius[randomIndex];
 }

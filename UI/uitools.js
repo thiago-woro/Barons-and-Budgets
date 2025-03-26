@@ -637,3 +637,5 @@ function closeInsideBuilding() {
     }
   }
   
+
+

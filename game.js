@@ -179,7 +179,7 @@ function updateSimulation() {
 
     // Animal simulation updates
     animals.forEach(animal => {
-      animal.update(simulationBaseInterval / (gameLoopSpeed / 50)); // Scaled deltaTime
+      //animal.update(simulationBaseInterval / (gameLoopSpeed / 50)); // Scaled deltaTime
     });
     console.timeEnd("simulation");
     window.isSimulationRunning = false;
