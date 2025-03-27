@@ -14,23 +14,16 @@ bush object is:
 }
   */
 
-
-/**
- * Animates an animal to a random cell, then looks for food.
- * @param {Animal} animal - The animal to animate (default: currentAnimalSelected).
- * @param {number} eatingDuration - Time spent eating in ms (default: 2000).
- * @param {number} movementDuration - Movement animation duration in ms (default: 1000).
- */
 function animateAnimalToRandomBush(animal = currentAnimalSelected, eatingDuration = 2000, movementDuration = 1000) {
   if (!animal) return;
 
   // Configurable radii
-  const RANDOM_MOVE_RADIUS = 4;    // Initial random move range (±7 cells)
+  const RANDOM_MOVE_RADIUS = 4;    // Initial random move range (±4 cells)
   const BUSH_CHECK_RADIUS = 3;     // Bush proximity check after random move
   const ADJACENT_RADIUS = 1;       // Distance to adjacent cell for bush
-  const PRE_FOOD_COOLDOWN = 700;  // Cooldown before moving to food (in ms)
+  const PRE_FOOD_COOLDOWN = 700;   // Cooldown before moving to food (in ms)
 
-  animal.state = "randomJump"; // Changed to randomJump during initial move
+  animal.state = "randomJump";
   const randomOffset = () => Math.floor(Math.random() * (RANDOM_MOVE_RADIUS * 2 + 1)) - RANDOM_MOVE_RADIUS;
   let targetCell = {
     gridX: animal.gridX + randomOffset(),
@@ -67,37 +60,49 @@ function animateAnimalToRandomBush(animal = currentAnimalSelected, eatingDuratio
   requestAnimationFrame(animateToRandomCell);
 }
 
-/**
- * Checks for nearby bushes and moves the animal to eat if found.
- * @param {Animal} animal - The animal looking for food.
- * @param {Object} targetCell - Current target cell coordinates.
- * @param {number} bushCheckRadius - Radius to check for bushes.
- * @param {number} adjacentRadius - Distance to move adjacent to bush.
- * @param {number} preFoodCooldown - Cooldown before moving to food.
- * @param {number} eatingDuration - Time spent eating.
- * @param {number} movementDuration - Movement animation duration.
- */
 function lookingForFood(animal, targetCell, bushCheckRadius, adjacentRadius, preFoodCooldown, eatingDuration, movementDuration) {
-  animal.state = "lookingforfood"; // Set state to lookingforfood
+  animal.state = "lookingforfood";
 
-  const nearbyBushes = gBushesPositions.filter(b => 
-    Math.abs(b.gridX - animal.gridX) + Math.abs(b.gridY - animal.gridY) <= bushCheckRadius
-  );
+  let closestPuddle = null;
+  for (let dx = -bushCheckRadius; dx <= bushCheckRadius; dx++) {
+    for (let dy = -bushCheckRadius; dy <= bushCheckRadius; dy++) {
+      const checkX = animal.gridX + dx;
+      const checkY = animal.gridY + dy;
+      if (Math.abs(dx) + Math.abs(dy) <= bushCheckRadius && puddlePositions.has(`${checkX},${checkY}`)) {
+        if (!closestPuddle || (Math.abs(dx) + Math.abs(dy) < Math.abs(closestPuddle.gridX - animal.gridX) + Math.abs(closestPuddle.gridY - animal.gridY))) {
+          closestPuddle = { gridX: checkX, gridY: checkY };
+        }
+      }
+    }
+  }
 
-  if (nearbyBushes.length > 0) {
-    const closestBush = nearbyBushes.reduce((closest, bush) => {
-      const distToCurrent = Math.abs(bush.gridX - animal.gridX) + Math.abs(bush.gridY - animal.gridY);
-      const distToClosest = Math.abs(closest.gridX - animal.gridX) + Math.abs(closest.gridY - animal.gridY);
-      return distToCurrent < distToClosest ? bush : closest;
-    }, nearbyBushes[0]);
+  let resource = null;
+  let isPuddle = false;
 
+  if (closestPuddle) {
+    resource = closestPuddle;
+    isPuddle = true;
+  } else {
+    const nearbyBushes = gBushesPositions.filter(b => 
+      Math.abs(b.gridX - animal.gridX) + Math.abs(b.gridY - animal.gridY) <= bushCheckRadius
+    );
+    if (nearbyBushes.length > 0) {
+      resource = nearbyBushes.reduce((closest, bush) => {
+        const distToCurrent = Math.abs(bush.gridX - animal.gridX) + Math.abs(bush.gridY - animal.gridY);
+        const distToClosest = Math.abs(closest.gridX - animal.gridX) + Math.abs(closest.gridY - animal.gridY);
+        return distToCurrent < distToClosest ? bush : closest;
+      }, nearbyBushes[0]);
+    }
+  }
+
+  if (resource) {
     animal.state = "cooldown";
     setTimeout(() => {
       const adjacentCells = [
-        { gridX: closestBush.gridX - adjacentRadius, gridY: closestBush.gridY },
-        { gridX: closestBush.gridX + adjacentRadius, gridY: closestBush.gridY },
-        { gridX: closestBush.gridX, gridY: closestBush.gridY - adjacentRadius },
-        { gridX: closestBush.gridX, gridY: closestBush.gridY + adjacentRadius }
+        { gridX: resource.gridX - adjacentRadius, gridY: resource.gridY },
+        { gridX: resource.gridX + adjacentRadius, gridY: resource.gridY },
+        { gridX: resource.gridX, gridY: resource.gridY - adjacentRadius },
+        { gridX: resource.gridX, gridY: resource.gridY + adjacentRadius }
       ];
       targetCell = adjacentCells[Math.floor(Math.random() * adjacentCells.length)];
       const targetX = targetCell.gridX * cellSize;
@@ -106,7 +111,7 @@ function lookingForFood(animal, targetCell, bushCheckRadius, adjacentRadius, pre
       animal.state = "movingtofood";
       const moveStartTime = performance.now();
 
-      function animateToBush(time) {
+      function animateToResource(time) {
         const progress = Math.min((time - moveStartTime) / (movementDuration / 2), 1);
         animal.x = animal.x + (targetX - animal.x) * progress;
         animal.y = animal.y + (targetY - animal.y) * progress;
@@ -115,23 +120,53 @@ function lookingForFood(animal, targetCell, bushCheckRadius, adjacentRadius, pre
         animals.forEach(a => a.draw(animalCtx));
 
         if (progress < 1) {
-          requestAnimationFrame(animateToBush);
+          requestAnimationFrame(animateToResource);
         } else {
           animal.gridX = targetCell.gridX;
           animal.gridY = targetCell.gridY;
-          animal.state = "eating";
+          animal.state = isPuddle ? "drinking" : "eating";
+
+          if (isPuddle) {
+            const puddle = potablePuddleCells.find(p => p.x === resource.gridX && p.y === resource.gridY);
+            if (puddle) {
+              // Calculate fadeAmount based on original opacity
+              const originalOpacity = puddle.opacity || 0.6;
+              const fadeSteps = eatingDuration / 100; // Spread fade over eatingDuration
+              const fadeAmount = originalOpacity / fadeSteps; // Decrease based on initial opacity
+              
+              // Store original opacity to use for timing drinking duration
+              const drinkingDuration = originalOpacity * eatingDuration;
+              
+              // Create interval for gradual draining
+              const fadeInterval = setInterval(() => {
+                if (puddle.opacity > 0) {
+                  puddle.opacity = Math.max(0, puddle.opacity - fadeAmount);
+                  drawPuddles(); // Redraw after each update
+                } else {
+                  clearInterval(fadeInterval);
+                  updatePuddlePositions(); // Update the puddle set when completely drained
+                }
+              }, 100);
+              
+              // Adjust the eating duration based on puddle opacity
+              eatingDuration = drinkingDuration;
+            }
+          }
+
           setTimeout(() => {
-            const bushIndex = gBushesPositions.findIndex(b => 
-              b.gridX === closestBush.gridX && b.gridY === closestBush.gridY
-            );
-            if (bushIndex !== -1) {
-              gBushesPositions.splice(bushIndex, 1);
-              const treeIndex = treePositions.findIndex(t => 
-                t.gridX === closestBush.gridX && t.gridY === closestBush.gridY && t.emoji === "🌳"
+            if (!isPuddle) {
+              const bushIndex = gBushesPositions.findIndex(b => 
+                b.gridX === resource.gridX && b.gridY === resource.gridY
               );
-              if (treeIndex !== -1) treePositions.splice(treeIndex, 1);
-              drawTrees(treeCtx, treePositions);
-              modifyWalkableCells([{ x: closestBush.gridX, y: closestBush.gridY }], "add");
+              if (bushIndex !== -1) {
+                gBushesPositions.splice(bushIndex, 1);
+                const treeIndex = treePositions.findIndex(t => 
+                  t.gridX === resource.gridX && t.gridY === resource.gridY && t.emoji === "🌳"
+                );
+                if (treeIndex !== -1) treePositions.splice(treeIndex, 1);
+                drawTrees(treeCtx, treePositions);
+                modifyWalkableCells([{ x: resource.gridX, y: resource.gridY }], "add");
+              }
             }
             animal.state = "cooldown";
             setTimeout(() => {
@@ -141,7 +176,7 @@ function lookingForFood(animal, targetCell, bushCheckRadius, adjacentRadius, pre
         }
       }
 
-      requestAnimationFrame(animateToBush);
+      requestAnimationFrame(animateToResource);
     }, preFoodCooldown);
   } else {
     animal.state = "cooldown";
@@ -150,11 +185,6 @@ function lookingForFood(animal, targetCell, bushCheckRadius, adjacentRadius, pre
     }, 1000);
   }
 }
-
-
-
-
-
 
 function moveAnimalsPeriodically(animalType, delay, movePercentage, durationRange) {
   setTimeout(() => {

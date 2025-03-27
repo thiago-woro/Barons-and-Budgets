@@ -15,31 +15,43 @@ function getRandomGrassImage() {
 
 let grasslands = []
 
+// Move updatePuddlePositions to be more explicit
+function updatePuddlePositions() {
+  puddlePositions = new Set(
+    potablePuddleCells
+      .filter(puddle => puddle.opacity > 0)
+      .map(puddle => `${puddle.x},${puddle.y}`)
+  );
+}
+
 // Function to draw grass tiles inside ground cells
 function drawGrass(ctx, grassDensity) {
   console.log(`function drawGrass`, ctx, grassDensity);
   
-  // Reset the grassCells array for this new drawing
+  // Reset the grassCells array
   grassCells = [];
   
-  // Create a Set of puddle cell coordinates for faster lookup
-  const puddlePositions = new Set(
-    potablePuddleCells.map(puddle => `${puddle.x},${puddle.y}`)
-  );
+  // Update puddle positions before filtering cells
+  updatePuddlePositions();
 
-  // Filter ground cells to exclude puddle locations
+  // Filter ground cells to exclude puddle locations more efficiently
+  const puddleSet = new Set(Array.from(puddlePositions));
+  
+  // Initialize availableGrassCells from groundCells, excluding puddles
   const availableGrassCells = groundCells.filter(cell => {
-    // Skip if cell is a puddle location
-    return !puddlePositions.has(`${cell.x},${cell.y}`);
+    const cellKey = `${cell.x},${cell.y}`;
+    return !puddleSet.has(cellKey);
   });
-
-  // Filter cells that are:
-  // 1. In emptyCells (walkable)
-  // 2. Have a noise value between 0.1 and 0.4 (appropriate terrain for grass)
+  
+  // Filter cells that are suitable for grass
   grasslands = emptyCells.filter((cell) => {
     const noiseValue = parseFloat(cell.noise);
-    // Check that it's a valid land cell with appropriate noise range for grass
-    return noiseValue >= 0.15 && noiseValue <= 0.37;
+    const cellKey = `${cell.x},${cell.y}`;
+    
+    // Check terrain suitability and ensure no puddle exists here
+    return noiseValue >= 0.15 && 
+           noiseValue <= 0.37 && 
+           !puddleSet.has(cellKey);
   });
 
   // Create a set of tree positions for faster lookups
@@ -50,12 +62,11 @@ function drawGrass(ctx, grassDensity) {
     });
   }
 
-
-
   // Additional check to make sure we're not drawing on water cells or tree positions
   grasslands = grasslands.filter(cell => {
     // Make sure this cell is not in potablePuddleCells and not where a tree is
-    return !treePositionsSet.has(`${cell.x},${cell.y}`) && !potablePuddleCells.some(puddle => puddle.x === cell.x && puddle.y === cell.y);
+    return !treePositionsSet.has(`${cell.x},${cell.y}`) && 
+           !potablePuddleCells.some(puddle => puddle.x === cell.x && puddle.y === cell.y);
   });
 
   console.log(`Found ${grasslands.length} potential grass cells after filtering water and trees`);

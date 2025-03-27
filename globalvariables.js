@@ -36,7 +36,7 @@ let allGrassEaten = []
 let allBerriesEaten = []
 let allWaterDrankByAnimals = []
 
-let treePercentageofLand = 0.49
+let treePercentageofLand = 0.09
 let usableLand = 0.045
 
 let flatLandCells = [];

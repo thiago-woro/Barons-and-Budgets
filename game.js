@@ -121,6 +121,11 @@ function updateSimulation() {
     window.isSimulationRunning = true;
     console.time("simulation");
     
+    // Update puddles
+    if (typeof drawPuddles === 'function' && potablePuddleCells && potablePuddleCells.length > 0) {
+      drawPuddles();
+    }
+    
     loopCounter = (loopCounter + 1) % cycleLength; 
     const isMajorActivitiesLoop = loopCounter === 0;
 

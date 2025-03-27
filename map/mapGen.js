@@ -303,7 +303,11 @@ function drawTerrainLayer(ctx, cellArray, cellSize) {
     }
   }
 }
-
+function updatePuddlePositions() {
+  puddlePositions = new Set(
+    potablePuddleCells.map(puddle => `${puddle.x},${puddle.y}`)
+  );
+}
 function afterMapGen() { //after basic terrain generation, adds enviromental details to map.
   generateWavyWaterCanvas(waterCtx, rows);
 
@@ -363,9 +367,13 @@ identifyIslands(false, false);
 islands.forEach(island => {
     // Add 2-3 puddles based on island size
     const numPuddles = Math.max(2, Math.floor(island.size / 900));
-    addPotablePuddleCell(island, numPuddles, 2);
+    addPotablePuddleCell(island, numPuddles, 20);
     
 });
+  // Create a Set of puddle cell coordinates for faster lookup
+  let puddlePositions ;
+
+  updatePuddlePositions();
 
   // Draw grass patches at the end
   drawGrass(oreDepositsCtx, 0.45);
@@ -1149,12 +1157,12 @@ function addPotablePuddleCell(island, amountPuddles, puddleSize = 2) {
         return;
     }
     
-    potablePuddleCells = [];
-    
-    // Filter suitable cells for puddles (flat terrain between 0.2 and 0.4 noise)
+    // Filter suitable cells for puddles (flat terrain between 0.2 and 0.4 noise) and that dont have trees
     const suitableCells = island.cells.filter(cell => {
         const noiseValue = parseFloat(cell.noise);
-        return noiseValue > 0.2 && noiseValue < 0.4;
+        // Check if there's a tree at the puddle's location
+        const treeExists = treePositions.some(tree => tree.gridX === cell.x && tree.gridY === cell.y);
+        return noiseValue > 0.2 && noiseValue < 0.4 && !treeExists;
     });
 
     if (suitableCells.length === 0) {
@@ -1176,8 +1184,8 @@ function addPotablePuddleCell(island, amountPuddles, puddleSize = 2) {
                     const puddleCell = {
                         x: baseCell.x + dx,
                         y: baseCell.y + dy,
-                        color: '#4d7ea8', // Light blue color for puddles
-                        type: 'puddle'
+                        color: '#4d7ea8',
+                        opacity: 0.6  // Set initial opacity
                     };
 
                     // Check if this cell is actually part of the island AND in suitable terrain
@@ -1196,41 +1204,61 @@ function addPotablePuddleCell(island, amountPuddles, puddleSize = 2) {
         }
     }
 
-    // Draw the puddles
+    console.warn("AFTER, PUDDLE CELLS LENGTH", potablePuddleCells.length);
+
+    // Draw the initial puddles
     drawPuddles();
 }
 
 // Separate function to draw puddles
 function drawPuddles() {
-    if (potablePuddleCells.length === 0) return;
+  if (potablePuddleCells.length === 0) return;
 
-    const ctx = groundCtx; // Using ground canvas for puddles
-    ctx.save();
+  // Clear only the puddle layer
+  oreDepositsCtx.clearRect(0, 0, oreDepositsCtx.canvas.width, oreDepositsCtx.canvas.height);
+  const ctx = oreDepositsCtx;
+  ctx.save();
+
+  // Draw each puddle with its current opacity
+  potablePuddleCells.forEach(puddle => {
+    // Ensure opacity is defined and within bounds
+    if (puddle.opacity === undefined) puddle.opacity = 0.6;
     
-    potablePuddleCells.forEach(puddle => {
-        // Check if there's a tree at the puddle's location
-        const treeExists = treePositions.some(tree => tree.gridX === puddle.x && tree.gridY === puddle.y);
-        if (treeExists) {
-            return; // Skip drawing this puddle cell
-        }
-
-        const randomAlpha = Math.floor(Math.random() * 0.1) + 0.5;
-
-        ctx.fillStyle = puddle.color;
-        ctx.globalAlpha = randomAlpha; // Make puddles semi-transparent
-        //random number between 1 and 7
-        const randomBorderRadius = Math.floor(Math.random() * 3) + 4;
-        drawRoundedRect(
-            ctx,
-            puddle.x * cellSize,
-            puddle.y * cellSize,
-            cellSize,
-            randomBorderRadius, // Rounded border radius
-            puddle.color
-        );
-    });
+    ctx.fillStyle = puddle.color;
+    ctx.globalAlpha = puddle.opacity;
     
-    ctx.restore();
+    // Fixed border radius to prevent flickering
+    const borderRadius = 4;
+    drawRoundedRect(
+      ctx,
+      puddle.x * cellSize,
+      puddle.y * cellSize,
+      cellSize,
+      borderRadius,
+      puddle.color
+    );
+  });
+
+  ctx.restore();
+}
+
+// Add new function to handle puddle fading
+function fadePuddle(puddle, amount = 0.001) {
+  if (puddle.opacity === undefined) puddle.opacity = 0.6;
+  puddle.opacity = Math.max(0, puddle.opacity - amount);
+  return puddle.opacity > 0;
+}
+
+// Add new function to update puddle states
+function updatePuddles() {
+  // Filter out puddles that have faded completely
+  potablePuddleCells = potablePuddleCells.filter(puddle => puddle.opacity > 0);
+  
+  // Update the puddle positions set
+  updatePuddlePositions();
+  
+  // Redraw the puddles with their new opacities
+  drawPuddles();
 }
 
 // Example usage:
