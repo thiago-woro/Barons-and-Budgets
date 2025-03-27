@@ -100,7 +100,13 @@ document.addEventListener('DOMContentLoaded', () => {
             Animal.PREDATOR_MAX_AGE : Animal.MAX_AGE;
         const randomAge = Math.floor(Math.random() * (maxAge * 0.9 - maxAge * 0.15) + maxAge * 0.15);
 
-        let animalSpecies = toolId.includes('Coyote') ? 'Coyote' : toolId.includes('Bear') ? 'Bear' : toolId.includes('Sheep') ? 'Sheep' : 'Chicken';
+        let animalSpecies = toolId.includes('Coyote') ? 'Coyote' : 
+                            toolId.includes('Bear') ? 'Bear' : 
+                            toolId.includes('Sheep') ? 'Sheep' : 
+                            toolId.includes('Cow') ? 'Cow' :
+                            toolId.includes('Pig') ? 'Pig' :
+                            toolId.includes('Chicken') ? 'Chicken' :
+                            'Sheep';
 
         animals.push(new Animal(coords.cellCol, coords.cellRow, animalSpecies, randomAge));
         animalCtx.clearRect(0, 0, animalCanvas.width, animalCanvas.height);

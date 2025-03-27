@@ -9,7 +9,7 @@ function initWalkableCellsLookup() {
   for (const cell of emptyCells) {
     walkableCellsLookup.add(`${cell.x},${cell.y}`);
   }
-  console.log(`Initialized walkable cells lookup with ${walkableCellsLookup.size} cells`);
+  console.warn(`Initialized walkable cells lookup with ${walkableCellsLookup.size} cells`);
 }
 
 // Euclidean distance - most accurate for real-world movement but computationally expensive
@@ -320,6 +320,8 @@ class Animal {
 
 
 function starterAnimalPopulations(amount = 20) {
+        initWalkableCellsLookup();
+
   // Clear existing animals
   animals = [];
   
@@ -440,4 +442,3 @@ function updateValidMovesLookup(changedCells) {
   
   console.log(`Updated walkable cells lookup, now has ${walkableCellsLookup.size} cells`);
 }
-

@@ -13,7 +13,8 @@ bush object is:
   "gridY": 113,
 }
   */
-
+ 
+  
 function animateAnimalToRandomBush(animal = currentAnimalSelected, eatingDuration = 2000, movementDuration = 1000) {
   if (!animal) return;
 
@@ -25,11 +26,7 @@ function animateAnimalToRandomBush(animal = currentAnimalSelected, eatingDuratio
 
   animal.state = "randomJump";
   
-  // Initialize walkable cells lookup if not already done
-  if (walkableCellsLookup.size === 0) {
-    initWalkableCellsLookup();
-  }
-  
+
   // Modified random offset generator that checks for walkable cells
   let targetCell = null;
   let attempts = 0;
@@ -58,7 +55,7 @@ function animateAnimalToRandomBush(animal = currentAnimalSelected, eatingDuratio
   
   // If no valid cell found after max attempts, use current position
   if (!targetCell) {
-    console.log("No walkable cell found for animal jump - staying in place");
+    console.warn("No walkable cell found for animal jump - staying in place");
     targetCell = {
       gridX: animal.gridX,
       gridY: animal.gridY

@@ -367,7 +367,7 @@ identifyIslands(false, false);
 islands.forEach(island => {
     // Add 2-3 puddles based on island size
     const numPuddles = Math.max(2, Math.floor(island.size / 900));
-    addPotablePuddleCell(island, numPuddles, 20);
+    addPotablePuddleCell(island, numPuddles, 4);
     
 });
   // Create a Set of puddle cell coordinates for faster lookup

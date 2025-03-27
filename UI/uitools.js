@@ -639,3 +639,75 @@ function closeInsideBuilding() {
   
 
 
+
+
+
+
+
+
+
+
+
+
+/**
+ * Toggles drawing "X" marks on walkable cells in the oreDepositCtx.
+ */
+function toggleDrawWalkableCells() {
+  // Check if the walkable cells overlay is currently enabled.
+  const isEnabled = window.drawWalkableCellsEnabled || false;
+
+  // Toggle the state.
+  window.drawWalkableCellsEnabled = !isEnabled;
+
+  // Log the new state to the console.
+  console.log(`Draw walkable cells overlay: ${window.drawWalkableCellsEnabled}`);
+
+  // If enabling, draw the walkable cells.
+  if (window.drawWalkableCellsEnabled) {
+    drawWalkableCells();
+  } else {
+    // If disabling, clear the overlay.
+    clearWalkableCells();
+  }
+}
+
+/**
+ * Draws "X" marks on all walkable cells in the oreDepositCtx.
+ */
+function drawWalkableCells() {
+
+
+  // Set the style for the "X" marks.
+  oreDepositsCtx.strokeStyle = 'red';
+  oreDepositsCtx.lineWidth = 2;
+
+  // Iterate over the walkable cells and draw an "X" on each.
+  for (const cell of walkableCellsLookup) {
+    const [gridX, gridY] = cell.split(",").map(Number);
+    const x = gridX * cellSize;
+    const y = gridY * cellSize;
+
+    // Draw the "X".
+    oreDepositsCtx.beginPath();
+    oreDepositsCtx.moveTo(x, y);
+    oreDepositsCtx.lineTo(x + cellSize, y + cellSize);
+    oreDepositsCtx.moveTo(x + cellSize, y);
+    oreDepositsCtx.lineTo(x, y + cellSize);
+    oreDepositsCtx.stroke();
+  }
+}
+
+/**
+ * Clears the walkable cells overlay from the oreDepositCtx.
+ */
+function clearWalkableCells() {
+  oreDepositsCtx.clearRect(0, 0, oreDepositsCanvas.width, oreDepositsCanvas.height);
+}
+
+// Add an event listener to toggle the walkable cells overlay with the "J" key.
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'j') {
+    toggleDrawWalkableCells();
+  }
+});
+
