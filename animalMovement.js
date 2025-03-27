@@ -29,14 +29,6 @@ function animateAnimalToRandomBush(animal = currentAnimalSelected, eatingDuratio
 
   // Modified random offset generator that checks for walkable cells
   let targetCell = null;
-  let attempts = 0;
-  const MAX_ATTEMPTS = 2; // Prevent infinite loops if no valid cells found
-  
-  // Keep trying to find a valid walkable cell within range
-  while (!targetCell && attempts < MAX_ATTEMPTS) {
-    attempts++;
-    
-    // Generate random offset within RANDOM_MOVE_RADIUS
     const randomOffsetX = Math.floor(Math.random() * (RANDOM_MOVE_RADIUS * 2 + 1)) - RANDOM_MOVE_RADIUS;
     const randomOffsetY = Math.floor(Math.random() * (RANDOM_MOVE_RADIUS * 2 + 1)) - RANDOM_MOVE_RADIUS;
     
@@ -51,15 +43,20 @@ function animateAnimalToRandomBush(animal = currentAnimalSelected, eatingDuratio
         gridY: potentialY
       };
     }
-  }
   
   // If no valid cell found after max attempts, use current position
   if (!targetCell) {
-    console.warn("No walkable cell found for animal jump - staying in place");
-    targetCell = {
-      gridX: animal.gridX,
-      gridY: animal.gridY
-    };
+
+    // New logic: move to a random adjacent cell
+    const possibleMoves = [
+      { gridX: animal.gridX + 1, gridY: animal.gridY },
+      { gridX: animal.gridX - 1, gridY: animal.gridY },
+      { gridX: animal.gridX, gridY: animal.gridY + 1 },
+      { gridX: animal.gridX, gridY: animal.gridY - 1 }
+    ];
+    
+    targetCell = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+    console.log(`Animal moving to random adjacent cell: ${targetCell.gridX}, ${targetCell.gridY}`);
   }
   
   let targetX = targetCell.gridX * cellSize;
