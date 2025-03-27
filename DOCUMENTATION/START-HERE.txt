@@ -1,5 +1,5 @@
 Project Context:
-This is a pure JavaScript, browser-only, 2D game with a grid coordinate system. Always use the Cell (x, y) row, column format to refer to a cell. Example: (`Cell X ${cellCol}, Y${cellRow}`).
+This is a client side, javascript + html canvas, 2D game with X,Y grid coords.
 npc object sample:
 {
   "x": 1300,
@@ -67,10 +67,6 @@ Code Patterns & Logic:
 - Event-driven UI interactions.
 - Grid-based logic for movement and placement.
 
-Technologies:
-- JavaScript for game logic.
-- HTML5 Canvas for rendering.
-- CSS.
 
 Important Notes:
 - Testing is manual; avoid automated tests.

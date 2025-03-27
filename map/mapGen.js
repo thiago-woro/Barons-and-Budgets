@@ -368,8 +368,8 @@ islands.forEach(island => {
 });
 
   // Draw grass patches at the end
-  drawGrass(treeCtx, 0.45);
-
+  drawGrass(oreDepositsCtx, 0.45);
+moveHerbivoresPeriodically();
 
 /* END OF ALL TERRAIN RELATED GENERATIONS */
 

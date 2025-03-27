@@ -733,28 +733,16 @@ function saveGame() {
           drawMountainTexture(groundCtx);
         }
       }
-      
       // Redraw trees
-      if (typeof drawTrees === 'function' && treeCtx) {
-        // Make sure treePositions is an array before passing it
-        if (Array.isArray(treePositions)) {
-          try {
-            // Call with the correct parameters based on the function signature
-            drawTrees(treeCtx, treePositions);
-          } catch (error) {
-            console.warn("Error drawing trees:", error);
-          }
-        } else {
-          console.warn("Cannot draw trees: treePositions is not an array");
-        }
-      }
+
+      drawTrees(treeCtx, treePositions);
+      
+    
       
       // Redraw buildings
       if (buildings && buildings.length > 0) {
         buildings.forEach(building => {
-          if (typeof building.draw === 'function') {
             building.draw(npcCtx);
-          }
         });
       }
       
