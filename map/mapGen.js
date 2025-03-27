@@ -375,8 +375,10 @@ islands.forEach(island => {
 
   updatePuddlePositions();
 
-  // Draw grass patches at the end
-  drawGrass(grassCtx, 0.45);
+  // Generate and draw grass patches
+  generateGrass(0.45);
+  drawGrass(grassCtx);
+  
 moveHerbivoresPeriodically();
 
 /* END OF ALL TERRAIN RELATED GENERATIONS */
@@ -944,7 +946,7 @@ function placeLakes() {
     
     // 4. Add grass to lake borders
     if (outsideRingLakeBorders.length > 0) {
-        // Draw grass on ~85% of border cells
+        // Add grass cells for ~85% of border cells
         const grassDensity = 0.85;
         
         for (const borderCell of outsideRingLakeBorders) {
@@ -953,27 +955,22 @@ function placeLakes() {
                 const x = borderCell.x;
                 const y = borderCell.y;
                 
-                const grassImage = new Image();
-                grassImage.src = getRandomGrassImage();
-                
                 // Create a grass cell entry
                 const grassCell = {
                     x: x,
                     y: y,
-                    image: grassImage.src
+                    image: getRandomGrassImage()
                 };
                 
                 // Add to grassCells array if it exists
                 if (typeof grassCells !== 'undefined') {
                     grassCells.push(grassCell);
                 }
-                
-                // Draw the grass when image loads
-                grassImage.onload = () => {
-                    treeCtx.drawImage(grassImage, x * cellSize, y * cellSize, cellSize, cellSize);
-                };
             }
         }
+        
+        // Draw the added grass cells
+        drawGrass(treeCtx);
         
         console.log(`Added grass to lake borders`);
     }

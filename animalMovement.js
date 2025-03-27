@@ -160,61 +160,17 @@ function lookingForFood(animal, targetCell, bushCheckRadius, adjacentRadius, pre
           animal.gridY = targetCell.gridY;
           animal.state = isPuddle ? "drinking" : "eating";
 
-          if (isPuddle) {
-            const puddle = potablePuddleCells.find(p => p.x === resource.gridX && p.y === resource.gridY);
-            if (puddle) {
-              // Store original opacity to calculate the drinking duration
-              const originalOpacity = puddle.opacity || 0.6;
-              
-              // Make drinking duration proportional to puddle size but ensure minimum 5 seconds
-              const drinkingDuration = Math.max(MINIMUM_DRINKING_DURATION, originalOpacity * eatingDuration * 2);
-              
-              // Calculate fade steps and amount to ensure complete draining 
-              const fadeSteps = drinkingDuration / 100; // Update every 100ms
-              const fadeAmount = puddle.opacity / fadeSteps; // Ensure we reach 0 by the end
-              
-              // Create interval for gradual draining that continues until opacity is 0
-              const fadeInterval = setInterval(() => {
-                if (puddle.opacity > 0) {
-                  // Reduce opacity and ensure it doesn't go negative
-                  puddle.opacity = Math.max(0, puddle.opacity - fadeAmount);
-                  drawPuddles(); // Redraw puddles after each update
-                } else {
-                  // When opacity reaches 0, clear interval and update puddle positions
-                  clearInterval(fadeInterval);
-                  // Filter out this puddle from the array when fully drained
-                  potablePuddleCells = potablePuddleCells.filter(p => 
-                    !(p.x === resource.gridX && p.y === resource.gridY)
-                  );
-                  updatePuddlePositions(); // Update the puddle positions set
-                }
-              }, 100);
-              
-              // Use the calculated duration or minimum, whichever is larger
-              eatingDuration = drinkingDuration;
-            }
-          }
-
-          setTimeout(() => {
-            if (!isPuddle) {
-              const bushIndex = gBushesPositions.findIndex(b => 
-                b.gridX === resource.gridX && b.gridY === resource.gridY
-              );
-              if (bushIndex !== -1) {
-                gBushesPositions.splice(bushIndex, 1);
-                const treeIndex = treePositions.findIndex(t => 
-                  t.gridX === resource.gridX && t.gridY === resource.gridY && t.emoji === "🌳"
-                );
-                if (treeIndex !== -1) treePositions.splice(treeIndex, 1);
-                drawTrees(treeCtx, treePositions);
-                modifyWalkableCells([{ x: resource.gridX, y: resource.gridY }], "add");
-              }
-            }
-            animal.state = "cooldown";
-            setTimeout(() => {
-              animal.state = "idle";
-            }, isPuddle ? MINIMUM_DRINKING_COOLDOWN : 1000); // Use longer cooldown for drinking
-          }, eatingDuration);
+            if (isPuddle) {
+                        handleAnimalDrinking(animal, resource, MINIMUM_DRINKING_DURATION, MINIMUM_DRINKING_COOLDOWN, eatingDuration);
+                      } else {
+                        if (animal.type === "Cow" || animal.type === "Chicken") {
+                          eatGrass(animal, resource, eatingDuration);
+                          console.log(`${animal.type} eating grass ✳`);
+                        } else {
+                          eatBushes(animal, resource, eatingDuration);
+                          console.log(`${animal.type} eating bushes 🌳`);
+                        }
+                      }
         }
       }
 
@@ -227,6 +183,92 @@ function lookingForFood(animal, targetCell, bushCheckRadius, adjacentRadius, pre
     }, 1000);
   }
 }
+
+// New function to handle animal drinking
+function handleAnimalDrinking(animal, resource, MINIMUM_DRINKING_DURATION, MINIMUM_DRINKING_COOLDOWN, eatingDuration) {
+  const puddle = potablePuddleCells.find(p => p.x === resource.gridX && p.y === resource.gridY);
+  if (puddle) {
+    // Store original opacity to calculate the drinking duration
+    const originalOpacity = puddle.opacity || 0.6;
+    
+    // Make drinking duration proportional to puddle size but ensure minimum duration
+    const drinkingDuration = Math.max(MINIMUM_DRINKING_DURATION, originalOpacity * eatingDuration * 2);
+    
+    // Calculate fade steps and amount to ensure complete draining 
+    const fadeSteps = drinkingDuration / 100; // Update every 100ms
+    const fadeAmount = puddle.opacity / fadeSteps; // Ensure we reach 0 by the end
+    
+    // Create interval for gradual draining that continues until opacity is 0
+    const fadeInterval = setInterval(() => {
+      if (puddle.opacity > 0) {
+        // Reduce opacity and ensure it doesn't go negative
+        puddle.opacity = Math.max(0, puddle.opacity - fadeAmount);
+        drawPuddles(); // Redraw puddles after each update
+      } else {
+        // When opacity reaches 0, clear interval and update puddle positions
+        clearInterval(fadeInterval);
+        // Filter out this puddle from the array when fully drained
+        potablePuddleCells = potablePuddleCells.filter(p => 
+          !(p.x === resource.gridX && p.y === resource.gridY)
+        );
+        updatePuddlePositions(); // Update the puddle positions set
+      }
+    }, 100);
+    
+    // Handle state after drinking
+    setTimeout(() => {
+      animal.state = "cooldown";
+      setTimeout(() => {
+        animal.state = "idle";
+      }, MINIMUM_DRINKING_COOLDOWN);
+    }, drinkingDuration);
+  }
+}
+
+// New function to handle animal eating
+function eatBushes(animal, resource, eatingDuration) {
+  setTimeout(() => {
+    const bushIndex = gBushesPositions.findIndex(b => 
+      b.gridX === resource.gridX && b.gridY === resource.gridY
+    );
+    if (bushIndex !== -1) {
+      gBushesPositions.splice(bushIndex, 1);
+      const treeIndex = treePositions.findIndex(t => 
+        t.gridX === resource.gridX && t.gridY === resource.gridY && t.emoji === "🌳"
+      );
+      if (treeIndex !== -1) treePositions.splice(treeIndex, 1);
+      // drawTrees(treeCtx, treePositions);
+      modifyWalkableCells([{ x: resource.gridX, y: resource.gridY }], "add");
+    }
+    animal.state = "cooldown";
+    setTimeout(() => {
+      animal.state = "idle";
+    }, 1000);
+  }, eatingDuration);
+}
+
+function eatGrass(animal, resource, eatingDuration) {
+
+  animal.state = "GRASS!!!";
+
+
+  setTimeout(() => {
+    const bushIndex = grassCells.findIndex(b => 
+      b.x === resource.gridX && b.y === resource.gridY
+    );
+    if (bushIndex !== -1) {
+      grassCells.splice(bushIndex, 1);
+      refreshGrass();
+    }
+    animal.state = "cooldown";
+    setTimeout(() => {
+      animal.state = "idle";
+    }, 1000);
+  }, eatingDuration);
+}
+
+
+
 
 function moveAnimalsPeriodically(animalType, delay, movePercentage, durationRange) {
   setTimeout(() => {
@@ -244,10 +286,12 @@ function moveAnimalsPeriodically(animalType, delay, movePercentage, durationRang
 function moveHerbivoresPeriodically() {
   moveAnimalsPeriodically("Chicken", 2000, 0.4, 800);
   moveAnimalsPeriodically("Sheep", 3000, 0.2, 2000);
-  moveAnimalsPeriodically("Cow", 3000, 0.1, 2000);
-  moveAnimalsPeriodically("Pig", 3000, 0.1, 2000);
+  moveAnimalsPeriodically("Cow", 3000, 0.9, 2000);
+  moveAnimalsPeriodically("Pig", 3000, 0.9, 2000);
 
   setTimeout(moveHerbivoresPeriodically, 2000);
+  drawTrees(treeCtx, treePositions);
+
 }
 
 

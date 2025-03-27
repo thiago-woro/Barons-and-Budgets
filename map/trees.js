@@ -175,10 +175,11 @@ function startTrees(ctx, cellSize) {
     return treePositions;
 }
 
+
+
+let drawTreesCounter = 0;
 function drawTrees(ctx, treePositions) {
     clearCanvas(ctx);
-    console.log('drawTrees 😍');
-
     // Sort trees by Y position for proper rendering order
     treePositions.sort((a, b) => a.gridY === b.gridY ? b.gridX - a.gridX : a.gridY - b.gridY);
 
@@ -204,6 +205,9 @@ function drawTrees(ctx, treePositions) {
 
         ctx.restore();
     });
+    drawTreesCounter++;
+    console.warn(`drawTreesCounter: ${drawTreesCounter}`);
+
 }
 
 function animateNewTree(gridX, gridY, emoji, callback) {
