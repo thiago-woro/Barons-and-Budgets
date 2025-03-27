@@ -29,7 +29,9 @@ const canvasElements = [ //all canvas
   "npcInfoOverlay",
   "oreDeposits",
   "homes",
-  "animalCanvas"
+  "animalCanvas",
+  "debugCanvas",
+  "grassCanvas"
 ];
 
 const ctxElements = {};
@@ -50,6 +52,8 @@ const [npcInfoOverlayCanvas, npcInfoOverlayCtx] = ctxElements["npcInfoOverlay"];
 const [oreDepositsCanvas, oreDepositsCtx] = ctxElements["oreDeposits"];
 const [homesCanvas, homesCtx] = ctxElements["homes"];
 const [animalCanvas, animalCtx] = ctxElements["animalCanvas"];
+const [debugCanvas, debugCtx] = ctxElements["debugCanvas"];
+const [grassCanvas, grassCtx] = ctxElements["grassCanvas"];
 //finished canvases setup
 
 
@@ -674,26 +678,68 @@ function toggleDrawWalkableCells() {
 /**
  * Draws "X" marks on all walkable cells in the oreDepositCtx.
  */
-function drawWalkableCells() {
-
-
+function drawWalkableCells(ctx = debugCtx, array = grasslands) {
   // Set the style for the "X" marks.
-  oreDepositsCtx.strokeStyle = 'red';
-  oreDepositsCtx.lineWidth = 2;
+  ctx.strokeStyle = 'red';
+  ctx.lineWidth = 2;
 
   // Iterate over the walkable cells and draw an "X" on each.
-  for (const cell of walkableCellsLookup) {
-    const [gridX, gridY] = cell.split(",").map(Number);
-    const x = gridX * cellSize;
-    const y = gridY * cellSize;
+  // Check if the array is a Set or an Array
+  if (array instanceof Set) {
+    for (const cell of array) {
+      let gridX, gridY;
+      if (typeof cell === 'string') {
+        // If cell is a string, split it
+        [gridX, gridY] = cell.split(",").map(Number);
+      } else if (Array.isArray(cell)) {
+        // If cell is already an array, use it directly
+        [gridX, gridY] = cell;
+      } else if (typeof cell === 'object' && cell !== null && cell.hasOwnProperty('x') && cell.hasOwnProperty('y')) {
+        // If cell is an object with x and y properties
+        gridX = cell.x;
+        gridY = cell.y;
+      }
+       else {
+        console.error("Unexpected cell format:", cell);
+        continue; // Skip to the next cell
+      }
 
-    // Draw the "X".
-    oreDepositsCtx.beginPath();
-    oreDepositsCtx.moveTo(x, y);
-    oreDepositsCtx.lineTo(x + cellSize, y + cellSize);
-    oreDepositsCtx.moveTo(x + cellSize, y);
-    oreDepositsCtx.lineTo(x, y + cellSize);
-    oreDepositsCtx.stroke();
+      const x = gridX * cellSize;
+      const y = gridY * cellSize;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + cellSize, y + cellSize);
+      ctx.moveTo(x + cellSize, y);
+      ctx.lineTo(x, y + cellSize);
+      ctx.stroke();
+    }
+  } else if (Array.isArray(array)) {
+    for (const cell of array) {
+      let gridX, gridY;
+      if (typeof cell === 'string') {
+        // If cell is a string, split it
+        [gridX, gridY] = cell.split(",").map(Number);
+      } else if (Array.isArray(cell)) {
+        // If cell is already an array, use it directly
+        [gridX, gridY] = cell;
+      } else if (typeof cell === 'object' && cell !== null && cell.hasOwnProperty('x') && cell.hasOwnProperty('y')) {
+        // If cell is an object with x and y properties
+        gridX = cell.x;
+        gridY = cell.y;
+      }
+       else {
+        console.error("Unexpected cell format:", cell);
+        continue; // Skip to the next cell
+      }
+      const x = gridX * cellSize;
+      const y = gridY * cellSize;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + cellSize, y + cellSize);
+      ctx.moveTo(x + cellSize, y);
+      ctx.lineTo(x, y + cellSize);
+      ctx.stroke();
+    }
   }
 }
 
@@ -701,7 +747,7 @@ function drawWalkableCells() {
  * Clears the walkable cells overlay from the oreDepositCtx.
  */
 function clearWalkableCells() {
-  oreDepositsCtx.clearRect(0, 0, oreDepositsCanvas.width, oreDepositsCanvas.height);
+  debugCtx.clearRect(0, 0, debugCanvas.width, debugCanvas.height);
 }
 
 // Add an event listener to toggle the walkable cells overlay with the "J" key.

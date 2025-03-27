@@ -25,7 +25,7 @@ function updatePuddlePositions() {
 }
 
 // Function to draw grass tiles inside ground cells
-function drawGrass(ctx, grassDensity) {
+function drawGrass(ctx = grassCtx, grassDensity) {
   console.log(`function drawGrass`, ctx, grassDensity);
   
   // Reset the grassCells array

@@ -320,84 +320,111 @@ class Animal {
 
 
 function starterAnimalPopulations(amount = 20) {
-        initWalkableCellsLookup();
+  initWalkableCellsLookup();
 
   // Clear existing animals
   animals = [];
-  
+
   // Filter for usable cells
-  const usableCells = emptyCells.filter(cell => {
+  const groundCells = emptyCells.filter(cell => { //renamed usableCells to groundCells
     const noise = parseFloat(cell.noise);
     return noise >= 0 && noise <= 0.4; // Using a wider range of suitable cells
   });
-  
+
+  // Group cells by terrain type
+  const sandCells = groundCells.filter(cell => parseFloat(cell.noise) < 0.05);   //PUT COYOTES HERE
+  const mountainCells = groundCells.filter(cell => parseFloat(cell.noise) > 0.4); //PUT BEARS HERE
+  const middleCells = groundCells.filter(cell => {  //PUT ALL OTHER ANIMALS HERE
+    const noise = parseFloat(cell.noise);
+    return noise >= 0.15 && noise <= 0.2;
+  }); 
+
   // Animal types and their distribution percentages
   const animalTypes = [
-    { type: 'Coyote', percent: 0.10 },
-    { type: 'Bear', percent: 0.10 },
-    { type: 'Sheep', percent: 0.2 },
-    { type: 'Chicken', percent: 0.2 },
-    { type: 'Cow', percent: 0.2 },
-    { type: 'Pig', percent: 0.2 }
+    { type: 'Coyote', percent: 0.10, cluster: false, cells: sandCells }, // No cluster, sand cells
+    { type: 'Bear', percent: 0.10, cluster: false, cells: mountainCells },   // No cluster, mountain cells
+    { type: 'Sheep', percent: 0.2, cluster: true, cells: middleCells }, // Middle cells
+    { type: 'Chicken', percent: 0.2, cluster: true, cells: middleCells }, // Middle cells
+    { type: 'Cow', percent: 0.2, cluster: true, cells: middleCells }, // Middle cells
+    { type: 'Pig', percent: 0.2, cluster: true, cells: middleCells }  // Middle cells
   ];
-  
+
   // Calculate counts for each animal type
   animalTypes.forEach(animal => {
     animal.count = Math.floor(amount * animal.percent);
   });
-  
+
   // Divide map into regions for each animal type
   const regionCount = animalTypes.length;
-  
-  // Create a tighter, more clustered distribution
+
   for (let typeIndex = 0; typeIndex < animalTypes.length; typeIndex++) {
     const animal = animalTypes[typeIndex];
-    
-    // Pick a single random starting point for this species cluster
-    const randomCellIndex = Math.floor(Math.random() * usableCells.length);
-    const centerCell = usableCells[randomCellIndex];
-    
-    // Find cells close to this center point
-    const clusterCells = [];
-    
-    // Sort cells by distance to center cell (creates tighter clusters)
-    const sortedCells = [...usableCells].sort((a, b) => {
-      const distA = calcManhattanDistance(centerCell.x, centerCell.y, a.x, a.y);
-      const distB = calcManhattanDistance(centerCell.x, centerCell.y, b.x, b.y);
-      return distA - distB;
-    });
-    
-    // Take just enough cells for this animal type, starting from closest
-    const clusterSize = Math.min(animal.count * 3, Math.floor(sortedCells.length / regionCount));
-    const speciesCells = sortedCells.slice(0, clusterSize);
-    
-    // Place this animal type in their tight cluster
-    for (let i = 0; i < animal.count; i++) {
-      if (speciesCells.length === 0) break;
-      
-      // Pick a random cell from the cluster region
-      const randomIndex = Math.floor(Math.random() * speciesCells.length);
-      const cell = speciesCells[randomIndex];
-      
-      // Remove the cell to prevent overlap
-      speciesCells.splice(randomIndex, 1);
-      
-      // Create and add the animal
-      const newAnimal = new Animal(cell.x, cell.y, animal.type);
-      animals.push(newAnimal);
-    }
-    
-    // Remove the used cells from the pool to prevent overlap between species
-    for (const cell of speciesCells) {
-      const index = usableCells.findIndex(c => c.x === cell.x && c.y === cell.y);
-      if (index !== -1) {
-        usableCells.splice(index, 1);
+    const availableCells = animal.cells; // Use the specified cells for this animal type
+
+    if (animal.cluster) {
+      // Clustered distribution logic
+      // Pick a single random starting point for this species cluster
+      const randomCellIndex = Math.floor(Math.random() * availableCells.length);
+      const centerCell = availableCells[randomCellIndex];
+
+      // Find cells close to this center point
+      const clusterCells = [];
+
+      // Sort cells by distance to center cell (creates tighter clusters)
+      const sortedCells = [...availableCells].sort((a, b) => {
+        const distA = calcManhattanDistance(centerCell.x, centerCell.y, a.x, a.y);
+        const distB = calcManhattanDistance(centerCell.x, centerCell.y, b.x, b.y);
+        return distA - distB;
+      });
+
+      // Take just enough cells for this animal type, starting from closest
+      const clusterSize = Math.min(animal.count * 3, Math.floor(sortedCells.length / regionCount));
+      const speciesCells = sortedCells.slice(0, clusterSize);
+
+      // Place this animal type in their tight cluster
+      for (let i = 0; i < animal.count; i++) {
+        if (speciesCells.length === 0) break;
+
+        // Pick a random cell from the cluster region
+        const randomIndex = Math.floor(Math.random() * speciesCells.length);
+        const cell = speciesCells[randomIndex];
+
+        // Remove the cell to prevent overlap
+        speciesCells.splice(randomIndex, 1);
+
+        // Create and add the animal
+        const newAnimal = new Animal(cell.x, cell.y, animal.type);
+        animals.push(newAnimal);
+      }
+
+      // Remove the used cells from the pool to prevent overlap between species
+      for (const cell of speciesCells) {
+        const index = availableCells.findIndex(c => c.x === cell.x && c.y === cell.y);
+        if (index !== -1) {
+          availableCells.splice(index, 1);
+        }
+      }
+    } else {
+      // Non-clustered distribution logic
+      for (let i = 0; i < animal.count; i++) {
+        if (availableCells.length === 0) break;
+
+        // Pick a random cell from all usable cells
+        const randomIndex = Math.floor(Math.random() * availableCells.length);
+        const cell = availableCells[randomIndex];
+
+        // Remove the cell to prevent overlap
+        availableCells.splice(randomIndex, 1);
+
+        // Create and add the animal
+        const newAnimal = new Animal(cell.x, cell.y, animal.type);
+        animals.push(newAnimal);
       }
     }
   }
-  
+
   // Log the distribution
-  console.log(`Distributed ${animals.length} animals in tighter clusters`);
+  console.log(`Distributed ${animals.length} animals`);
   animalTypes.forEach(animal => {
     const actualCount = animals.filter(a => a.type === animal.type).length;
     console.log(`${actualCount} ${animal.type}s`);
