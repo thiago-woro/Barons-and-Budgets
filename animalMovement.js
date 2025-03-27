@@ -24,11 +24,47 @@ function animateAnimalToRandomBush(animal = currentAnimalSelected, eatingDuratio
   const PRE_FOOD_COOLDOWN = 700;   // Cooldown before moving to food (in ms)
 
   animal.state = "randomJump";
-  const randomOffset = () => Math.floor(Math.random() * (RANDOM_MOVE_RADIUS * 2 + 1)) - RANDOM_MOVE_RADIUS;
-  let targetCell = {
-    gridX: animal.gridX + randomOffset(),
-    gridY: animal.gridY + randomOffset()
-  };
+  
+  // Initialize walkable cells lookup if not already done
+  if (walkableCellsLookup.size === 0) {
+    initWalkableCellsLookup();
+  }
+  
+  // Modified random offset generator that checks for walkable cells
+  let targetCell = null;
+  let attempts = 0;
+  const MAX_ATTEMPTS = 2; // Prevent infinite loops if no valid cells found
+  
+  // Keep trying to find a valid walkable cell within range
+  while (!targetCell && attempts < MAX_ATTEMPTS) {
+    attempts++;
+    
+    // Generate random offset within RANDOM_MOVE_RADIUS
+    const randomOffsetX = Math.floor(Math.random() * (RANDOM_MOVE_RADIUS * 2 + 1)) - RANDOM_MOVE_RADIUS;
+    const randomOffsetY = Math.floor(Math.random() * (RANDOM_MOVE_RADIUS * 2 + 1)) - RANDOM_MOVE_RADIUS;
+    
+    // Calculate potential target cell
+    const potentialX = animal.gridX + randomOffsetX;
+    const potentialY = animal.gridY + randomOffsetY;
+    
+    // Check if the cell is walkable using the lookup set
+    if (walkableCellsLookup.has(`${potentialX},${potentialY}`)) {
+      targetCell = {
+        gridX: potentialX,
+        gridY: potentialY
+      };
+    }
+  }
+  
+  // If no valid cell found after max attempts, use current position
+  if (!targetCell) {
+    console.log("No walkable cell found for animal jump - staying in place");
+    targetCell = {
+      gridX: animal.gridX,
+      gridY: animal.gridY
+    };
+  }
+  
   let targetX = targetCell.gridX * cellSize;
   let targetY = targetCell.gridY * cellSize;
   const startX = animal.x;
@@ -62,6 +98,10 @@ function animateAnimalToRandomBush(animal = currentAnimalSelected, eatingDuratio
 
 function lookingForFood(animal, targetCell, bushCheckRadius, adjacentRadius, preFoodCooldown, eatingDuration, movementDuration) {
   animal.state = "lookingforfood";
+  
+  // Define minimum durations for drinking
+  const MINIMUM_DRINKING_COOLDOWN = 8000; // seconds minimum cooldown
+  const MINIMUM_DRINKING_DURATION = 3000; //  seconds minimum drinking time
 
   let closestPuddle = null;
   for (let dx = -bushCheckRadius; dx <= bushCheckRadius; dx++) {
@@ -112,7 +152,7 @@ function lookingForFood(animal, targetCell, bushCheckRadius, adjacentRadius, pre
       const moveStartTime = performance.now();
 
       function animateToResource(time) {
-        const progress = Math.min((time - moveStartTime) / (movementDuration / 2), 1);
+        const progress = Math.min((time - moveStartTime) / movementDuration , 1);
         animal.x = animal.x + (targetX - animal.x) * progress;
         animal.y = animal.y + (targetY - animal.y) * progress;
 
@@ -129,26 +169,34 @@ function lookingForFood(animal, targetCell, bushCheckRadius, adjacentRadius, pre
           if (isPuddle) {
             const puddle = potablePuddleCells.find(p => p.x === resource.gridX && p.y === resource.gridY);
             if (puddle) {
-              // Calculate fadeAmount based on original opacity
+              // Store original opacity to calculate the drinking duration
               const originalOpacity = puddle.opacity || 0.6;
-              const fadeSteps = eatingDuration / 100; // Spread fade over eatingDuration
-              const fadeAmount = originalOpacity / fadeSteps; // Decrease based on initial opacity
               
-              // Store original opacity to use for timing drinking duration
-              const drinkingDuration = originalOpacity * eatingDuration;
+              // Make drinking duration proportional to puddle size but ensure minimum 5 seconds
+              const drinkingDuration = Math.max(MINIMUM_DRINKING_DURATION, originalOpacity * eatingDuration * 2);
               
-              // Create interval for gradual draining
+              // Calculate fade steps and amount to ensure complete draining 
+              const fadeSteps = drinkingDuration / 100; // Update every 100ms
+              const fadeAmount = puddle.opacity / fadeSteps; // Ensure we reach 0 by the end
+              
+              // Create interval for gradual draining that continues until opacity is 0
               const fadeInterval = setInterval(() => {
                 if (puddle.opacity > 0) {
+                  // Reduce opacity and ensure it doesn't go negative
                   puddle.opacity = Math.max(0, puddle.opacity - fadeAmount);
-                  drawPuddles(); // Redraw after each update
+                  drawPuddles(); // Redraw puddles after each update
                 } else {
+                  // When opacity reaches 0, clear interval and update puddle positions
                   clearInterval(fadeInterval);
-                  updatePuddlePositions(); // Update the puddle set when completely drained
+                  // Filter out this puddle from the array when fully drained
+                  potablePuddleCells = potablePuddleCells.filter(p => 
+                    !(p.x === resource.gridX && p.y === resource.gridY)
+                  );
+                  updatePuddlePositions(); // Update the puddle positions set
                 }
               }, 100);
               
-              // Adjust the eating duration based on puddle opacity
+              // Use the calculated duration or minimum, whichever is larger
               eatingDuration = drinkingDuration;
             }
           }
@@ -171,7 +219,7 @@ function lookingForFood(animal, targetCell, bushCheckRadius, adjacentRadius, pre
             animal.state = "cooldown";
             setTimeout(() => {
               animal.state = "idle";
-            }, 1000);
+            }, isPuddle ? MINIMUM_DRINKING_COOLDOWN : 1000); // Use longer cooldown for drinking
           }, eatingDuration);
         }
       }
