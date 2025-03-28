@@ -1,13 +1,9 @@
 //all this is just to make sure all canvas have the correct width and height, that is the gridsize * cellsize
 function setupCanvas(canvasId, width, height) {
-  //console.log('setting ' + canvasId + "to "  + gridSize + " x " + rows +" rows")
   const canvas = document.getElementById(canvasId);
   const ctx = canvas.getContext("2d");
-  //canvas.width = gridSize * cellSize; // Set canvas width to the specified width
-  //canvas.height = gridSize * cellSize; // Set canvas height to the specified heig
   canvas.width = cellSize * rows;
   canvas.height = cellSize * rows;
- // console.log('new width  ' + canvas.width)
 
   // Set canvas position relative to the container
   canvas.style.position = "absolute";
@@ -17,7 +13,7 @@ function setupCanvas(canvasId, width, height) {
 }
 
 
-const canvasElements = [ //all canvas
+const canvasElements = [ //all canvases
   "npcCanvas",
   "groundCanvas",
   "waterCanvas",

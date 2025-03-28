@@ -107,33 +107,6 @@ class Camera {
     return { x: screenX, y: screenY };
   }
 
-  
-/* 
-  updateHoveredCell(event) {  OLD FUNCTION
-    // Use offsetX/offsetY for mouse coordinates relative to the container
-    const mouseX = event.offsetX;
-    const mouseY = event.offsetY;
-    // Convert screen coordinates to world coordinates
-    const worldX = mouseX / this.zoom + this.position.x;
-    const worldY = mouseY / this.zoom + this.position.y;
-    // Calculate cell index based on world coordinates
-    const cellX = Math.floor(worldX / cellSize);
-    const cellY = Math.floor(worldY / cellSize);
-    // Calculate the screen position of the cell highlight
-    const cellScreenX = (cellX * cellSize - this.position.x) * this.zoom;
-    const cellScreenY = (cellY * cellSize - this.position.y) * this.zoom;
-    // Clear previous highlight
-    boatCtx.clearRect(0, 0, boatCanvas.width, boatCanvas.height);
-    // Draw the highlight
-    boatCtx.fillStyle = 'rgba(128, 0, 128, 0.5)';
-    boatCtx.fillRect(cellScreenX, cellScreenY, cellSize * this.zoom, cellSize * this.zoom);
-    // Update camera zoom info with additional cell info
-    const cameraZoomInfo = document.getElementById('cameraZoomInfo');
-    if (cameraZoomInfo) {
-      cameraZoomInfo.innerHTML = `updateHoveredCell: Zoom: ${this.zoom.toFixed(2)} | Position: (${this.position.x.toFixed(2)}, ${this.position.y.toFixed(2)}) | Cell: (${cellX}, ${cellY}) | Screen: (${cellScreenX.toFixed(2)}, ${cellScreenY.toFixed(2)})`;
-    }
-  }
- */
 
 
 updateHoveredCell(event, emoji) {

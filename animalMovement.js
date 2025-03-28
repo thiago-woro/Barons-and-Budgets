@@ -112,33 +112,73 @@ function lookingForFood(animal, targetCell, bushCheckRadius, adjacentRadius, pre
 
   let resource = null;
   let isPuddle = false;
+  let isGrass = false;
 
   if (closestPuddle) {
     resource = closestPuddle;
     isPuddle = true;
   } else {
-    const nearbyBushes = gBushesPositions.filter(b => 
-      Math.abs(b.gridX - animal.gridX) + Math.abs(b.gridY - animal.gridY) <= bushCheckRadius
-    );
-    if (nearbyBushes.length > 0) {
-      resource = nearbyBushes.reduce((closest, bush) => {
-        const distToCurrent = Math.abs(bush.gridX - animal.gridX) + Math.abs(bush.gridY - animal.gridY);
-        const distToClosest = Math.abs(closest.gridX - animal.gridX) + Math.abs(closest.gridY - animal.gridY);
-        return distToCurrent < distToClosest ? bush : closest;
-      }, nearbyBushes[0]);
+    // Check for grass first if the animal eats grass
+    if (animal.type === "Cow" || animal.type === "Chicken") {
+      // Find nearby grass cells
+      const nearbyGrass = grassCells.filter(g => 
+        Math.abs(g.x - animal.gridX) + Math.abs(g.y - animal.gridY) <= bushCheckRadius
+      );
+      
+      if (nearbyGrass.length > 0) {
+        // Find closest grass cell
+        resource = nearbyGrass.reduce((closest, grass) => {
+          const distToCurrent = Math.abs(grass.x - animal.gridX) + Math.abs(grass.y - animal.gridY);
+          const distToClosest = Math.abs(closest.x - animal.gridX) + Math.abs(closest.y - animal.gridY);
+          return distToCurrent < distToClosest ? grass : closest;
+        }, nearbyGrass[0]);
+        
+        // Convert to gridX/gridY format for consistency
+        resource = {
+          gridX: resource.x,
+          gridY: resource.y
+        };
+        
+        isGrass = true;
+      }
+    }
+    
+    // If no grass found or animal doesn't eat grass, check for bushes
+    if (!resource) {
+      const nearbyBushes = gBushesPositions.filter(b => 
+        Math.abs(b.gridX - animal.gridX) + Math.abs(b.gridY - animal.gridY) <= bushCheckRadius
+      );
+      if (nearbyBushes.length > 0) {
+        resource = nearbyBushes.reduce((closest, bush) => {
+          const distToCurrent = Math.abs(bush.gridX - animal.gridX) + Math.abs(bush.gridY - animal.gridY);
+          const distToClosest = Math.abs(closest.gridX - animal.gridX) + Math.abs(closest.gridY - animal.gridY);
+          return distToCurrent < distToClosest ? bush : closest;
+        }, nearbyBushes[0]);
+      }
     }
   }
 
   if (resource) {
     animal.state = "cooldown";
     setTimeout(() => {
-      const adjacentCells = [
-        { gridX: resource.gridX - adjacentRadius, gridY: resource.gridY },
-        { gridX: resource.gridX + adjacentRadius, gridY: resource.gridY },
-        { gridX: resource.gridX, gridY: resource.gridY - adjacentRadius },
-        { gridX: resource.gridX, gridY: resource.gridY + adjacentRadius }
-      ];
-      targetCell = adjacentCells[Math.floor(Math.random() * adjacentCells.length)];
+      // For grass, move directly to the grass cell itself
+      // For puddles and bushes, move to an adjacent cell
+      let targetCellList;
+      
+      if (isGrass) {
+        // For grass, the target is the grass cell itself
+        targetCellList = [{ gridX: resource.gridX, gridY: resource.gridY }];
+      } else {
+        // For puddles and bushes, target an adjacent cell
+        targetCellList = [
+          { gridX: resource.gridX - adjacentRadius, gridY: resource.gridY },
+          { gridX: resource.gridX + adjacentRadius, gridY: resource.gridY },
+          { gridX: resource.gridX, gridY: resource.gridY - adjacentRadius },
+          { gridX: resource.gridX, gridY: resource.gridY + adjacentRadius }
+        ];
+      }
+      
+      targetCell = targetCellList[Math.floor(Math.random() * targetCellList.length)];
       const targetX = targetCell.gridX * cellSize;
       const targetY = targetCell.gridY * cellSize;
 
@@ -160,17 +200,17 @@ function lookingForFood(animal, targetCell, bushCheckRadius, adjacentRadius, pre
           animal.gridY = targetCell.gridY;
           animal.state = isPuddle ? "drinking" : "eating";
 
-            if (isPuddle) {
-                        handleAnimalDrinking(animal, resource, MINIMUM_DRINKING_DURATION, MINIMUM_DRINKING_COOLDOWN, eatingDuration);
-                      } else {
-                        if (animal.type === "Cow" || animal.type === "Chicken") {
-                          eatGrass(animal, resource, eatingDuration);
-                          console.log(`${animal.type} eating grass ✳`);
-                        } else {
-                          eatBushes(animal, resource, eatingDuration);
-                          console.log(`${animal.type} eating bushes 🌳`);
-                        }
-                      }
+          if (isPuddle) {
+            handleAnimalDrinking(animal, resource, MINIMUM_DRINKING_DURATION, MINIMUM_DRINKING_COOLDOWN, eatingDuration);
+          } else {
+            if (isGrass) {
+              eatGrass(animal, resource, eatingDuration);
+              console.log(`${animal.type} eating grass ✳`);
+            } else {
+              eatBushes(animal, resource, eatingDuration);
+              console.log(`${animal.type} eating bushes 🌳`);
+            }
+          }
         }
       }
 
@@ -248,18 +288,56 @@ function eatBushes(animal, resource, eatingDuration) {
 }
 
 function eatGrass(animal, resource, eatingDuration) {
-
-  animal.state = "GRASS!!!";
-
-
+  console.warn(`BEFORE Eating grass - grassCells: ${grassCells.length}`);
+  
+  // Convert resource grid coordinates to normal coordinates
+  const cellX = resource.gridX;
+  const cellY = resource.gridY;
+  
+  // Optional: Draw a red X over the targeted grass cell (more efficient implementation)
+  if (debugCtx) {
+    const x = cellX * cellSize;
+    const y = cellY * cellSize;
+    
+    debugCtx.save(); // Save current context state
+    debugCtx.strokeStyle = 'red';
+    debugCtx.lineWidth = 2;
+    
+    // Draw the X more efficiently
+    debugCtx.beginPath();
+    debugCtx.moveTo(x, y);
+    debugCtx.lineTo(x + cellSize, y + cellSize);
+    debugCtx.moveTo(x + cellSize, y);
+    debugCtx.lineTo(x, y + cellSize);
+    debugCtx.stroke();
+    debugCtx.restore(); // Restore context state
+    
+    // Clear the X after a delay
+    setTimeout(() => {
+      debugCtx.clearRect(x - 2, y - 2, cellSize + 4, cellSize + 4);
+    }, eatingDuration + 500);
+  }
+  
+  animal.state = "eating";
+  
   setTimeout(() => {
-    const bushIndex = grassCells.findIndex(b => 
-      b.x === resource.gridX && b.y === resource.gridY
+    // Use hash map lookup instead of array findIndex for better performance
+    const cellKey = `${cellX},${cellY}`;
+    const bushIndex = grassCells.findIndex(grass => 
+      grass.x === cellX && grass.y === cellY
     );
+    
     if (bushIndex !== -1) {
+      // Remove the grass cell from the array
       grassCells.splice(bushIndex, 1);
-      refreshGrass();
+      
+      // Only update the specific grass cell that was removed
+      const x = cellX * cellSize;
+      const y = cellY * cellSize;
+      grassCtx.clearRect(x, y, cellSize, cellSize);
     }
+    
+    console.warn(`AFTER Eating grass - grassCells: ${grassCells.length}`);
     animal.state = "cooldown";
     setTimeout(() => {
       animal.state = "idle";

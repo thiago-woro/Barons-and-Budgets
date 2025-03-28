@@ -376,26 +376,30 @@ islands.forEach(island => {
   updatePuddlePositions();
 
   // Generate and draw grass patches
-  generateGrass(0.45);
-  drawGrass(grassCtx);
-  
-moveHerbivoresPeriodically();
+  generateGrass().then(() => {
+    drawGrass(grassCtx);
+    
+    // Move this after grass is drawn
+    moveHerbivoresPeriodically();
+    
+    // Start game loop only after everything is ready
+    gameLoopInterval = requestAnimationFrame(renderLoop);
+    simulationInterval = setInterval(updateSimulation, simulationBaseInterval / (gameLoopSpeed / 90));
+    
+    // Remove loading screen after everything is complete
+    removeLoadingScreen();
+    camera.reset();
+  });
 
-/* END OF ALL TERRAIN RELATED GENERATIONS */
+  // Move these outside the promise chain if they don't depend on grass
+  /* END OF ALL TERRAIN RELATED GENERATIONS */
 
 
 
   // startNPCs(npcCtx, cellSize);
  // initializeFishingResources();
 
-      gameLoopInterval = requestAnimationFrame(renderLoop);
-    simulationInterval = setInterval(updateSimulation, simulationBaseInterval / (gameLoopSpeed / 90));
-    //startButton.textContent = "Pause Game";
-   // isPaused = false;
-  
-  // Remove loading screen after everything is complete
-  removeLoadingScreen();
-  camera.reset();
+      //drawCellsInArray(pathCells, 'rgba(128, 59, 190, 0.52)', pathCtx);
 }
 
 function drawHousePaths(cellArray, numRowsToSkip, pathCurveAmount) {   //wavy house paths
@@ -969,10 +973,10 @@ function placeLakes() {
             }
         }
         
-        // Draw the added grass cells
-        drawGrass(treeCtx);
-        
-        console.log(`Added grass to lake borders`);
+        // Mark these grass cells as already drawn
+        if (typeof grassCells !== 'undefined') {
+          console.log(`Added ${grassCells.length} grass cells to lake borders`);
+        }
     }
 
     // Re-filter emptyCells to exclude lake cells AND border cells
