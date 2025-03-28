@@ -455,15 +455,8 @@ function findPath(start, target) {
         // Check if cell is not water (is in emptyCells)
         const cellInEmptyCells = emptyCells.some(cell => cell.x === x && cell.y === y);
         
-        // Check if cell is occupied by a tree
-        // Trees are stored with pixel coordinates, so we need to convert grid coordinates to pixel
-        // Trees are centered at (x+0.5)*cellSize, (y+0.5)*cellSize
-        const treePresent = treePositions.some(tree => {
-            // Convert tree's pixel coordinates back to grid coordinates
-            const treeGridX = Math.floor(tree.x / cellSize);
-            const treeGridY = Math.floor(tree.y / cellSize);
-            return treeGridX === x && treeGridY === y;
-        });
+     // Check for tree using Set
+        const treePresent = treePositionsSet.has(`${x},${y}`);
         
         // A cell is walkable if it's in emptyCells AND doesn't have a tree
         return cellInEmptyCells && !treePresent;

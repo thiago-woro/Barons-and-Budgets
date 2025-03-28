@@ -57,7 +57,7 @@ function modifyWalkableCells(cells, operation) {
     console.log(`🌲 ${operation}ed ${cells.length} cells. emptyCells.length: ${emptyCells.length}`);
 }
 
-function startTrees(ctx, cellSize) {
+function startTrees(ctx) {
     clearCanvas(ctx);
     let treeCount = groundCells.length * treePercentageofLand;
     console.log(`Starting tree placement: target ${treeCount} trees`);
@@ -171,10 +171,16 @@ function startTrees(ctx, cellSize) {
     const gridCoords = treePositions.map(tree => ({ x: tree.gridX, y: tree.gridY }));
     modifyWalkableCells(gridCoords, "remove");
 
+
+    // Create a set of tree positions for faster lookups
+     treePositionsSet = new Set();
+     console.warn(`treePositionsSet: ${treePositionsSet}`);
+
     //initTreeLifecycle(); // its causing weird animations on dead trees redraws
     return treePositions;
 }
 
+    let treePositionsSet = []
 
 
 let drawTreesCounter = 0;

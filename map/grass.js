@@ -30,8 +30,7 @@ function generateGrass() {
     updatePuddlePositions();
     const puddleSet = new Set(Array.from(puddlePositions));
     
-    // Create a set of tree positions for faster lookups
-    const treePositionsSet = new Set();
+    //using tree SET
     if (treePositions && treePositions.length > 0) {
       treePositions.forEach(tree => {
         treePositionsSet.add(`${tree.gridX},${tree.gridY}`);
