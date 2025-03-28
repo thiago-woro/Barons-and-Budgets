@@ -779,16 +779,21 @@ window.addEventListener('load', () => {
   initializeAnimalTaskSystem();
 });
 
-// Global variables for panel refresh
+// Global variables for panel refresh and animal highlighting
 let currentSelectedAnimalId = null;
 let infoPanelRefreshInterval = null;
+let highlightedAnimalCell = null;
 
 //Animal popup details
 function showAnimalInfo(animal) {
   const infoPanel = document.getElementById('infoPanel');
   
-  // Store the current animal ID for refreshing
+  // Store the current animal ID for refreshing and highlighting
   currentSelectedAnimalId = animal.id;
+  highlightedAnimalCell = { gridX: animal.gridX, gridY: animal.gridY };
+  
+  // Draw initial highlight
+  drawAnimalHighlight(animal);
   
   // Clear any existing refresh interval
   if (infoPanelRefreshInterval) {
@@ -809,6 +814,13 @@ function showAnimalInfo(animal) {
     if (currentAnimal) {
       // Update the panel with fresh data
       updateAnimalInfoPanel(currentAnimal);
+      
+      // Update the highlight if animal position changed
+      if (highlightedAnimalCell.gridX !== currentAnimal.gridX || 
+          highlightedAnimalCell.gridY !== currentAnimal.gridY) {
+        highlightedAnimalCell = { gridX: currentAnimal.gridX, gridY: currentAnimal.gridY };
+        drawAnimalHighlight(currentAnimal);
+      }
     } else {
       // Animal no longer exists, close the panel
       document.getElementById('infoPanel').style.visibility = 'hidden';
@@ -816,8 +828,34 @@ function showAnimalInfo(animal) {
       clearInterval(infoPanelRefreshInterval);
       infoPanelRefreshInterval = null;
       currentSelectedAnimalId = null;
+      
+      // Clear highlight
+        debugCtx.clearRect(0, 0, debugCanvas.width, debugCanvas.height);
     }
-  }, 200);
+  }, 3);
+}
+
+// Function to draw a highlight around the selected animal's cell
+function drawAnimalHighlight(animal) {
+  
+  // Clear previous highlights first
+  debugCtx.clearRect(0, 0, debugCanvas.width, debugCanvas.height);
+  
+  const cellX = animal.gridX * cellSize;
+  const cellY = animal.gridY * cellSize;
+  
+  // Draw a highlighted cell rectangle
+  debugCtx.save();
+  
+
+  
+  // Inner white stroke
+  debugCtx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+  debugCtx.lineWidth = 2;
+  debugCtx.strokeRect(cellX, cellY, cellSize, cellSize);
+  
+  
+  debugCtx.restore();
 }
 
 // Function to update the content of the info panel
@@ -942,6 +980,12 @@ function updateAnimalInfoPanel(animal) {
     clearInterval(infoPanelRefreshInterval);
     infoPanelRefreshInterval = null;
     currentSelectedAnimalId = null;
+    
+    // Clear the highlight when closing the panel
+    if (debugCtx) {
+      debugCtx.clearRect(0, 0, debugCanvas.width, debugCanvas.height);
+    }
+    highlightedAnimalCell = null;
   });
 }
 
@@ -957,7 +1001,14 @@ function closeAnimalInfoPanel() {
     clearInterval(infoPanelRefreshInterval);
     infoPanelRefreshInterval = null;
   }
+  
+  // Clear the highlight when closing the panel
+  if (debugCtx) {
+    debugCtx.clearRect(0, 0, debugCanvas.width, debugCanvas.height);
+  }
+  
   currentSelectedAnimalId = null;
+  highlightedAnimalCell = null;
 }
 
 // Make sure to call closeAnimalInfoPanel when clicking away or on game exit
