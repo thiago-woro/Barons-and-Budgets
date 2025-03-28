@@ -19,7 +19,7 @@ bush object is:
 // Task: Move to a random cell within a radius without a curve
 function taskSlowRandomMove(animal, params = {}) {
   return new Promise(resolve => {
-    const { radius = 4, movementDuration = 1000 } = params;
+    const { radius = 4, movementDuration = 3000 } = params;
     animal.state = "moving";
 
     // Try to find a walkable cell within radius
@@ -338,28 +338,6 @@ function taskEatGrass(animal, params = {}) {
     const cellX = resource.gridX;
     const cellY = resource.gridY;
     
-    // Optional: Draw a red X over the targeted grass cell (for debugging)
-    if (debugCtx) {
-      const x = cellX * cellSize;
-      const y = cellY * cellSize;
-      
-      debugCtx.save(); // Save current context state
-      debugCtx.strokeStyle = 'red';
-      debugCtx.lineWidth = 2;
-      
-      debugCtx.beginPath();
-      debugCtx.moveTo(x, y);
-      debugCtx.lineTo(x + cellSize, y + cellSize);
-      debugCtx.moveTo(x + cellSize, y);
-      debugCtx.lineTo(x, y + cellSize);
-      debugCtx.stroke();
-      debugCtx.restore(); // Restore context state
-      
-      // Clear the X after a delay
-      setTimeout(() => {
-        debugCtx.clearRect(x - 2, y - 2, cellSize + 4, cellSize + 4);
-      }, eatingDuration + 500);
-    }
     
     setTimeout(() => {
       const bushIndex = grassCells.findIndex(grass => 
@@ -501,11 +479,11 @@ const animalBehaviors = {
     { task: taskCooldown, params: { duration: 2000 } }
   ],
   Cow: [
-    { task: taskSlowRandomMove, params: { radius: 2, movementDuration: 800 } },
+    { task: taskSlowRandomMove, params: { radius: 2, movementDuration: 3000 } },
     { task: taskLookForFood, params: { bushCheckRadius: 3, adjacentRadius: 1 } },
-    { task: taskMoveToFood, params: { movementDuration: 1800 }, conditional: true },
+    { task: taskMoveToFood, params: { movementDuration: 3000 }, conditional: true },
     { task: taskEatGrass, params: { eatingDuration: 3500 }, conditional: true },
-    { task: taskCooldown, params: { duration: 1000 } }
+    { task: taskCooldown, params: { duration: 2000 } }
   ],
   Sheep: [
     { task: taskLookForFood, params: { bushCheckRadius: 3, adjacentRadius: 1 } },
@@ -833,6 +811,9 @@ function showAnimalInfo(animal) {
         debugCtx.clearRect(0, 0, debugCanvas.width, debugCanvas.height);
     }
   }, 3);
+
+  // Add auto-focus on the animal when first selected
+  centerCameraOnAnimal(animal);
 }
 
 // Function to draw a highlight around the selected animal's cell
@@ -950,6 +931,7 @@ function updateAnimalInfoPanel(animal) {
     <div style="margin-top:15px">
       <button id="animateAnimalButton">Start Animal Behavior</button>
       <button id="clearAnimalTasksButton">Clear Tasks</button>
+      <button id="focusCameraButton">Focus Camera</button>
       <button id="closeInfoPanelButton">Close</button>
     </div>
   `;
@@ -972,6 +954,18 @@ function updateAnimalInfoPanel(animal) {
     animal.targetCell = null;
     animal.targetAnimal = null;
   });
+  
+// --- Or inside the 'focusCameraButton' event listener ---
+document.getElementById('focusCameraButton').addEventListener('click', () => {
+  // const animal = ... find the currently selected animal ...
+  requestAnimationFrame(() => {
+     if (container.clientWidth > 0 && container.clientHeight > 0) {
+          centerCameraOnAnimal(animal);
+      } else {
+          console.warn("Container has zero dimensions when trying to focus.");
+      }
+  });
+});
   
   document.getElementById('closeInfoPanelButton').addEventListener('click', () => {
     // Close the panel and stop refreshing
@@ -1003,9 +997,7 @@ function closeAnimalInfoPanel() {
   }
   
   // Clear the highlight when closing the panel
-  if (debugCtx) {
     debugCtx.clearRect(0, 0, debugCanvas.width, debugCanvas.height);
-  }
   
   currentSelectedAnimalId = null;
   highlightedAnimalCell = null;
@@ -1025,6 +1017,72 @@ function closeAnimalInfoPanel() {
 
 // Stop refreshing when window unloads
 window.addEventListener('beforeunload', closeAnimalInfoPanel);
+
+// Function to center the camera on a specific animal
+function centerCameraOnAnimal(animal) {
+  if (!animal || !camera) {
+     console.error("Cannot center camera: Animal or Camera object is missing.");
+     return;
+  }
+  if (!container) {
+     console.error("Cannot center camera: Container element is missing.");
+     return;
+  }
+  if (typeof cellSize === 'undefined' || cellSize <= 0) {
+     console.error("Cannot center camera: cellSize is invalid.");
+     return;
+  }
+
+  // 1. Calculate the world position of the animal's cell center
+  // Using gridX/gridY for precise cell centering. Using animal.x/y might be better
+  // if you want to center exactly where the animal *sprite* is during movement.
+  const animalWorldX = animal.gridX * cellSize + (cellSize / 2);
+  const animalWorldY = animal.gridY * cellSize + (cellSize / 2);
+
+  // 2. Get the container (viewport) dimensions in screen pixels
+  const viewportPixelWidth = container.clientWidth;
+  const viewportPixelHeight = container.clientHeight;
+
+  if (viewportPixelWidth <= 0 || viewportPixelHeight <= 0) {
+    console.error("Cannot center camera: Container dimensions are invalid (0 or less).");
+    return;
+  }
+  if (camera.zoom <= 0) {
+    console.error("Cannot center camera: Camera zoom is invalid (0 or less).");
+    return;
+  }
+
+
+  // 3. Calculate the viewport size in world coordinates
+  const viewportWorldWidth = viewportPixelWidth / camera.zoom;
+  const viewportWorldHeight = viewportPixelHeight / camera.zoom;
+
+  // 4. Calculate the desired top-left world coordinates for the camera
+  // Camera position should be: Animal's center - Half the viewport's world size
+  const newCameraX = animalWorldX - (viewportWorldWidth / 2);
+  const newCameraY = animalWorldY - (viewportWorldHeight / 2);
+
+  // --- Debugging Logs ---
+  console.log(`Centering on Animal ID: ${animal.id}, Type: ${animal.type}`);
+  console.log(`  Animal Grid: (${animal.gridX}, ${animal.gridY}), CellSize: ${cellSize}`);
+  console.log(`  Animal World Coords (Center): (${animalWorldX.toFixed(2)}, ${animalWorldY.toFixed(2)})`);
+  console.log(`  Viewport Pixels: ${viewportPixelWidth}w x ${viewportPixelHeight}h`);
+  console.log(`  Camera Zoom: ${camera.zoom.toFixed(2)}`);
+  console.log(`  Viewport World Size: (${viewportWorldWidth.toFixed(2)}, ${viewportWorldHeight.toFixed(2)})`);
+  console.log(`  Calculated New Camera Top-Left (World): (${newCameraX.toFixed(2)}, ${newCameraY.toFixed(2)})`);
+  // --- End Debugging Logs ---
+
+  // 5. Set the camera position directly
+  camera.position.x = newCameraX;
+  camera.position.y = newCameraY;
+
+  // 6. Update the transform to apply the new camera position visually
+  // This assumes camera.updateTransform() correctly uses camera.position and camera.zoom
+  // to set the CSS transform (which it appears to do based on your Camera class).
+  camera.updateTransform();
+
+  console.log(`Camera position updated. New camera.position: (${camera.position.x.toFixed(2)}, ${camera.position.y.toFixed(2)})`);
+}
 
 /* 
 DO NOT TOUCH THIS
