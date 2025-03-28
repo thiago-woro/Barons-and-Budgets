@@ -144,7 +144,11 @@ function generateTerrainMap(width, height, customNoiseScale) {
         
         if (smoothedNoiseValue < 0.05) {
           // For very low noise values (near shore), still use sand color
-          colorIndex = 0; // Sand color (first in LAND_SHADES)
+        colorIndex = 0; // Sand color (first in LAND_SHADES)
+
+          //colorIndex = Math.random() < 0.5 ? 7 : 0; // 50% chance to use the first color (sand)
+        
+
         } else {
           // For higher noise values, use green colors (skip the first sand color)
           // Map the noise range 0.08-1.0 to the green colors (indices 1 to end of LAND_SHADES)

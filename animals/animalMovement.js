@@ -779,53 +779,201 @@ window.addEventListener('load', () => {
   initializeAnimalTaskSystem();
 });
 
-//npc card details
+// Global variables for panel refresh
+let currentSelectedAnimalId = null;
+let infoPanelRefreshInterval = null;
+
+//Animal popup details
 function showAnimalInfo(animal) {
   const infoPanel = document.getElementById('infoPanel');
-  let infoHtml = `
-    <strong>${animal.type} ${animal.emoji}</strong><br/>
-    Position: ${animal.gridX}, ${animal.gridY}<br/>
-    Age: <strong>${animal.age}</strong><br/>
-    Is Predator: <strong>${animal.isPredator}</strong><br/>
-    Eats Grass: <strong>${animal.eatsGrass}</strong><br/>
-    Eats Plants: <strong>${animal.eatsPlants}</strong><br/>
-    Eats Animals: <strong>${animal.eatsAnimals}</strong><br/>
-    Hunger: <strong>${animal.hunger}</strong><br/>
-    Thirst: <strong>${animal.thirst}</strong><br/>
-    State: <strong>${animal.state}</strong><br/>
-    Last State: <strong>${animal.lastState}</strong><br/>
-    Time Since Last Reproduction: <strong>${animal.timeSinceLastReproduction}</strong><br/>
-    Move Interval: <strong>${animal.moveInterval}</strong><br/>
-    Move Cooldown: <strong>${animal.moveCooldown}</strong><br/>
-    Resource Cooldown: <strong>${animal.resourceCooldown}</strong><br/>
-    Wander Duration: <strong>${animal.wanderDuration}</strong><br/>
-    Target Animal: <strong>${animal.targetAnimal}</strong><br/>
-    Target Cell: <strong>${animal.targetCell ? `${animal.targetCell.gridX}, ${animal.targetCell.gridY}` : 'None'}</strong><br/>
-    Task Queue: <strong>${animal.taskQueue ? animal.taskQueue.length : 0} tasks</strong><br/>
-    Last Move From X: <strong>${animal.lastMoveFromX}</strong><br/>
-    Last Move From Y: <strong>${animal.lastMoveFromY}</strong><br/>
-    <br/>
-    <br/>
-    <br/>
-    #${animal.id}<br/><br/>
-    <button id="animateAnimalToRandomBushButton">Animate Animal</button>
-  `;
+  
+  // Store the current animal ID for refreshing
+  currentSelectedAnimalId = animal.id;
+  
+  // Clear any existing refresh interval
+  if (infoPanelRefreshInterval) {
+    clearInterval(infoPanelRefreshInterval);
+  }
+  
+  // Create and update the panel content
+  updateAnimalInfoPanel(animal);
 
-  infoPanel.innerHTML = infoHtml; // Set the content 
-
-  // Make the info panel visible
+  // Set the panel to visible
   infoPanel.style.visibility = 'visible';
   infoPanel.style.display = 'block';
   
-  // Add event listener to the button AFTER it's added to the DOM
-  document.getElementById('animateAnimalToRandomBushButton').addEventListener('click', () => {
-    // Pass the current animal to the animation function
-    animateAnimalToRandomBush(animal);
+  // Set up refresh interval (update every 200ms while panel is visible)
+  infoPanelRefreshInterval = setInterval(() => {
+    // Find the animal by ID
+    const currentAnimal = animals.find(a => a.id === currentSelectedAnimalId);
+    if (currentAnimal) {
+      // Update the panel with fresh data
+      updateAnimalInfoPanel(currentAnimal);
+    } else {
+      // Animal no longer exists, close the panel
+      document.getElementById('infoPanel').style.visibility = 'hidden';
+      document.getElementById('infoPanel').style.display = 'none';
+      clearInterval(infoPanelRefreshInterval);
+      infoPanelRefreshInterval = null;
+      currentSelectedAnimalId = null;
+    }
+  }, 200);
+}
+
+// Function to update the content of the info panel
+function updateAnimalInfoPanel(animal) {
+  const infoPanel = document.getElementById('infoPanel');
+  
+  // Map the task queue to a more detailed format
+  let taskQueueDisplay = "No tasks in queue";
+  
+  if (animal.taskQueue && animal.taskQueue.length > 0) {
+    // Create a task status indicator
+    const statusIndicator = animal.isProcessingTasks ? 
+      '<span style="color: green; font-weight: bold;">⚙️ Processing</span>' : 
+      '<span style="color: gray;">⏸️ Waiting</span>';
+    
+    // Create a list of tasks with parameters
+    const taskListItems = animal.taskQueue.map((entry, index) => {
+      // Get task name, removing "task" prefix if it exists
+      const rawTaskName = entry.task.name || "UnnamedTask";
+      const taskName = rawTaskName.startsWith("task") ? 
+        rawTaskName.substring(4) : rawTaskName;
+      
+      // Format the parameters for display
+      let paramsList = "";
+      if (entry.params) {
+        const paramEntries = Object.entries(entry.params);
+        if (paramEntries.length > 0) {
+          paramsList = paramEntries.map(([key, value]) => 
+            `<li><span style="color:#888">${key}:</span> ${value}</li>`
+          ).join("");
+          paramsList = `<ul style="margin:0; padding-left:20px">${paramsList}</ul>`;
+        }
+      }
+      
+      // Add conditional indicator if applicable
+      const conditionalTag = entry.conditional ? 
+        '<span style="color:orange;font-style:italic"> (conditional)</span>' : '';
+      
+      return `<li style="margin-bottom:5px">
+        <strong>${index === 0 ? '▶️ ' : ''}${taskName}</strong>${conditionalTag}
+        ${paramsList}
+      </li>`;
+    }).join("");
+    
+    taskQueueDisplay = `
+      <div>
+        <div style="margin-bottom:5px">${statusIndicator} - ${animal.taskQueue.length} task(s)</div>
+        <ol style="margin-top:0; padding-left:25px">
+          ${taskListItems}
+        </ol>
+      </div>
+    `;
+  }
+
+  let infoHtml = `
+    <strong>${animal.type} ${animal.emoji}</strong><br/>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; margin-top:5px">
+      <div>
+        <strong>Basic Info</strong><br/>
+        Position: ${animal.gridX}, ${animal.gridY}<br/>
+        State: <strong>${animal.state}</strong><br/>
+        Is Predator: <strong>${animal.isPredator}</strong><br/>
+        Hunger: <strong>${animal.hunger}</strong><br/>
+        Thirst: <strong>${animal.thirst}</strong><br/>
+      </div>
+      <div>
+        <strong>Targets</strong><br/>
+        Target Animal: <strong>${animal.targetAnimal ? animal.targetAnimal.type : 'None'}</strong><br/>
+        Target Cell: <strong>${animal.targetCell ? `X:${animal.targetCell.gridX}, Y:${animal.targetCell.gridY}` : 'None'}</strong><br/>
+        Target Resource: <strong>${animal.targetResource ? 
+          (animal.targetResource.isPuddle ? 'Puddle' : 
+           animal.targetResource.isGrass ? 'Grass' : 'Bush') : 'None'}</strong>
+      </div>
+    </div>
+    
+    <div style="margin-top:10px">
+      <strong>Task Queue:</strong><br/>
+      ${taskQueueDisplay}
+    </div>
+    
+    <div style="margin-top:10px">
+      <strong>Additional Info</strong><br/>
+      Age: <strong>${animal.age}</strong><br/>
+      Last State: <strong>${animal.lastState}</strong><br/>
+      Eats Grass: <strong>${animal.eatsGrass}</strong><br/>
+      Eats Plants: <strong>${animal.eatsPlants}</strong><br/>
+      Eats Animals: <strong>${animal.eatsAnimals}</strong><br/>
+      Time Since Last Reproduction: <strong>${animal.timeSinceLastReproduction}</strong><br/>
+      #${animal.id}<br/>
+    </div>
+    
+    <div style="margin-top:15px">
+      <button id="animateAnimalButton">Start Animal Behavior</button>
+      <button id="clearAnimalTasksButton">Clear Tasks</button>
+      <button id="closeInfoPanelButton">Close</button>
+    </div>
+  `;
+
+  infoPanel.innerHTML = infoHtml;
+
+  // Add event listeners to buttons
+  document.getElementById('animateAnimalButton').addEventListener('click', () => {
+    const behavior = animalBehaviors[animal.type];
+    if (behavior) {
+      addTasksToAnimal(animal, behavior);
+    }
+  });
+  
+  document.getElementById('clearAnimalTasksButton').addEventListener('click', () => {
+    animal.taskQueue = [];
+    animal.isProcessingTasks = false;
+    animal.state = "idle";
+    animal.targetResource = null;
+    animal.targetCell = null;
+    animal.targetAnimal = null;
+  });
+  
+  document.getElementById('closeInfoPanelButton').addEventListener('click', () => {
+    // Close the panel and stop refreshing
+    infoPanel.style.visibility = 'hidden';
+    infoPanel.style.display = 'none';
+    clearInterval(infoPanelRefreshInterval);
+    infoPanelRefreshInterval = null;
+    currentSelectedAnimalId = null;
   });
 }
 
+// When clicking elsewhere on the canvas or closing the game, ensure we clean up the interval
+function closeAnimalInfoPanel() {
+  const infoPanel = document.getElementById('infoPanel');
+  if (infoPanel) {
+    infoPanel.style.visibility = 'hidden';
+    infoPanel.style.display = 'none';
+  }
+  
+  if (infoPanelRefreshInterval) {
+    clearInterval(infoPanelRefreshInterval);
+    infoPanelRefreshInterval = null;
+  }
+  currentSelectedAnimalId = null;
+}
 
-let animateAnimalButton = document.getElementById('animateAnimalToRandomBushButton');
+// Make sure to call closeAnimalInfoPanel when clicking away or on game exit
+// This needs to be called from your canvas click handler or game exit function
+// Example:
+// document.getElementById('gameCanvas').addEventListener('click', function(e) {
+//   // Your existing click handler code
+//   
+//   // If clicked away from an animal
+//   if (!clickedOnAnimal) {
+//     closeAnimalInfoPanel();
+//   }
+// });
+
+// Stop refreshing when window unloads
+window.addEventListener('beforeunload', closeAnimalInfoPanel);
 
 /* 
 DO NOT TOUCH THIS
