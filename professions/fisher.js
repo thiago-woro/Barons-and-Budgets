@@ -1009,7 +1009,7 @@ function drawFisherInfo(npc, ctx) {
   }
 
   // Call the common NPC method for displaying info
-  npc.drawInfoText(ctx, infoText, additionalInfo, progressBar);
+  drawInfoText(ctx, infoText, additionalInfo, progressBar);
 }
 
 // Initialize fishing resources

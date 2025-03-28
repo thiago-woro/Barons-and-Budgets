@@ -342,7 +342,7 @@ class NPC {
         text: this.state,
         color: this.getRaceColor()
       } : null; */
-      this.drawInfoText(ctx, this.state, null);
+      drawInfoText(ctx, this.state, null);
     }  else if (this.profession === 'Hunter') {
       drawHunterInfo(this, ctx);
     } else if (this.profession === 'Fisher') {
@@ -425,4 +425,189 @@ class NPC {
     const item = this.inventory.find(item => item.type === itemType);
     return item ? item.amount : 0;
   }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// A* pathfinding algorithm to find a path between two cells
+function findPath(start, target) {
+    // Helper function to calculate Manhattan distance heuristic
+    const heuristic = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+    
+    // Helper function to check if a cell is walkable
+    const isWalkable = (x, y) => {
+        // Check if cell is within grid bounds
+        if (x < 0 || y < 0 || x >= rows || y >= rows) {
+            return false;
+        }
+        
+        // Check if cell is not water (is in emptyCells)
+        const cellInEmptyCells = emptyCells.some(cell => cell.x === x && cell.y === y);
+        
+        // Check if cell is occupied by a tree
+        // Trees are stored with pixel coordinates, so we need to convert grid coordinates to pixel
+        // Trees are centered at (x+0.5)*cellSize, (y+0.5)*cellSize
+        const treePresent = treePositions.some(tree => {
+            // Convert tree's pixel coordinates back to grid coordinates
+            const treeGridX = Math.floor(tree.x / cellSize);
+            const treeGridY = Math.floor(tree.y / cellSize);
+            return treeGridX === x && treeGridY === y;
+        });
+        
+        // A cell is walkable if it's in emptyCells AND doesn't have a tree
+        return cellInEmptyCells && !treePresent;
+    };
+    
+    // Create open and closed sets
+    const openSet = [];
+    const closedSet = [];
+    
+    // Add start node to open set
+    openSet.push({
+        x: start.x,
+        y: start.y,
+        g: 0,                          // Cost from start to current node
+        h: heuristic(start, target),   // Estimated cost from current to target
+        f: heuristic(start, target),   // Total cost (g + h)
+        parent: null                   // Reference to parent node
+    });
+    
+    // While there are nodes to explore
+    while (openSet.length > 0) {
+        // Sort openSet by f score (lowest first)
+        openSet.sort((a, b) => a.f - b.f);
+        
+        // Get the node with lowest f score
+        const current = openSet.shift();
+        
+        // Add current to closed set
+        closedSet.push(current);
+        
+        // If reached the target
+        if (current.x === target.x && current.y === target.y) {
+            // Reconstruct the path
+            const path = [];
+            let temp = current;
+            
+            while (temp !== null) {
+                path.push({ x: temp.x, y: temp.y });
+                temp = temp.parent;
+            }
+            
+            // Return the path in reverse (from start to target)
+            return path.reverse();
+        }
+        
+        // Get neighboring cells
+        const neighbors = [
+            { x: current.x - 1, y: current.y },     // Left
+            { x: current.x + 1, y: current.y },     // Right
+            { x: current.x, y: current.y - 1 },     // Up
+            { x: current.x, y: current.y + 1 }      // Down
+        ];
+        
+        for (const neighbor of neighbors) {
+            // Skip if not walkable or in closed set
+            if (!isWalkable(neighbor.x, neighbor.y) || 
+                closedSet.some(n => n.x === neighbor.x && n.y === neighbor.y)) {
+                continue;
+            }
+            
+            // Calculate g score for this neighbor
+            const gScore = current.g + 1; // Assuming cost of 1 to move to adjacent cell
+            
+            // Check if neighbor is already in open set
+            const existingNeighborIndex = openSet.findIndex(n => 
+                n.x === neighbor.x && n.y === neighbor.y
+            );
+            
+            if (existingNeighborIndex === -1) {
+                // Not in open set, add it
+                openSet.push({
+                    x: neighbor.x,
+                    y: neighbor.y,
+                    g: gScore,
+                    h: heuristic(neighbor, target),
+                    f: gScore + heuristic(neighbor, target),
+                    parent: current
+                });
+            } else if (gScore < openSet[existingNeighborIndex].g) {
+                // Already in open set, but this path is better
+                openSet[existingNeighborIndex].g = gScore;
+                openSet[existingNeighborIndex].f = gScore + openSet[existingNeighborIndex].h;
+                openSet[existingNeighborIndex].parent = current;
+            }
+        }
+    }
+    
+    // No path found
+    return null;
+}
+
+// Variable to store the start cell for pathfinding
+let pathStart = null;
+
+// Function to handle path visualization when using the path tool
+function viewPath(coords) {
+    if (!pathStart) {
+        // First click - set start cell
+        pathStart = { x: coords.cellCol, y: coords.cellRow };
+        console.log("Path start cell selected:", pathStart);
+    } else {
+        // Second click - set target cell and calculate path
+        const target = { x: coords.cellCol, y: coords.cellRow };
+        console.log("Path target cell selected:", target);
+        
+        // Calculate path using A* algorithm
+        const path = findPath(pathStart, target);
+        
+        if (path) {
+            console.log("Path found:", path);
+            
+            // Clear previous paths
+            boatCtx.clearRect(0, 0, boatCtx.canvas.width, boatCtx.canvas.height);
+            
+            // Draw path as purple line
+            boatCtx.strokeStyle = "#8A2BE2"; // Purple color
+            boatCtx.lineWidth = 2;
+            boatCtx.beginPath();
+            
+            // Move to the first point
+            const firstCell = path[0];
+            boatCtx.moveTo(
+                (firstCell.x * cellSize) + (cellSize / 2), 
+                (firstCell.y * cellSize) + (cellSize / 2)
+            );
+            
+            // Draw lines to each subsequent point
+            for (let i = 1; i < path.length; i++) {
+                const cell = path[i];
+                boatCtx.lineTo(
+                    (cell.x * cellSize) + (cellSize / 2), 
+                    (cell.y * cellSize) + (cellSize / 2)
+                );
+            }
+            
+            boatCtx.stroke();
+        } else {
+            console.log("No path found between start and target");
+            
+            // Clear previous paths when no path is found
+            boatCtx.clearRect(0, 0, boatCtx.canvas.width, boatCtx.canvas.height);
+        }
+        
+        // Reset the start cell for the next path
+        pathStart = null;
+    }
 }
